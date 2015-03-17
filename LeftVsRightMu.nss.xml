@@ -1,0 +1,65 @@
+<NeurofeedbackSignalSpecs>
+	<CompositeMontage>__</CompositeMontage>
+	<vSignals>
+		<DerivedSignal>
+			<sSignalName>Raw</sSignalName>
+			<SpatialFilterMatrix>mu.xml</SpatialFilterMatrix>
+			<sType>plain</sType>
+		</DerivedSignal>
+		<DerivedSignal>
+			<sSignalName>MuL+R</sSignalName>
+			<SpatialFilterMatrix>mu.xml</SpatialFilterMatrix>
+			<fBandpassLowHz>8</fBandpassLowHz>
+			<fBandpassHighHz>12</fBandpassHighHz>
+			<sType>plain</sType>
+		</DerivedSignal>
+		<DerivedSignal>
+			<sSignalName>MuLeft</sSignalName>
+			<SpatialFilterMatrix>left_mu.xml</SpatialFilterMatrix>
+			<fBandpassLowHz>8</fBandpassLowHz>
+			<fBandpassHighHz>12</fBandpassHighHz>
+			<sType>plain</sType>
+		</DerivedSignal>
+		<DerivedSignal>
+			<sSignalName>MuRight</sSignalName>
+			<SpatialFilterMatrix>right_mu.xml</SpatialFilterMatrix>
+			<fBandpassLowHz>8</fBandpassLowHz>
+			<fBandpassHighHz>12</fBandpassHighHz>
+			<sType>plain</sType>
+		</DerivedSignal>
+	</vSignals>
+	<vProtocols>
+		<FeedbackProtocol>
+			<sProtocolName>Baseline</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<bUpdateStatistics>1</bUpdateStatistics>
+			<fDuration>3</fDuration>
+			<bStopAfter>1</bStopAfter>
+			<cString>Baseline acquisition</cString>
+		</FeedbackProtocol>
+		<FeedbackProtocol>
+			<sProtocolName>EyeArtifacts</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<bUpdateStatistics>1</bUpdateStatistics>
+			<fDuration>3</fDuration>
+			<bStopAfter>1</bStopAfter>
+			<cString></cString>
+		</FeedbackProtocol>
+		<FeedbackProtocol>
+			<sProtocolName>Feedback</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nSecondsPerWindow>10</nSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>10</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString></cString>
+		</FeedbackProtocol>
+			</vProtocols>
+	<vPSequence>
+<s>EyeArtifacts</s>
+		<s>Baseline</s>
+
+<s>Feedback</s>
+
+	</vPSequence>
+</NeurofeedbackSignalSpecs>
