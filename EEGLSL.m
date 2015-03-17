@@ -144,7 +144,7 @@ classdef EEGLSL < handle
             self.signal_to_feedback = 2;
             self.composite_montage = [];
             self.settings_file_text = 'LeftVsRightMu.nss.xml';
-            self.settings_file =  'LeftVsRightMu.nss.xml';
+            self.settings_file =  'settings\LeftVsRightMu.nss.xml';
             self.recording = 0;
             self.next_protocol = 1;
             self.finished = 0;
@@ -872,8 +872,8 @@ end
 end
 function channels = read_channel_file()
 
-fname = 'mitsar_channels.txt';
-t = fileread('mitsar_channels.txt');
+fname = 'settings/mitsar_channels.txt';
+t = fileread('settings/mitsar_channels.txt');
 channels = {};
 str = '';
 k = 1;
