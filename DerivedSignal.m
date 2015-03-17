@@ -42,7 +42,9 @@ classdef DerivedSignal < handle
                     self.temporal_filter{c}.order = signal.filters(c).order;
                     self.temporal_filter{c}.range = signal.filters(c).range;
                     self.temporal_filter{c}.mode = signal.filters(c).mode;
-                    [self.temporal_filter{c}.B, self.temporal_filter{c}.A ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2));
+                    [z p k] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
+                    [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
+                    %[self.temporal_filter{c}.B, self.temporal_filter{c}.A ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                 end
@@ -56,7 +58,7 @@ classdef DerivedSignal < handle
                     self.temporal_filter{c}.order = signal.filters(c).order;
                     self.temporal_filter{c}.range = signal.filters(c).range;
                     self.temporal_filter{c}.mode = signal.filters(c).mode;
-                    [z p k ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2));
+                    [z p k] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
                     [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
                     %[self.temporal_filter{c}.B, self.temporal_filter{c}.A ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2));
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);

@@ -42,16 +42,16 @@ classdef NeurofeedbackSession < handle
                 
                 
 
-                d.filters(1).order = 2;
-                d.filters(1).mode = 'stop';
-                d.filters(1).range = [45 55];
                 d.filters(2).order = 2;
-                d.filters(2).mode = 'pass';
-                d.filters(2).range = [0.5 100];
+                d.filters(2).mode = 'stop';
+                d.filters(2).range = [45 55];
+                d.filters(1).order = 2;
+                d.filters(1).mode = 'bandpass';
+                d.filters(1).range = [0.5 100];
                 try
                     d.filters(3).range = [d.fBandpassLowHz d.fBandpassHighHz];
                     d.filters(3).order = 5;
-                    d.filters(3).mode = 'pass';
+                    d.filters(3).mode = 'bandpass';
                 catch 
                 end
                 

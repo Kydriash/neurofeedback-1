@@ -9,7 +9,6 @@ classdef RealtimeProtocol < handle
         actual_protocol_size
         ds_names
         ds_index
-		isover
         rbuff
         stop_after
         string_to_show
