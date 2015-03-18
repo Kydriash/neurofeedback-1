@@ -42,10 +42,10 @@ classdef NeurofeedbackSession < handle
                 
                 
 
-                d.filters(2).order = 2;
+                d.filters(2).order = 4;
                 d.filters(2).mode = 'stop';
                 d.filters(2).range = [45 55];
-                d.filters(1).order = 2;
+                d.filters(1).order = 4;
                 d.filters(1).mode = 'bandpass';
                 d.filters(1).range = [0.5 100];
                 try

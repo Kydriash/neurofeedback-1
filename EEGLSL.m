@@ -73,7 +73,8 @@ classdef EEGLSL < handle
         yscales_fixed
         fb_statistics_set
         %%%%%% Signal processing and feedback related members%
-        composite_montage
+        composite_montage %used_ch by used_ch matrix
+        allxall% all ch by all ch matrix
         signals %parameters
         derived_signals
         feedback_protocols
@@ -156,8 +157,10 @@ classdef EEGLSL < handle
             if(self.current_protocol>0)
                 N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                 if(N>0)
-                    ds_minimum = Inf;
-                    ds_maximum = -Inf;
+                    ds_d = -Inf;
+                    ds_m = -Inf;
+%                     ds_minimum = Inf;
+%                     ds_maximum = -Inf;
                     for s = 2:length(self.derived_signals)
                         if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
                             values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
@@ -166,19 +169,29 @@ classdef EEGLSL < handle
                         end
                         self.feedback_manager.average(s-1) = mean(values);
                         self.feedback_manager.standard_deviation(s-1) = std(values);
-                        if ds_minimum > min(values)
-                            ds_minimum = min(values);
+                        if ds_d < std(values)
+                            ds_d = std(values);
+%                         if ds_minimum > min(values)
+%                             ds_minimum = min(values);
+%                         end
+%                         if ds_maximum < max(values)
+%                             ds_maximum = max(values);
+%                         end
                         end
-                        if ds_maximum < max(values)
-                            ds_maximum = max(values);
+                        if ds_m < mean(values)
+                            ds_m = mean(values);
                         end
                     end
                     self.fb_statistics_set = 1;
-                    ds_d = ds_maximum - ds_minimum;
-                    set(self.ds_subplot,'YLim',[ds_minimum ds_d*length(self.derived_signals)*2]);
-                    self.ds_shift = ds_d*2;
-                    raw_minimum = Inf;
-                    raw_maximum = -Inf;
+                    %ds_d = ds_maximum - ds_minimum;
+                    
+                   %set(self.ds_subplot,'YLim',[ds_minimum ds_d*length(self.derived_signals)*2]);
+                   set(self.ds_subplot,'YLim',[ds_m - ds_d*3 ds_m - ds_d*3+(ds_m+ds_d*3*2)*length(self.derived_signals)]);
+                    self.ds_shift = ds_d*2*3;
+%                     raw_minimum = Inf;
+%                     raw_maximum = -Inf;
+raw_d = -Inf;
+raw_m = -Inf;
                     for ch = 1:length(self.used_ch)
                         if self.derived_signals{1}.collect_buff.lst - N+1 < self.derived_signals{1}.collect_buff.fst
                             v = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
@@ -186,16 +199,23 @@ classdef EEGLSL < handle
                             v = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
                         end
                         values = v(:,ch);
-                        if raw_minimum > min(values)
-                            raw_minimum = min(values);
+                        if raw_d < std(values)
+                            raw_d = std(values);
                         end
-                        if raw_maximum < max(values)
-                            raw_maximum = max(values);
+                        if raw_m < mean(values)
+                            raw_m = mean(values);
                         end
+%                         if raw_minimum > min(values)
+%                             raw_minimum = min(values);
+%                         end
+%                         if raw_maximum < max(values)
+%                             raw_maximum = max(values);
+%                         end
                     end
-                    raw_d = raw_maximum - raw_minimum;
-                    set(self.raw_subplot,'YLim',[raw_minimum raw_minimum+raw_d*length(self.used_ch)*2]);
-                    self.raw_shift = raw_d*2;
+%                     raw_d = raw_maximum - raw_minimum;
+%                     set(self.raw_subplot,'YLim',[raw_minimum raw_minimum+raw_d*length(self.used_ch)*2]);
+set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_d*3*2)*(length(self.used_ch)+1))]);
+                    self.raw_shift = raw_d*2*3;
                     self.SetRawYTicks;
                     self.SetDSYTicks;
                     self.yscales_fixed = 1;
@@ -209,7 +229,7 @@ classdef EEGLSL < handle
                 %removing DC component
                 %sample = sample - repmat(sum(sample,1)/length(self.channel_count),size(sample,1),1);
                 % apply average reference montage
-                self.nd = self.composite_montage*self.nd;
+                %self.nd = self.composite_montage*self.nd;
                 for ds = 1:length(self.derived_signals)
                     self.derived_signals{ds}.Apply(self.nd,self.recording);
                 end;
@@ -226,28 +246,38 @@ classdef EEGLSL < handle
             self.samples_acquired = self.samples_acquired+size(sample,2);
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + size(sample,2);
+                if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
+                    
                 try
-                    if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
                         temp_log_str = get(self.log_text,'String');
                         temp_log_str{end+1} = self.feedback_protocols{self.current_protocol}.protocol_name;
                         set(self.log_text,'String', temp_log_str);
                         if self.feedback_protocols{self.current_protocol}.to_update_statistics
                             self.Update_Statistics();
                         end
+                   
+                        catch
+                            0
+                end
+                    try
+                    
                         if self.feedback_protocols{self.current_protocol}.stop_after
                             set(self.connect_button, 'String', 'Start recording');
                             set(self.connect_button, 'Callback',@self.StartRecording);%%%%%
                             self.StopRecording();
                         else
-                            self.current_protocol = self.next_protocol;
+                                                        self.current_protocol = self.next_protocol;
                             self.next_protocol = self.next_protocol + 1;
                             if self.current_protocol > length(self.feedback_protocols)
                                 self.StopRecording();
                             end
                         end
+                    catch
+                        1
                     end
-                catch
-                end
+ 
+                    end
+
             end
         end
         function Connect(self,predicate, value)
@@ -351,14 +381,28 @@ classdef EEGLSL < handle
                 end
             end
             all_ch = self.channel_labels;
-            self.composite_montage = zeros(length(all_ch),length(all_ch));
+
+            self.composite_montage = zeros(length(self.used_ch), length(self.used_ch));
+            self.allxall = zeros(length(all_ch), length(all_ch));
+
             used_ch_labels = self.used_ch(:,1);
             for i = 1:length(used_ch_labels)
                 for j = 1:length(all_ch)
                     if strcmp(self.used_ch{i,1},all_ch{j})
-                        self.composite_montage(:,j) = 1/length(self.used_ch);
-                        self.composite_montage(j,j) = 1-1/length(self.used_ch);
+                        self.allxall(:,j) = 1/length(self.used_ch);
+                        self.allxall(j,j) = 1-1/length(self.used_ch);
+                        self.composite_montage(:,i) = 1/length(self.used_ch);
+                        self.composite_montage(i,i) = 1-1/length(self.used_ch);
                     end
+                end
+            end
+            
+            
+            for ds = 1:length(self.derived_signals)
+                if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
+                self.derived_signals{ds}.composite_montage = self.composite_montage;
+                else
+                    self.derived_signals{ds}.composite_montage = self.allxall;
                 end
             end
             %connect
@@ -378,7 +422,7 @@ classdef EEGLSL < handle
             self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 16, 'Min',-16,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
             self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 16, 'Min',-16,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
             ds_temp = zeros(length(self.derived_signals),fix(self.plot_size));
-            r_temp = zeros(self.channel_count,fix(self.plot_size));
+            r_temp = zeros(length(self.used_ch),fix(self.plot_size));
             self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
             self.ds_plot = plot(ds_temp', 'Parent', self.ds_subplot);
             self.raw_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 320 100 25],'Tag', 'raw_line');

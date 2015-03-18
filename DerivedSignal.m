@@ -48,6 +48,7 @@ classdef DerivedSignal < handle
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                 end
+                
             else
                 self.collect_buff = circVBuf(data_length,1,0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
@@ -93,8 +94,11 @@ classdef DerivedSignal < handle
                         [ sz self.temporal_filter{f}.Zf] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz', self.temporal_filter{f}.Zi);
                         self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
                     end
+                    
                     self.data(i:i,:) = sz;
+                    
                 end
+                self.data = self.composite_montage*self.data;
                 self.ring_buff.append(self.data');
                 if recording
                     self.collect_buff.append(self.data');
@@ -103,19 +107,29 @@ classdef DerivedSignal < handle
                 
             else
                 
-                self.data  = self.spatial_filter*newdata; 
-
-                sz = self.data;
                 
-                if length(self.data) > 5
-                    for f = 1:length(self.temporal_filter)
-                        [sz, self.temporal_filter{f}.Zf ] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz', self.temporal_filter{f}.Zi);
-                        self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
+
+                %sz  = self.spatial_filter*self.composite_montage*newdata;
+                sz = newdata;
+                if size(sz,2) > 5
+                    %add selection
+                    
+                    for i = 1:size(sz,1)
+                        %add selection
+                        if self.spatial_filter(i)
+                        for f = 1:length(self.temporal_filter)
+                            [sz(i,:), self.temporal_filter{f}.Zf ] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi);
+                            self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
+                        end
+                        end
                     end
+                    
+                    sz = self.spatial_filter*self.composite_montage * sz;
+                     
                     try
-                        self.ring_buff.append(sz);
+                        self.ring_buff.append(sz');
                         if recording
-                            self.collect_buff.append(sz);
+                            self.collect_buff.append(sz');
                         end
                     catch
                         1
