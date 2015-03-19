@@ -10,7 +10,7 @@ classdef EEGLSL < handle
         plot_length %sec
         plot_size %samples
         plot_refresh_rate %sec
-
+        
         %%%plots and axes
         %raw eeg subplot
         raw_subplot
@@ -19,18 +19,26 @@ classdef EEGLSL < handle
         r_ytick_labels
         raw_ydata_scale
         raw_line %text
+        raw_plot_min
+        raw_plot_max
+        raw_plot_shift
+        raw_mean
         %derived_signals subplot
         ds_subplot
         ds_shift
         ds_plot
         ds_ytick_labels
         ds_ydata_scale
-        ds_line 
+        ds_line
+        ds_plot_min
+        ds_plot_max
+        ds_plot_shift
+        ds_mean
         %feedback subplot
         fbplot_handle %bar
-        feedback_axis_handle 
-        fb_stub %text 
-
+        feedback_axis_handle
+        fb_stub %text
+        
         %%%uicontrol
         connect_button
         disconnect_button
@@ -135,6 +143,8 @@ classdef EEGLSL < handle
             self.raw_ydata_scale = 1;
             self.ds_ydata_scale = 1;
             self.nd = [];
+            self.raw_mean = 0;
+            self.ds_mean = 0;
         end
         function UpdateFeedbackSignal(self)
             for s = 2:length(self.derived_signals)
@@ -158,9 +168,7 @@ classdef EEGLSL < handle
                 N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                 if(N>0)
                     ds_d = -Inf;
-                    ds_m = -Inf;
-%                     ds_minimum = Inf;
-%                     ds_maximum = -Inf;
+                    self.ds_mean = -Inf;
                     for s = 2:length(self.derived_signals)
                         if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
                             values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
@@ -171,27 +179,18 @@ classdef EEGLSL < handle
                         self.feedback_manager.standard_deviation(s-1) = std(values);
                         if ds_d < std(values)
                             ds_d = std(values);
-%                         if ds_minimum > min(values)
-%                             ds_minimum = min(values);
-%                         end
-%                         if ds_maximum < max(values)
-%                             ds_maximum = max(values);
-%                         end
                         end
-                        if ds_m < mean(values)
-                            ds_m = mean(values);
+                        if self.ds_mean < mean(values)
+                            self.ds_mean = mean(values);
                         end
                     end
-                    self.fb_statistics_set = 1;
-                    %ds_d = ds_maximum - ds_minimum;
-                    
-                   %set(self.ds_subplot,'YLim',[ds_minimum ds_d*length(self.derived_signals)*2]);
-                   set(self.ds_subplot,'YLim',[ds_m - ds_d*3 ds_m - ds_d*3+(ds_m+ds_d*3*2)*length(self.derived_signals)]);
-                    self.ds_shift = ds_d*2*3;
-%                     raw_minimum = Inf;
-%                     raw_maximum = -Inf;
-raw_d = -Inf;
-raw_m = -Inf;
+                    self.ds_shift = abs(ds_d*6)+self.ds_mean;
+                    set(self.ds_subplot,'YLim',[self.ds_mean - abs(ds_d*3) self.ds_mean - abs(ds_d)*3+self.ds_shift*length(self.derived_signals)]);
+                    set(self.ds_plot_min,'String',num2str(self.ds_mean-abs(ds_d*3)));
+                    set(self.ds_plot_max,'String',num2str(((self.ds_mean - abs(ds_d*3)) +self.ds_shift*(length(self.derived_signals)))));
+                    set(self.ds_plot_shift,'String', num2str(self.ds_shift));
+                    raw_d = -Inf;
+                    self.raw_mean = -Inf;
                     for ch = 1:length(self.used_ch)
                         if self.derived_signals{1}.collect_buff.lst - N+1 < self.derived_signals{1}.collect_buff.fst
                             v = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
@@ -202,23 +201,19 @@ raw_m = -Inf;
                         if raw_d < std(values)
                             raw_d = std(values);
                         end
-                        if raw_m < mean(values)
-                            raw_m = mean(values);
+                        if self.raw_mean < mean(values)
+                            self.raw_mean = mean(values);
                         end
-%                         if raw_minimum > min(values)
-%                             raw_minimum = min(values);
-%                         end
-%                         if raw_maximum < max(values)
-%                             raw_maximum = max(values);
-%                         end
                     end
-%                     raw_d = raw_maximum - raw_minimum;
-%                     set(self.raw_subplot,'YLim',[raw_minimum raw_minimum+raw_d*length(self.used_ch)*2]);
-set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_d*3*2)*(length(self.used_ch)+1))]);
-                    self.raw_shift = raw_d*2*3;
+                    set(self.raw_subplot,'YLim',[(self.raw_mean - abs(raw_d*3)) ((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))]);
+                    self.raw_shift = abs(raw_d*6)+self.raw_mean;
+                    set(self.raw_plot_min,'String',num2str(self.raw_mean-abs(raw_d*3)));
+                    set(self.raw_plot_max,'String',num2str(((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))));
+                    set(self.raw_plot_shift,'String', num2str(self.raw_shift));
                     self.SetRawYTicks;
                     self.SetDSYTicks;
                     self.yscales_fixed = 1;
+                    self.fb_statistics_set = 1;
                 end;
             end;
         end
@@ -248,25 +243,25 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + size(sample,2);
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
                     
-                try
+                    try
                         temp_log_str = get(self.log_text,'String');
                         temp_log_str{end+1} = self.feedback_protocols{self.current_protocol}.protocol_name;
                         set(self.log_text,'String', temp_log_str);
                         if self.feedback_protocols{self.current_protocol}.to_update_statistics
                             self.Update_Statistics();
                         end
-                   
-                        catch
-                            0
-                end
+                        
+                    catch
+                        0
+                    end
                     try
-                    
+                        
                         if self.feedback_protocols{self.current_protocol}.stop_after
                             set(self.connect_button, 'String', 'Start recording');
                             set(self.connect_button, 'Callback',@self.StartRecording);%%%%%
                             self.StopRecording();
                         else
-                                                        self.current_protocol = self.next_protocol;
+                            self.current_protocol = self.next_protocol;
                             self.next_protocol = self.next_protocol + 1;
                             if self.current_protocol > length(self.feedback_protocols)
                                 self.StopRecording();
@@ -275,9 +270,9 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
                     catch
                         1
                     end
- 
-                    end
-
+                    
+                end
+                
             end
         end
         function Connect(self,predicate, value)
@@ -381,10 +376,10 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
                 end
             end
             all_ch = self.channel_labels;
-
+            
             self.composite_montage = zeros(length(self.used_ch), length(self.used_ch));
             self.allxall = zeros(length(all_ch), length(all_ch));
-
+            
             used_ch_labels = self.used_ch(:,1);
             for i = 1:length(used_ch_labels)
                 for j = 1:length(all_ch)
@@ -400,7 +395,7 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
             
             for ds = 1:length(self.derived_signals)
                 if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
-                self.derived_signals{ds}.composite_montage = self.composite_montage;
+                    self.derived_signals{ds}.composite_montage = self.composite_montage;
                 else
                     self.derived_signals{ds}.composite_montage = self.allxall;
                 end
@@ -419,14 +414,20 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
             self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
             self.raw_subplot = subplot(2,1,1);
             self.ds_subplot = subplot(2,1,2);
-            self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 16, 'Min',-16,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
-            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 16, 'Min',-16,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
+            self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 32, 'Min',-32,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
+            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 32, 'Min',-32,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
             ds_temp = zeros(length(self.derived_signals),fix(self.plot_size));
             r_temp = zeros(length(self.used_ch),fix(self.plot_size));
             self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
             self.ds_plot = plot(ds_temp', 'Parent', self.ds_subplot);
             self.raw_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 320 100 25],'Tag', 'raw_line');
             self.ds_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 120 100 25],'Tag','ds_line');
+            self.ds_plot_min= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 50 100 25],'Tag', 'ds_plot_min');
+            self.ds_plot_max= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 250 100 25],'Tag', 'ds_plot_max');
+            self.ds_plot_shift= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 150 100 25],'Tag', 'ds_plot_shift');
+            self.raw_plot_min= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 350 100 25],'Tag', 'raw_plot_min');
+            self.raw_plot_max= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 550 100 25],'Tag', 'raw_plot_max');
+            self.raw_plot_shift= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 450 100 25],'Tag', 'raw_plot_shift');
         end
         function PlotEEGData(self,timer_obj, event)
             r_sp = get(self.raw_subplot);
@@ -471,7 +472,7 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
                                 r_max = max(raw_data(i:i,:));
                             end
                             r_d = r_max - r_min;
-                            set(self.raw_plot(i),'YData', raw_data(i:i,:)*self.raw_ydata_scale+self.raw_shift*i);
+                            set(self.raw_plot(i),'YData', (raw_data(i:i,:)-self.raw_mean)*self.raw_ydata_scale+self.raw_shift*i);
                         end
                         for i = 2:length(self.derived_signals)
                             pulled = self.derived_signals{i}.ring_buff.raw(first_to_show:last_to_show,:);
@@ -483,7 +484,7 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
                                 ds_max = max(pulled);
                             end
                             ds_d = ds_max - ds_min;
-                            set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1)); %NaN
+                            set(self.ds_plot(i-1), 'YData',(pulled(1,:)-self.ds_mean)*self.ds_ydata_scale+self.ds_shift*i); %NaN
                         end
                         if all([isnumeric(ds_d),~isinf(ds_d)])
                             ylim(self.ds_subplot,[ds_d/2 (2*length(self.derived_signals)+1)*ds_d]);
@@ -497,12 +498,12 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
                         for i = 1:size(raw_data,1)
-                            set(self.raw_plot(i),'YData', raw_data(i:i,:)*self.raw_ydata_scale+self.raw_shift*i);
+                            set(self.raw_plot(i),'YData', (raw_data(i:i,:)-self.raw_mean)*self.raw_ydata_scale+self.raw_shift*i);
                         end
                         for i = 2:length(self.derived_signals)
                             pulled = self.derived_signals{i}.ring_buff.raw(first_to_show:last_to_show,:);
                             pulled = pulled';
-                            set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1));
+                            set(self.ds_plot(i-1), 'YData',(pulled(1,:)-self.ds_mean)*self.ds_ydata_scale+self.ds_shift*i);
                         end
                     end
                     if self.samples_acquired < self.plot_size
@@ -726,7 +727,7 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
             else
                 self.path_text.String = self.path;
             end
-        end   
+        end
         function SetDesignFile(self,~,~)
             [fname fpath fspec] = uigetfile('*.*');
             if ~isempty(nonzeros([fname fpath fspec]))
@@ -772,22 +773,30 @@ set(self.raw_subplot,'YLim',[(raw_m - (raw_d*3)) ((raw_m - raw_d*3) +(raw_m+raw_
             self.SetDSYTicks;
         end
         function SetRawYTicks(self)
-            r_sp = get(self.raw_subplot);
-            self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
-            r_yticks = [r_sp.YLim(1):self.raw_shift:r_sp.YLim(2)];
-            set(self.raw_subplot, 'YTick', r_yticks);
-            set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
-            set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1)/self.raw_ydata_scale));  
-        end     
-        function SetDSYTicks(self)
-            ds_sp = get(self.ds_subplot);
-            self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
-            ds_yticks = [ds_sp.YLim(1):self.ds_shift:ds_sp.YLim(2)];
-            set(self.ds_subplot, 'YTick', ds_yticks);
-            set(self.ds_subplot, 'YTickLabel', self.ds_ytick_labels);
-            set(self.ds_line,'String',num2str((ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals))/self.ds_ydata_scale));
+            try
+                r_sp = get(self.raw_subplot);
+                if ~self.yscales_fixed
+                    self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
+                end
+                r_yticks = [r_sp.YLim(1):self.raw_shift:r_sp.YLim(2)];
+                set(self.raw_subplot, 'YTick', r_yticks);
+                set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
+                set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1)/self.raw_ydata_scale));
+            end
         end
-    end 
+        function SetDSYTicks(self)
+            try
+                ds_sp = get(self.ds_subplot);
+                if ~self.yscales_fixed
+                    self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
+                end
+                ds_yticks = [ds_sp.YLim(1):self.ds_shift:ds_sp.YLim(2)];
+                set(self.ds_subplot, 'YTick', ds_yticks);
+                set(self.ds_subplot, 'YTickLabel', self.ds_ytick_labels);
+                set(self.ds_line,'String',num2str((ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals))/self.ds_ydata_scale));
+            end
+        end
+    end
 end
 
 
@@ -833,7 +842,7 @@ while true
 end
 
 
-end 
+end
 
 %                 if self.feedback_manager.standard_deviation
 %                     self.y_limit = [self.feedback_manager.average/self.feedback_manager.standard_deviation*0.9,self.feedback_manager.average/self.feedback_manager.standard_deviation*1.1];
