@@ -108,24 +108,26 @@ classdef DerivedSignal < handle
             else
                 
                 
-
+                
                 %sz  = self.spatial_filter*self.composite_montage*newdata;
                 sz = newdata;
+                
+
                 if size(sz,2) > 5
                     %add selection
                     
                     for i = 1:size(sz,1)
                         %add selection
                         if self.spatial_filter(i)
-                        for f = 1:length(self.temporal_filter)
-                            [sz(i,:), self.temporal_filter{f}.Zf ] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi);
-                            self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
-                        end
+                            for f = 1:length(self.temporal_filter)
+                                [sz(i,:), self.temporal_filter{f}.Zf ] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi);
+                                self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
+                            end
                         end
                     end
                     
                     sz = self.spatial_filter*self.composite_montage * sz;
-                     
+                    
                     try
                         self.ring_buff.append(sz');
                         if recording
