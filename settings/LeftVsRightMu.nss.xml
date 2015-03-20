@@ -43,7 +43,7 @@
 			<bUpdateStatistics>1</bUpdateStatistics>
 			<fDuration>3</fDuration>
 			<bStopAfter>1</bStopAfter>
-			<cString></cString>
+			<cString>EyeArtifacts acquisition</cString>
 		</FeedbackProtocol>
 		<FeedbackProtocol>
 			<sProtocolName>Feedback</sProtocolName>
