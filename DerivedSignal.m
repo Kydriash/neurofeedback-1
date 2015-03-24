@@ -40,17 +40,17 @@ classdef DerivedSignal < handle
                         end
                     end
                 end
-                self.temporal_filter = cell(1,2);
-                for c = 1:length(self.temporal_filter)
-                    self.temporal_filter{c}.order = signal.filters(c).order;
-                    self.temporal_filter{c}.range = signal.filters(c).range;
-                    self.temporal_filter{c}.mode = signal.filters(c).mode;
-                    [z p k] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
-                    [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
-                    %[self.temporal_filter{c}.B, self.temporal_filter{c}.A ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
-                    self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-                    self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-                end
+%                 self.temporal_filter = cell(1,2);
+%                 for c = 1:length(self.temporal_filter)
+%                     self.temporal_filter{c}.order = signal.filters(c).order;
+%                     self.temporal_filter{c}.range = signal.filters(c).range;
+%                     self.temporal_filter{c}.mode = signal.filters(c).mode;
+%                     [z p k] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
+%                     [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
+%                     %[self.temporal_filter{c}.B, self.temporal_filter{c}.A ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
+%                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
+%                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
+%                 end
                 
             else
                 self.collect_buff = circVBuf(data_length,1,0);
@@ -58,7 +58,7 @@ classdef DerivedSignal < handle
                 self.temporal_filter = cell(1,length(signal.filters));
                 % the first temporal filter is [45 55], the second - [0.5
                 % 100]
-                for c = 1:length(self.temporal_filter)
+                for c = 3:length(self.temporal_filter)
                     self.temporal_filter{c}.order = signal.filters(c).order;
                     self.temporal_filter{c}.range = signal.filters(c).range;
                     self.temporal_filter{c}.mode = signal.filters(c).mode;
@@ -93,11 +93,11 @@ classdef DerivedSignal < handle
                 self.data = zeros(length(self.channels), size(newdata,2));
                 for i = 1:length(self.channels_indices)
                     sz = newdata(self.channels_indices(i):self.channels_indices(i),:);
-                    for f = 1:2 %temporal filters
-                        [ sz self.temporal_filter{f}.Zf] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz', self.temporal_filter{f}.Zi);
-                        self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
-                    end
-                    
+%                     for f = 1:2 %temporal filters
+%                         [ sz self.temporal_filter{f}.Zf] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz', self.temporal_filter{f}.Zi);
+%                         self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
+%                     end
+%                     
                     self.data(i:i,:) = sz;
                     
                 end
@@ -122,7 +122,7 @@ classdef DerivedSignal < handle
                     for i = 1:size(sz,1)
                         %add selection
                         if self.spatial_filter(i)
-                            for f = 1:length(self.temporal_filter)
+                            for f = 3:length(self.temporal_filter)
                                 [sz(i,:), self.temporal_filter{f}.Zf ] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi);
                                 self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
                             end
