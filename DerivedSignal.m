@@ -33,7 +33,10 @@ classdef DerivedSignal < handle
                 for i = 1:channel_count
                     for j = 1:length(self.channels)
                         if strcmp(channels{i},self.channels{j,1})
+                            try
                             self.channels_indices(j) = i;
+                            catch i,j
+                            end
                         end
                     end
                 end

@@ -33,7 +33,7 @@
 			<sProtocolName>Baseline</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
-			<fDuration>3</fDuration>
+			<fDuration>10</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
@@ -41,7 +41,7 @@
 			<sProtocolName>EyeArtifacts</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
-			<fDuration>3</fDuration>
+			<fDuration>10</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>EyeArtifacts acquisition</cString>
 		</FeedbackProtocol>
@@ -56,10 +56,8 @@
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
-<s>EyeArtifacts</s>
 		<s>Baseline</s>
-
-<s>Feedback</s>
-
+          	<s>Feedback</s>
+		<s>Feedback</s>
 	</vPSequence>
 </NeurofeedbackSignalSpecs>

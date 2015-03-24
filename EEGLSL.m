@@ -306,8 +306,8 @@ classdef EEGLSL < handle
                 self.channel_count = self.max_ch_count;
             end
             self.inlet = lsl_inlet(self.streams{1});
-            %self.channel_labels = get_channel_labels(self.inlet);
-            self.channel_labels = read_channel_file();
+            self.channel_labels = get_channel_labels(self.inlet);
+            %self.channel_labels = read_channel_file();
             self.plot_size = self.plot_length * self.sampling_frequency;
             self.RunInterface;
             self.InitTimer();
@@ -690,7 +690,7 @@ classdef EEGLSL < handle
                 end
                 for j = 2:length(self.derived_signals)
                     string = strcat(string,',',self.derived_signals{j}.signal_name);
-                    data_matrix(:,j) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx+1:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
+                    data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx+1:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
                 end
                 string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev');
                 whole_data = [raw_data_matrix data_matrix fb_matrix];
