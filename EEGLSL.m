@@ -124,7 +124,7 @@ classdef EEGLSL < handle
             self.connected = false;
             self.fig_feedback = figure('Visible', 'off');
             self.channel_labels = {};
-            self.feedback_manager = FeedbackManager;
+            
             self.current_protocol = 0;
             self.feedback_protocols = {};
             self.exp_data_length = 0;
@@ -236,7 +236,9 @@ classdef EEGLSL < handle
             end;
         end
         function Receive(self,timer_obj, event)
-            [sample, ~] = self.inlet.pull_chunk();
+            [sample, timestamp] = self.inlet.pull_chunk();
+            
+            size(sample,2), timestamp
             self.nd = [self.nd sample];
             if(size(self.nd,2)>5)
                 %removing DC component
@@ -247,12 +249,14 @@ classdef EEGLSL < handle
                     self.derived_signals{ds}.Apply(self.nd,self.recording);
                 end;
                 self.UpdateFeedbackSignal;
-                fb = zeros(size(self.nd,2),4);
-                fb(:,1) = self.signal_to_feedback;
-                fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
-                fb(:,3) = self.feedback_manager.average(self.signal_to_feedback-1);
-                fb(:,4) = self.feedback_manager.standard_deviation(self.signal_to_feedback-1);
-                self.feedback_manager.feedback_records.append(fb);
+                if self.recording
+                    fb = zeros(size(self.nd,2),4);
+                    fb(:,1) = self.signal_to_feedback;
+                    fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
+                    fb(:,3) = self.feedback_manager.average(self.signal_to_feedback-1);
+                    fb(:,4) = self.feedback_manager.standard_deviation(self.signal_to_feedback-1);
+                    self.feedback_manager.feedback_records.append(fb);
+                end
                 self.nd =[];
             else
             end;
@@ -358,6 +362,8 @@ classdef EEGLSL < handle
             nfs = NeurofeedbackSession;
             nfs.LoadFromFile(self.settings_file);
             self.feedback_protocols = nfs.feedback_protocols;
+            self.feedback_manager = FeedbackManager;
+
             self.signals = nfs.derived_signals;
             self.protocol_sequence = nfs.protocol_sequence;
             for i = 1:length(self.feedback_protocols)

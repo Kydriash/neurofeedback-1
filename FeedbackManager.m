@@ -7,6 +7,7 @@ classdef FeedbackManager < handle
         window_length %ms
         window_size %samples
         current_protocol
+
         %samples_acquired
         eeglsl_obj
         feedback_vector
@@ -17,26 +18,24 @@ classdef FeedbackManager < handle
     methods
         function self = FeedbackManager(self)
             self.window_size            = 10;
-            self.reset_stats();
-             self.standard_deviation     = [1];
-             self.average                = [0];
-
-            self.current_protocol       = {};
-            self.feedback_vector        = [];
+            self.current_protocol       = 0;
             self.neurofeedback_session  = [];
+             self.feedback_vector        = zeros(1,1);
+                 self.standard_deviation     = ones(1,1);
+                 self.average                = zeros(1,1);
             
         end
-        
-        function reset_stats(self)
-            self.standard_deviation = 1;%ones(length(self.current_protocol.ds_index),1);
-            self.average            = 0;%zeros(length(self.current_protocol.ds_index),1);
-            self.sum_of_squares     = 0;%zeros(length(self.current_protocol.ds_index),1);
-            self.sum_of_values      = 0;%zeros(length(self.current_protocol.ds_index),1);
-        end;
-        
-        function set_eeglsl(self, eeglsl_obj_in)
-            self.eeglsl_obj = eeglsl_obj_in;
-        end
+
+%         function reset_stats(self)
+%             self.standard_deviation = 1;%ones(length(self.current_protocol.ds_index),1);
+%             self.average            = 0;%zeros(length(self.current_protocol.ds_index),1);
+%             self.sum_of_squares     = 0;%zeros(length(self.current_protocol.ds_index),1);
+%             self.sum_of_values      = 0;%zeros(length(self.current_protocol.ds_index),1);
+%         end;
+%         
+%         function set_eeglsl(self, eeglsl_obj_in)
+%             self.eeglsl_obj = eeglsl_obj_in;
+%         end
         
 %         function set_protocol(self, curr_protocol)
 %             self.current_protocol = curr_protocol;
