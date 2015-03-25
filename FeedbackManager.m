@@ -11,7 +11,7 @@ classdef FeedbackManager < handle
         eeglsl_obj
         feedback_vector
         neurofeedback_session
-        feedback_records
+        feedback_records %number of the derived_signal
     end
     
     methods

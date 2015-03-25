@@ -25,11 +25,10 @@ classdef DerivedSignal < handle
             
             self.channels = signal.channels;
             self.channels_indices = zeros(1,length(signal.channels));
-            if strcmpi(self.signal_name, 'raw')
-                
+            if strcmpi(self.signal_name, 'raw')         
                 self.collect_buff = circVBuf(data_length, length(signal.channels), 0);
-                self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),length(signal.channels), 0); %why 128
-                
+                self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),length(signal.channels), 0); 
+
                 for i = 1:channel_count
                     for j = 1:length(self.channels)
                         if strcmp(channels{i},self.channels{j,1})
@@ -39,26 +38,14 @@ classdef DerivedSignal < handle
                             end
                         end
                     end
-                end
-%                 self.temporal_filter = cell(1,2);
-%                 for c = 1:length(self.temporal_filter)
-%                     self.temporal_filter{c}.order = signal.filters(c).order;
-%                     self.temporal_filter{c}.range = signal.filters(c).range;
-%                     self.temporal_filter{c}.mode = signal.filters(c).mode;
-%                     [z p k] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
-%                     [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
-%                     %[self.temporal_filter{c}.B, self.temporal_filter{c}.A ] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
-%                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-%                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-%                 end
-                
+                end     
             else
                 self.collect_buff = circVBuf(data_length,1,0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
-                self.temporal_filter = cell(1,length(signal.filters));
-                % the first temporal filter is [45 55], the second - [0.5
-                % 100]
-                for c = 3:length(self.temporal_filter)
+
+            end
+            self.temporal_filter = cell(1,length(signal.filters));
+            for c = 1:length(self.temporal_filter)
                     self.temporal_filter{c}.order = signal.filters(c).order;
                     self.temporal_filter{c}.range = signal.filters(c).range;
                     self.temporal_filter{c}.mode = signal.filters(c).mode;
@@ -68,10 +55,6 @@ classdef DerivedSignal < handle
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                 end
-                
-            end
-            
-            
             self.spatial_filter = zeros(1,channel_count);
             for i = 1:size(channels,2)
                 for j = 1:length(signal.channels)

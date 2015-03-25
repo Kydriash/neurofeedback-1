@@ -38,21 +38,13 @@ classdef NeurofeedbackSession < handle
                     end
                      end
                 end
-                d.filters(2,1) = struct();
-                
-                
-
-                d.filters(2).order = 2;
-                d.filters(2).mode = 'stop';
-                d.filters(2).range = [45 55];
-                d.filters(1).order = 2;
-                d.filters(1).mode = 'bandpass';
-                d.filters(1).range = [0.5 100];
-                try
-                    d.filters(3).range = [d.fBandpassLowHz d.fBandpassHighHz];
-                    d.filters(3).order = 5;
-                    d.filters(3).mode = 'bandpass';
-                catch 
+                if ~strcmp(d.sSignalName, 'Raw')
+                    d.filters(1,1) = struct();
+                    d.filters(1).range = [d.fBandpassLowHz d.fBandpassHighHz];
+                    d.filters(1).order = 5;
+                    d.filters(1).mode = 'bandpass';
+                else
+                    d.filters = cell(1,0);
                 end
                 
                 
