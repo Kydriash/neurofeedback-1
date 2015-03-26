@@ -40,7 +40,7 @@ classdef DerivedSignal < handle
                     end
                 end     
             else
-                self.collect_buff = circVBuf(data_length,1,0);
+                self.collect_buff = circVBuf(data_length*10,1,0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
 
             end
@@ -74,27 +74,19 @@ classdef DerivedSignal < handle
             %do projection, i.e. apply spatial filter(s)
             if strcmpi(self.signal_name, 'raw')
                 self.data = zeros(length(self.channels), size(newdata,2));
+                %select only channels we need
                 for i = 1:length(self.channels_indices)
                     sz = newdata(self.channels_indices(i):self.channels_indices(i),:);
-%                     for f = 1:2 %temporal filters
-%                         [ sz self.temporal_filter{f}.Zf] = filter( self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz', self.temporal_filter{f}.Zi);
-%                         self.temporal_filter{f}.Zi = self.temporal_filter{f}.Zf;
-%                     end
-%                     
                     self.data(i:i,:) = sz;
-                    
                 end
                 self.data = self.composite_montage*self.data;
                 self.ring_buff.append(self.data');
                 if recording
                     self.collect_buff.append(self.data');
                 end
-                
-                
+
             else
-                
-                
-                
+
                 %sz  = self.spatial_filter*self.composite_montage*newdata;
                 sz = newdata;
                 

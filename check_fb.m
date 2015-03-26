@@ -1,4 +1,4 @@
-mulr = ReadEEGData('D:\neurofeedback\results\2015-03-26\Null\14-18-55\2Feedback.bin');
+mulr = ReadEEGData('D:\neurofeedback\results\2015-03-26\Null\15-29-40\2Feedback.bin');
 mul = mulr(:,6); % mu from the left side
 fb = mulr(:,10); %feedback
 fb5 = zeros(size(mulr,1),1);
@@ -7,10 +7,13 @@ fb20 = zeros(size(mulr,1),1);
 av = mulr(1,11); %average
 s = mulr(1,12); %std
 
- for i = 5:5:size(mulr,1)
+window = 5;
+step = 5;
 
-val = sum(abs(mul(i-4:i)))/5;
-fb5(i-4:i) = (val-av)/s;
+ for i = window:step:size(mulr,1)
+
+val = sum(abs(mul(i-window+1:i)))/window;
+fb5(i-step+1:i) = (val-av)/s;
  end
 %  for i = 5:1:5000
 % val = sum(abs(mul(i-4:i)))/5;
@@ -32,7 +35,7 @@ plot(fb5,'r-');
 % plot(fb10, 'k-');
 % hold on;
 % plot(fb20, 'g-');
-XLim([0 size(mulr,1)-5]);
+XLim([window size(mulr,1)-step]);
 [R, P] = corrcoef(fb,fb5)
 % [R, P] = corrcoef(fb,fb10)
 % [R, P] = corrcoef(fb,fb20)
