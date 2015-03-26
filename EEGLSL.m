@@ -238,7 +238,7 @@ classdef EEGLSL < handle
         function Receive(self,timer_obj, event)
             [sample, timestamp] = self.inlet.pull_chunk();
             
-            size(sample,2), timestamp
+            %size(sample,2)%, timestamp
             self.nd = [self.nd sample];
             if(size(self.nd,2)>5)
                 %removing DC component
@@ -312,9 +312,9 @@ classdef EEGLSL < handle
                 self.channel_count = self.max_ch_count;
             end
             self.inlet = lsl_inlet(self.streams{1});
-%             try
-%             self.channel_labels = get_channel_labels(self.inlet);
-%             end
+            try
+                self.channel_labels = get_channel_labels(self.inlet);
+            end
             if length(self.channel_labels) ~= self.channel_count
                 self.channel_labels = read_channel_file();
             end
@@ -381,7 +381,7 @@ classdef EEGLSL < handle
             self.feedback_manager.average = zeros(1,length(self.derived_signals)-1);
             self.feedback_manager.standard_deviation = ones(1,length(self.derived_signals)-1);
             self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
-            self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 4,0);
+            self.feedback_manager.feedback_records = circVBuf(self.exp_data_length*10, 4,0);
             self.sn_to_fb_string = '';
             for i = 2:length(self.derived_signals)
                 if i == 2
@@ -469,16 +469,7 @@ classdef EEGLSL < handle
             self.ds_plot = plot(ds_temp', 'Parent', self.ds_subplot);
             self.raw_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 320 100 25],'Tag', 'raw_line');
             self.ds_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 120 100 25],'Tag','ds_line');
-            %             self.ds_plot_min= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 50 100 25],'Tag', 'ds_plot_min');
-            %             self.ds_plot_max= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 250 100 25],'Tag', 'ds_plot_max');
-            %             self.ds_plot_shift= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 150 100 25],'Tag', 'ds_plot_shift');
-            %             self.raw_plot_min= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 350 100 25],'Tag', 'raw_plot_min');
-            %             self.raw_plot_max= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 550 100 25],'Tag', 'raw_plot_max');
-            %             self.raw_plot_shift= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 450 100 25],'Tag', 'raw_plot_shift');
-            %             %self.raw_fit_plot =uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [500 280 130 20], ...
-            %'String', 'Fit raw plot', 'Callback', @self.FitPlot,'Tag','raw_fit_plot');
-            %self.ds_fit_plot = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [420 50 130 20], ...
-            %'String', 'Fit DS plot', 'Callback', @self.FitPlot,'Tag','ds_fit_plot');
+
         end
         function PlotEEGData(self,timer_obj, event)
             r_sp = get(self.raw_subplot);
@@ -701,7 +692,7 @@ classdef EEGLSL < handle
             for i = 1:length(self.feedback_protocols)
                 filename = strcat(num2str(i),self.feedback_protocols{i}.protocol_name,'.bin');
                 string = '';
-                fb_matrix = self.feedback_manager.feedback_records.raw(self.derived_signals{1}.collect_buff.fst+idx+1:self.derived_signals{1}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
+                fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx+1:self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
                 data_matrix = zeros(self.feedback_protocols{i}.actual_protocol_size, length(self.derived_signals)-1);
                 raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx+1:self.derived_signals{1}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
                 for c = 1:length(self.used_ch)
@@ -853,43 +844,7 @@ classdef EEGLSL < handle
                 set(self.ds_line,'String',num2str((ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals))/self.ds_ydata_scale));
             end
         end
-        %         function FitPlot(self,obj,event)
-        %             if strcmp(get(obj, 'Tag'), 'raw_fit_plot')
-        %                 [signals_averages, signals_stds] = self.CalculateStats('Raw');
-        %                 m = max(signals_averages);
-        %                 s = abs(max(signals_stds));
-        %                 self.raw_shift = abs(m + 6*s);
-        %                 set(self.raw_subplot,'YLim',[(m - 3*s) (m - 3*s +self.raw_shift*(length(self.used_ch)+1))]);
-        %                 self.raw_yscale_fixed = 1;
-        %             elseif strcmp(get(obj,'Tag'),'ds_fit_plot')
-        %                 [signals_averages, signals_stds] = self.CalculateStats('DS');
-        %                 m = max(signals_averages);
-        %                 s = abs(max(signals_stds));
-        %                 self.ds_shift = m + 6*s;
-        %                 set(self.ds_subplot,'YLim',[(m - 3*s) (m - 3*s+self.ds_shift*length(self.derived_signals))]);
-        %                 self.ds_yscale_fixed = 1;
-        %             end
-        %         end
-        %         function [signals_averages, signals_stds] = CalculateStats(self,signals)
-        %             signals_averages = [];
-        %             signals_stds = [];
-        %             if strcmp(signals,'Raw')
-        %                 signals_averages = zeros(length(self.used_ch),1);
-        %                 signals_stds = zeros(length(self.used_ch),1);
-        %                 for signal = 1:length(self.used_ch)
-        %                     signals_averages(signal) = mean(self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.fst:self.derived_signals{1}.ring_buff.lst,signal));
-        %                     signals_stds(signal) = std(self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.fst:self.derived_signals{1}.ring_buff.lst,signal));
-        %                 end
-        %             elseif strcmp(signals,'DS')
-        %                 signals_averages = zeros(length(self.derived_signals)-1,1);
-        %                 signals_stds = zeros(length(self.derived_signals)-1,1);
-        %                 for signal = 2:length(self.derived_signals)
-        %                     signals_averages(signal-1)= mean(self.derived_signals{signal}.ring_buff.raw(self.derived_signals{signal}.ring_buff.fst:self.derived_signals{signal}.ring_buff.lst));
-        %                     signals_stds(signal-1) = std(self.derived_signals{signal}.ring_buff.raw(self.derived_signals{signal}.ring_buff.fst:self.derived_signals{signal}.ring_buff.lst));
-        %                 end
-        %             end
-        %
-        %         end
+
     end
 end
 
@@ -952,6 +907,54 @@ end
 %protocol.feedback_avg = self.feedback_manager.average;
 %protocol.feedback_std = self.feedback_manager.standard_deviation;
 %self.feedback_manager.samples_acquired = 0;
-
+            %             self.ds_plot_min= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 50 100 25],'Tag', 'ds_plot_min');
+            %             self.ds_plot_max= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 250 100 25],'Tag', 'ds_plot_max');
+            %             self.ds_plot_shift= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 150 100 25],'Tag', 'ds_plot_shift');
+            %             self.raw_plot_min= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 350 100 25],'Tag', 'raw_plot_min');
+            %             self.raw_plot_max= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 550 100 25],'Tag', 'raw_plot_max');
+            %             self.raw_plot_shift= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [600 450 100 25],'Tag', 'raw_plot_shift');
+            %             %self.raw_fit_plot =uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [500 280 130 20], ...
+            %'String', 'Fit raw plot', 'Callback', @self.FitPlot,'Tag','raw_fit_plot');
+            %self.ds_fit_plot = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [420 50 130 20], ...
+            %'String', 'Fit DS plot', 'Callback', @self.FitPlot,'Tag','ds_fit_plot');
 %f = fopen('cm_136_5.bin','w'), fwrite(f,size(self.composite_montage),'int'); fwrite(f,self.composite_montage,'float'); fclose(f);
 %f = fopen('cm_136_5.bin','r'), sz = fread(f,2,'int'); A = fread(f,sz,'float'); fclose(f);
+
+
+        %         function FitPlot(self,obj,event)
+        %             if strcmp(get(obj, 'Tag'), 'raw_fit_plot')
+        %                 [signals_averages, signals_stds] = self.CalculateStats('Raw');
+        %                 m = max(signals_averages);
+        %                 s = abs(max(signals_stds));
+        %                 self.raw_shift = abs(m + 6*s);
+        %                 set(self.raw_subplot,'YLim',[(m - 3*s) (m - 3*s +self.raw_shift*(length(self.used_ch)+1))]);
+        %                 self.raw_yscale_fixed = 1;
+        %             elseif strcmp(get(obj,'Tag'),'ds_fit_plot')
+        %                 [signals_averages, signals_stds] = self.CalculateStats('DS');
+        %                 m = max(signals_averages);
+        %                 s = abs(max(signals_stds));
+        %                 self.ds_shift = m + 6*s;
+        %                 set(self.ds_subplot,'YLim',[(m - 3*s) (m - 3*s+self.ds_shift*length(self.derived_signals))]);
+        %                 self.ds_yscale_fixed = 1;
+        %             end
+        %         end
+        %         function [signals_averages, signals_stds] = CalculateStats(self,signals)
+        %             signals_averages = [];
+        %             signals_stds = [];
+        %             if strcmp(signals,'Raw')
+        %                 signals_averages = zeros(length(self.used_ch),1);
+        %                 signals_stds = zeros(length(self.used_ch),1);
+        %                 for signal = 1:length(self.used_ch)
+        %                     signals_averages(signal) = mean(self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.fst:self.derived_signals{1}.ring_buff.lst,signal));
+        %                     signals_stds(signal) = std(self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.fst:self.derived_signals{1}.ring_buff.lst,signal));
+        %                 end
+        %             elseif strcmp(signals,'DS')
+        %                 signals_averages = zeros(length(self.derived_signals)-1,1);
+        %                 signals_stds = zeros(length(self.derived_signals)-1,1);
+        %                 for signal = 2:length(self.derived_signals)
+        %                     signals_averages(signal-1)= mean(self.derived_signals{signal}.ring_buff.raw(self.derived_signals{signal}.ring_buff.fst:self.derived_signals{signal}.ring_buff.lst));
+        %                     signals_stds(signal-1) = std(self.derived_signals{signal}.ring_buff.raw(self.derived_signals{signal}.ring_buff.fst:self.derived_signals{signal}.ring_buff.lst));
+        %                 end
+        %             end
+        %
+        %         end

@@ -16,7 +16,7 @@ if channel_count ~= length(channel_labels)
     channel_count
     length(channel_labels)
 end
-'finished'
+%'finished'
 end
 
 
