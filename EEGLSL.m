@@ -165,6 +165,7 @@ classdef EEGLSL < handle
                 sdev = self.feedback_manager.standard_deviation(s-1);
                 val = sum(abs(dat))/n;
                 self.feedback_manager.feedback_vector(s-1)  = (val-avg)/sdev;
+
             end
         end
         function Update_Statistics(self)
@@ -240,7 +241,8 @@ classdef EEGLSL < handle
             
             %size(sample,2)%, timestamp
             self.nd = [self.nd sample];
-            if(size(self.nd,2)>5)
+            sz = size(self.nd,2);
+            if(sz>5)
                 %removing DC component
                 %sample = sample - repmat(sum(sample,1)/length(self.channel_count),size(sample,1),1);
                 % apply average reference montage
@@ -248,19 +250,23 @@ classdef EEGLSL < handle
                 for ds = 1:length(self.derived_signals)
                     self.derived_signals{ds}.Apply(self.nd,self.recording);
                 end;
-                self.UpdateFeedbackSignal;
-                if self.recording
-                    fb = zeros(size(self.nd,2),4);
-                    fb(:,1) = self.signal_to_feedback;
-                    fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
-                    fb(:,3) = self.feedback_manager.average(self.signal_to_feedback-1);
-                    fb(:,4) = self.feedback_manager.standard_deviation(self.signal_to_feedback-1);
-                    self.feedback_manager.feedback_records.append(fb);
-                end
                 self.nd =[];
             else
+                
             end;
+            
             self.samples_acquired = self.samples_acquired+size(sample,2);
+            
+            self.UpdateFeedbackSignal;
+            if self.recording
+                fb = zeros(sz,5);
+                fb(:,1) = self.signal_to_feedback;
+                fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
+                fb(:,3) = self.feedback_manager.average(self.signal_to_feedback-1);
+                fb(:,4) = self.feedback_manager.standard_deviation(self.signal_to_feedback-1);
+                fb(:,5) = sz;
+                self.feedback_manager.feedback_records.append(fb);
+            end
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + size(sample,2);
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
@@ -381,7 +387,7 @@ classdef EEGLSL < handle
             self.feedback_manager.average = zeros(1,length(self.derived_signals)-1);
             self.feedback_manager.standard_deviation = ones(1,length(self.derived_signals)-1);
             self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
-            self.feedback_manager.feedback_records = circVBuf(self.exp_data_length*10, 4,0);
+            self.feedback_manager.feedback_records = circVBuf(self.exp_data_length*10, 5,0);
             self.sn_to_fb_string = '';
             for i = 2:length(self.derived_signals)
                 if i == 2
@@ -706,7 +712,7 @@ classdef EEGLSL < handle
                     string = strcat(string,',',self.derived_signals{j}.signal_name);
                     data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx+1:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
                 end
-                string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev');
+                string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev',',','Chunk_size');
                 whole_data = [raw_data_matrix data_matrix fb_matrix];
                 idx = idx+self.feedback_protocols{i}.actual_protocol_size;
                 %write data

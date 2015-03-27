@@ -17,7 +17,7 @@ classdef FeedbackManager < handle
     
     methods
         function self = FeedbackManager(self)
-            self.window_size            = 10;
+            self.window_size            = 15;
             self.current_protocol       = 0;
             self.neurofeedback_session  = [];
              self.feedback_vector        = zeros(1,1);
