@@ -103,6 +103,11 @@ classdef EEGLSL < handle
         exp_data_length
         %other
         tstop
+        last_to_fb
+        to_proceed
+        last_proceed
+        count
+        to_fb
     end
     
     methods
@@ -113,7 +118,7 @@ classdef EEGLSL < handle
             self.channel_count = -1;
             self.streams = {};
             self.plot_refresh_rate = 0.075;
-            self.data_receive_rate = 0.02;
+            self.data_receive_rate = 0.01;
             self.timer_new_data_function = @self.Receive;
             self.timer_new_data = timer('Name','receive_data','TimerFcn', self.timer_new_data_function,'ExecutionMode','fixedRate',...
                 'Period',self.data_receive_rate);
@@ -149,23 +154,34 @@ classdef EEGLSL < handle
             self.nd = [];
             self.raw_mean = 0;
             self.ds_mean = 0;
+            self.last_to_fb = 0;
+            self.to_proceed = [];
+            self.samples_acquired = 0;
+            self.count = 1;
+
+            
         end
         function UpdateFeedbackSignal(self)
+            
+            n = self.feedback_manager.window_length;
+            index2 = self.derived_signals{2}.ring_buff.lst-mod((self.derived_signals{2}.collect_buff.lst - self.derived_signals{2}.ring_buff.fst),n);
+            index1 = index2 - n+1;
+            self.last_proceed = index2;
             for s = 2:length(self.derived_signals)
-                n = self.feedback_manager.window_length;
-                if self.derived_signals{s}.ring_buff.fst > self.derived_signals{s}.ring_buff.lst-n+1
-                    dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.fst:...
-                        self.derived_signals{s}.ring_buff.lst,:);
-                    n = self.derived_signals{s}.ring_buff.lst-self.derived_signals{s}.ring_buff.fst+1;
-                else
-                    dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-n+1:...
-                        self.derived_signals{s}.ring_buff.lst,:);
-                end
+                dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-n+1:self.derived_signals{s}.ring_buff.lst);
                 avg  = self.feedback_manager.average(s-1);
                 sdev = self.feedback_manager.standard_deviation(s-1);
                 val = sum(abs(dat))/n;
                 self.feedback_manager.feedback_vector(s-1)  = (val-avg)/sdev;
-
+            end
+            if self.recording
+                fb = zeros(n,5);
+                fb(:,1) = self.signal_to_feedback;
+                fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
+                fb(:,3) = self.feedback_manager.average(self.signal_to_feedback-1);
+                fb(:,4) = self.feedback_manager.standard_deviation(self.signal_to_feedback-1);
+                fb(:,5) = self.feedback_manager.window_length;
+                self.feedback_manager.feedback_records.append(fb);
             end
         end
         function Update_Statistics(self)
@@ -238,35 +254,17 @@ classdef EEGLSL < handle
         end
         function Receive(self,timer_obj, event)
             [sample, timestamp] = self.inlet.pull_chunk();
-            
-            %size(sample,2)%, timestamp
             self.nd = [self.nd sample];
             sz = size(self.nd,2);
-            if(sz>5)
-                %removing DC component
-                %sample = sample - repmat(sum(sample,1)/length(self.channel_count),size(sample,1),1);
-                % apply average reference montage
-                %self.nd = self.composite_montage*self.nd;
+            if (sz > self.feedback_manager.window_length)   
                 for ds = 1:length(self.derived_signals)
-                    self.derived_signals{ds}.Apply(self.nd,self.recording);
-                end;
-                self.nd =[];
-            else
-                
+                    self.derived_signals{ds}.Apply(self.nd(:,1:self.feedback_manager.window_length),self.recording);  
+                end
+                self.UpdateFeedbackSignal;
+                self.nd =self.nd(:,self.feedback_manager.window_length+1:end);
             end;
+              self.samples_acquired = self.samples_acquired+size(sample,2);
             
-            self.samples_acquired = self.samples_acquired+size(sample,2);
-            
-            self.UpdateFeedbackSignal;
-            if self.recording
-                fb = zeros(sz,5);
-                fb(:,1) = self.signal_to_feedback;
-                fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
-                fb(:,3) = self.feedback_manager.average(self.signal_to_feedback-1);
-                fb(:,4) = self.feedback_manager.standard_deviation(self.signal_to_feedback-1);
-                fb(:,5) = sz;
-                self.feedback_manager.feedback_records.append(fb);
-            end
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + size(sample,2);
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
@@ -383,11 +381,13 @@ classdef EEGLSL < handle
             for i = 1: length(self.signals)
                 self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.channel_count,self.plot_length);
             end
+            self.last_proceed = self.derived_signals{2}.collect_buff.fst;
             self.feedback_manager.window_length = round(self.feedback_manager.window_size*self.sampling_frequency / 1000);
             self.feedback_manager.average = zeros(1,length(self.derived_signals)-1);
             self.feedback_manager.standard_deviation = ones(1,length(self.derived_signals)-1);
             self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
             self.feedback_manager.feedback_records = circVBuf(self.exp_data_length*10, 5,0);
+
             self.sn_to_fb_string = '';
             for i = 2:length(self.derived_signals)
                 if i == 2
@@ -715,6 +715,7 @@ classdef EEGLSL < handle
                 string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev',',','Chunk_size');
                 whole_data = [raw_data_matrix data_matrix fb_matrix];
                 idx = idx+self.feedback_protocols{i}.actual_protocol_size;
+                
                 %write data
                 f = fopen(filename,'w');
                 fwrite(f,size(whole_data),'int');
