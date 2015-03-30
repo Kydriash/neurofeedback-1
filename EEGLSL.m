@@ -318,7 +318,8 @@ classdef EEGLSL < handle
             end
             self.inlet = lsl_inlet(self.streams{1});
              try
-                 self.channel_labels = get_channel_labels(self.inlet);
+                 %self.channel_labels = get_channel_labels(self.inlet);
+                 self.channel_labels = derive_channel_labels(self.inlet.info);
              end
             if length(self.channel_labels) ~= self.channel_count
                 self.channel_labels = read_channel_file();
