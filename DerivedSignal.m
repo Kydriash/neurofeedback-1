@@ -28,7 +28,7 @@ classdef DerivedSignal < handle
             if strcmpi(self.signal_name, 'raw')         
                 self.collect_buff = circVBuf(data_length, length(signal.channels), 0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),length(signal.channels), 0); 
-
+% 
                 for i = 1:channel_count
                     for j = 1:length(self.channels)
                         if strcmp(channels{i},self.channels{j,1})
@@ -39,6 +39,7 @@ classdef DerivedSignal < handle
                         end
                     end
                 end     
+            %self.channels_indices = [1:5];
             else
                 self.collect_buff = circVBuf(data_length*10,1,0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
@@ -86,6 +87,7 @@ classdef DerivedSignal < handle
                 end
 
             else
+                self.spatial_filter = [ones(1,5) zeros(1,131)];
 
                 %sz  = self.spatial_filter*self.composite_montage*newdata;
                 sz = newdata;

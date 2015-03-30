@@ -108,6 +108,7 @@ classdef EEGLSL < handle
         last_proceed
         count
         to_fb
+        
     end
     
     methods
@@ -316,9 +317,9 @@ classdef EEGLSL < handle
                 self.channel_count = self.max_ch_count;
             end
             self.inlet = lsl_inlet(self.streams{1});
-%             try
-%                 self.channel_labels = get_channel_labels(self.inlet);
-%             end
+             try
+                 self.channel_labels = get_channel_labels(self.inlet);
+             end
             if length(self.channel_labels) ~= self.channel_count
                 self.channel_labels = read_channel_file();
             end
@@ -469,7 +470,7 @@ classdef EEGLSL < handle
             self.ds_subplot = subplot(2,1,2);
             self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 32, 'Min',-32,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
             self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 32, 'Min',-32,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
-            ds_temp = zeros(length(self.derived_signals),fix(self.plot_size));
+            ds_temp = zeros(length(self.derived_signals)-1,fix(self.plot_size));
             r_temp = zeros(length(self.used_ch),fix(self.plot_size));
             self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
             self.ds_plot = plot(ds_temp', 'Parent', self.ds_subplot);
@@ -482,6 +483,8 @@ classdef EEGLSL < handle
             ds_sp = get(self.ds_subplot);
             self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
             self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
+            self.SetDSYTicks;
+            self.SetRawYTicks;
             if ~self.ylabels_fixed
                 self.ds_ytick_labels = {' '};
                 self.r_ytick_labels = {' '};
@@ -493,8 +496,8 @@ classdef EEGLSL < handle
                     self.r_ytick_labels{end+1} = self.used_ch{i,1};
                 end
                 self.r_ytick_labels{end+1} = ' ';
-                for i = 1:length(self.derived_signals)
-                    set(self.ds_plot(i),'DisplayName', self.derived_signals{i}.signal_name);
+                for i = 2:length(self.derived_signals)
+                    set(self.ds_plot(i-1),'DisplayName', self.derived_signals{i}.signal_name);
                 end
                 for i = 1:length(self.used_ch)
                     set(self.raw_plot(i),'DisplayName', self.used_ch{i,1});
@@ -518,32 +521,36 @@ classdef EEGLSL < handle
                                 ds_max = max(pulled);
                             end
                             ds_d = ds_max - ds_min;
-                            set(self.ds_plot(i-1), 'YData',(pulled(1,:)-self.ds_mean)*self.ds_ydata_scale+self.ds_shift*(i-1)); %NaN
+                            set(self.ds_plot(i-1), 'YData',(pulled(1,:)-self.ds_mean)*self.ds_ydata_scale+self.ds_shift*(i-1)); 
                         end
                         if all([isnumeric(ds_d),~isinf(ds_d)])
                             ylim(self.ds_subplot,[ds_d/2 (2*length(self.derived_signals)+1)*ds_d]);
                         end
                         
-                        self.SetDSYTicks;
+                        
                     elseif ~self.raw_yscale_fixed
-                        r_min = Inf;
-                        r_max = 0;
+%                         r_min = Inf;
+%                         r_max = 0;
+                        r_min = 10^-4;
+                        r_max = length(self.used_ch)*2*r_min;
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
-                        for i = 1:size(raw_data,1)
-                            if min(raw_data(i:i,:)) < r_min
-                                r_min = min(raw_data(i:i,:));
-                            end
-                            if max(raw_data(i:i,:)) > r_min
-                                r_max = max(raw_data(i:i,:));
-                            end
-                            r_d = r_max - r_min;
-                            if all([isnumeric(r_d),~isinf(r_d)])
-                                ylim(self.raw_subplot,[r_d/2 2*(length(self.used_ch)+2)*r_d]);
-                            end
-                            set(self.raw_plot(i),'YData', (raw_data(i:i,:)-self.raw_mean)*self.raw_ydata_scale+self.raw_shift*i);
+                        ylim(self.raw_subplot,[r_min r_max]);
+                         for i = 1:size(raw_data,1)
+%                             if min(raw_data(i:i,:)) < r_min
+%                                 r_min = min(raw_data(i:i,:));
+%                             end
+%                             if max(raw_data(i:i,:)) > r_min
+%                                 r_max = max(raw_data(i:i,:));
+%                             end
+%                             r_d = r_max - r_min;
+%                             if all([isnumeric(r_d),~isinf(r_d)])
+%                                 ylim(self.raw_subplot,[r_d/2 2*(length(self.used_ch)+2)*r_d]);
+%                             end
+                            
+                             set(self.raw_plot(i),'YData', (raw_data(i:i,:)-self.raw_mean)*self.raw_ydata_scale+self.raw_shift*i);
                         end
-                        self.SetRawYTicks;
+                        
                     else
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
