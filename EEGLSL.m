@@ -108,7 +108,8 @@ classdef EEGLSL < handle
         last_proceed
         count
         to_fb
-        
+        montage_fname
+        montage_fname_text
     end
     
     methods
@@ -159,6 +160,10 @@ classdef EEGLSL < handle
             self.to_proceed = [];
             self.samples_acquired = 0;
             self.count = 1;
+            self.montage_fname = 'C:\Users\user1\AppData\Local\MCS\NeoRec\nvx136.nvx136.monopolar-Pz';
+            self.montage_fname_text = 'nvx136.nvx136.monopolar-Pz';
+            self.raw_shift = 150;
+            self.ds_shift = 150;
 
             
         end
@@ -206,13 +211,13 @@ classdef EEGLSL < handle
                             self.ds_mean = mean(values);
                         end
                     end
-                    if abs(ds_d)*6 > abs(self.ds_mean)
-                        self.ds_shift = abs(2*self.ds_mean);
-                        set(self.ds_subplot,'YLim',[0.5*self.ds_mean abs(self.ds_mean*(length(self.derived_signals)+0.5))]);
-                    else
-                        self.ds_shift = abs(ds_d*6)+self.ds_mean;
-                        set(self.ds_subplot,'YLim',[self.ds_mean - abs(ds_d*3) self.ds_mean - abs(ds_d)*3+self.ds_shift*length(self.derived_signals)]);
-                    end
+%                     if abs(ds_d)*6 > abs(self.ds_mean)
+%                         self.ds_shift = abs(2*self.ds_mean);
+%                         set(self.ds_subplot,'YLim',[0.5*self.ds_mean abs(self.ds_mean*(length(self.derived_signals)+0.5))]);
+%                     else
+%                         self.ds_shift = abs(ds_d*6)+self.ds_mean;
+%                         set(self.ds_subplot,'YLim',[self.ds_mean - abs(ds_d*3) self.ds_mean - abs(ds_d)*3+self.ds_shift*length(self.derived_signals)]);
+%                     end
                     
                     set(self.ds_plot_min,'String',num2str(self.ds_mean-abs(ds_d*3)));
                     set(self.ds_plot_max,'String',num2str(((self.ds_mean - abs(ds_d*3)) +self.ds_shift*(length(self.derived_signals)))));
@@ -234,13 +239,13 @@ classdef EEGLSL < handle
                         end
                     end
                     
-                    if abs(raw_d*6) > abs(self.raw_mean)
-                        self.raw_shift = abs(2*self.raw_mean);
-                        set(self.raw_subplot,'YLim',[0.5*self.raw_mean abs(self.raw_mean*(length(self.used_ch)+1.5))]);
-                    else
-                        self.raw_shift = abs(raw_d*6)+self.raw_mean;
-                        set(self.raw_subplot,'YLim',[(self.raw_mean - abs(raw_d*3)) ((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))]);
-                    end
+%                     if abs(raw_d*6) > abs(self.raw_mean)
+%                         self.raw_shift = abs(2*self.raw_mean);
+%                         set(self.raw_subplot,'YLim',[0.5*self.raw_mean abs(self.raw_mean*(length(self.used_ch)+1.5))]);
+%                     else
+%                         self.raw_shift = abs(raw_d*6)+self.raw_mean;
+%                         set(self.raw_subplot,'YLim',[(self.raw_mean - abs(raw_d*3)) ((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))]);
+%                     end
                     set(self.raw_plot_min,'String',num2str(self.raw_mean-abs(raw_d*3)));
                     set(self.raw_plot_max,'String',num2str(((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))));
                     set(self.raw_plot_shift,'String', num2str(self.raw_shift));
@@ -317,13 +322,15 @@ classdef EEGLSL < handle
                 self.channel_count = self.max_ch_count;
             end
             self.inlet = lsl_inlet(self.streams{1});
-             try
-                 %self.channel_labels = get_channel_labels(self.inlet);
-                 self.channel_labels = derive_channel_labels(self.inlet.info);
-             end
-            if length(self.channel_labels) ~= self.channel_count
-                self.channel_labels = read_channel_file();
-            end
+%              try
+%                  self.channel_labels = read_montage_file(self.montage_fname);
+%                  %self.channel_labels = check_channels();
+%                  %self.channel_labels = get_channel_labels(self.inlet);
+%                  %self.channel_labels = derive_channel_labels(self.inlet.info);
+%              end
+%             if length(self.channel_labels) ~= self.channel_count
+%                 self.channel_labels = read_channel_file();
+%             end
             
             self.plot_size = self.plot_length * self.sampling_frequency;
             self.RunInterface;
@@ -353,6 +360,8 @@ classdef EEGLSL < handle
             self.settings_file_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.settings_file_text,'Position', [120 90 200 35],'HorizontalAlignment','left');
             settings_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp.design', 'Callback', @self.SetDesignFile, 'Position', [20 100 100 35]); %#ok<NASGU>
             set_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Run the experiment', 'Position', [100 20 200 40],'Callback','uiresume'); %#ok<NASGU>
+            montage_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp. montage', 'Callback', @self.SetMontageFile, 'Position', [20 60 100 35]);
+            montage_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
             uiwait();
             if verLessThan('matlab','8.4.0')
                 self.plot_refresh_rate = str2num(get(prr,'String'));
@@ -365,6 +374,7 @@ classdef EEGLSL < handle
                 self.subject_record.subject_name = sn.String;
                 self.fig_interface.Visible = 'off';
             end
+            self.channel_labels = read_montage_file(self.montage_fname);
             nfs = NeurofeedbackSession;
             nfs.LoadFromFile(self.settings_file);
             self.feedback_protocols = nfs.feedback_protocols;
@@ -468,9 +478,13 @@ classdef EEGLSL < handle
             self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ', 'Position', [0 210 200 20],'HorizontalAlignment','left','Tag','status_text');
             self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
             self.raw_subplot = subplot(2,1,1);
+            
+            
             self.ds_subplot = subplot(2,1,2);
-            self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 32, 'Min',-32,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
-            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 32, 'Min',-32,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
+            set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
+            set(self.ds_subplot,'YLim', [0 self.raw_shift*length(self.derived_signals)]);
+            self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
+            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
             ds_temp = zeros(length(self.derived_signals)-1,fix(self.plot_size));
             r_temp = zeros(length(self.used_ch),fix(self.plot_size));
             self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
@@ -480,12 +494,17 @@ classdef EEGLSL < handle
 
         end
         function PlotEEGData(self,timer_obj, event)
+            set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
+            set(self.ds_subplot,'YLim', [0 self.raw_shift*(length(self.derived_signals))]);
+           
             r_sp = get(self.raw_subplot);
             ds_sp = get(self.ds_subplot);
-            self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
-            self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
-            self.SetDSYTicks;
-            self.SetRawYTicks;
+%             self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
+%             self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
+%self.raw_shift = 150;
+%self.ds_shift = 150;
+           % self.SetDSYTicks;
+            %self.SetRawYTicks;
             if ~self.ylabels_fixed
                 self.ds_ytick_labels = {' '};
                 self.r_ytick_labels = {' '};
@@ -524,9 +543,9 @@ classdef EEGLSL < handle
                             ds_d = ds_max - ds_min;
                             set(self.ds_plot(i-1), 'YData',(pulled(1,:)-self.ds_mean)*self.ds_ydata_scale+self.ds_shift*(i-1)); 
                         end
-                        if all([isnumeric(ds_d),~isinf(ds_d)])
-                            ylim(self.ds_subplot,[ds_d/2 (2*length(self.derived_signals)+1)*ds_d]);
-                        end
+%                         if all([isnumeric(ds_d),~isinf(ds_d)])
+%                             ylim(self.ds_subplot,[ds_d/2 (2*length(self.derived_signals)+1)*ds_d]);
+%                         end
                         
                         
                     elseif ~self.raw_yscale_fixed
@@ -536,7 +555,7 @@ classdef EEGLSL < handle
                         r_max = length(self.used_ch)*2*r_min;
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
-                        ylim(self.raw_subplot,[r_min r_max]);
+                        %ylim(self.raw_subplot,[r_min r_max]);
                          for i = 1:size(raw_data,1)
 %                             if min(raw_data(i:i,:)) < r_min
 %                                 r_min = min(raw_data(i:i,:));
@@ -798,6 +817,17 @@ classdef EEGLSL < handle
                 end
             end
         end
+        function SetMontageFile(self,~,~)
+            [fname fpath fspec] = uigetfile('*.*');
+            if ~isempty(nonzeros([fname fpath fspec]))
+                self.montage_file = strcat(fpath,fname);
+                if verLessThan('matlab','8.4.0')
+                    set(self.montage_fname_text, 'String',self.settings_file);
+                else
+                    self.montage_fname_text.String = self.settings_file;
+                end
+            end
+        end
         function SelectSignalToFeedback(self,obj,event)
             if verLessThan('matlab','8.4.0')
                 self.signal_to_feedback = get(obj,'Value')+1;
@@ -838,9 +868,9 @@ classdef EEGLSL < handle
         function SetRawYTicks(self)
             try
                 r_sp = get(self.raw_subplot);
-                if ~self.yscales_fixed
-                    self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
-                end
+%                 if ~self.yscales_fixed
+%                     self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
+%                 end
                 r_yticks = [r_sp.YLim(1):self.raw_shift:r_sp.YLim(2)];
                 set(self.raw_subplot, 'YTick', r_yticks);
                 set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
@@ -850,9 +880,9 @@ classdef EEGLSL < handle
         function SetDSYTicks(self)
             try
                 ds_sp = get(self.ds_subplot);
-                if ~self.yscales_fixed
-                    self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
-                end
+%                 if ~self.yscales_fixed
+%                     self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals)+1);
+%                 end
                 ds_yticks = [ds_sp.YLim(1):self.ds_shift:ds_sp.YLim(2)];
                 set(self.ds_subplot, 'YTick', ds_yticks);
                 set(self.ds_subplot, 'YTickLabel', self.ds_ytick_labels);
@@ -861,52 +891,76 @@ classdef EEGLSL < handle
         end
 
     end
-end
+    end
 
-
-
-
-
-function channels = get_channel_labels(input) %input = inlet obj
-ChS =  input.info.desc.child('channels');
-ch = ChS.first_child;
+function channels = read_montage_file(fname)
+montage = xml2struct(fname);
 channels = {};
-try
-    
-    % while ch.next_sibling.PtrHandle
-    while ch.PtrHandle
-        l = ch.child('label');
-        channels{end+1} = l.child_value ;
-        ch = ch.next_sibling;
-    end
-catch
-    channels = cell(1,input.channel_count());
-    for i = 1:input.channel_count()
-        channels{i} = num2str(i);
-    end
+for i = 1:length(montage.neorec.transmission.clogicals.clogical)
+    channels{end+1} = montage.neorec.transmission.clogicals.clogical{i}.name.Text;
 end
 end
-function channels = read_channel_file()%input = txt file
-
-fname = 'mitsar_channels.txt';
-t = fileread('mitsar_channels.txt');
-channels = {};
-str = '';
-k = 1;
-j = 1;
-while true
-    if k>length(t)
-        break
-    end
-    if strcmp(t(k), ' ')
-        channels{end+1} = {t(j:k-1)};
-        j = k+1;
-    end
-    k = k + 1;
-end
+        
 
 
-end
+
+
+
+% function channels = get_channel_labels(input) %input = inlet obj
+% ChS = input.info.desc.child('channels');
+% ch = ChS.first_child;
+% channels = {};
+% try
+%     
+%     while ch.PtrHandle
+%         l = ch.child('label');
+%         channels{end+1} = l.child_value ;
+%         ch = ch.next_sibling;
+%     end
+% catch
+%     channels = cell(1,input.channel_count());
+%     for i = 1:input.channel_count()
+%         channels{i} = num2str(i);
+%     end
+% end
+% ChS =  input.info.desc.child('channels');
+% ch = ChS.first_child;
+% channels = {};
+% try
+%     
+%     % while ch.next_sibling.PtrHandle
+%     while ch.PtrHandle
+%         l = ch.child('label');
+%         channels{end+1} = l.child_value ;
+%         ch = ch.next_sibling;
+%     end
+% catch
+%     channels = cell(1,input.channel_count());
+%     for i = 1:input.channel_count()
+%         channels{i} = num2str(i);
+%     end
+% end
+%end
+% function channels = read_channel_file()%input = txt file
+% 
+% fname = 'mitsar_channels.txt';
+% t = fileread('mitsar_channels.txt');
+% channels = {};
+% str = '';
+% k = 1;
+% j = 1;
+% while true
+%     if k>length(t)
+%         break
+%     end
+%     if strcmp(t(k), ' ')
+%         channels{end+1} = {t(j:k-1)};
+%         j = k+1;
+%     end
+%     k = k + 1;
+% end
+
+
 
 %                 if self.feedback_manager.standard_deviation
 %                     self.y_limit = [self.feedback_manager.average/self.feedback_manager.standard_deviation*0.9,self.feedback_manager.average/self.feedback_manager.standard_deviation*1.1];

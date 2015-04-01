@@ -1,0 +1,1287 @@
+<?xml version="1.0"?>
+<neorec version="1.0">
+	<comment>Monopolar montage</comment>
+	<device model="nvx136" configuration="FullChannels">
+		<Samplerate>500 Hz</Samplerate>
+		<DataStreamLatency>High</DataStreamLatency>
+	</device>
+	<montage include="../../../../../../Program Files/MCS/NeoRec/defaultProfiles/montages/MCScap-128" />
+	<transmission>
+		<creferences>
+			<creference id="86D793B7-DB5B-45D1-9ED0-1529360A604E">
+				<name>ref</name>
+				<input ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+			</creference>
+		</creferences>
+		<clogicals>
+			<clogical id="DDBDD12C-34A6-4A14-8904-4ED11404494F">
+				<name>C3</name>
+				<positive ref="4B8F8721-2B56-4CFA-9501-F04193122C10" />
+				<negative ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+				<adf>50.000000</adf>
+			</clogical>
+			<clogical id="1246ADD1-6FD1-4C54-A5E3-390CF25B8470">
+				<name>C1</name>
+				<positive ref="D360A2FF-9019-4D7C-97D9-0AC7C8E24BF3" />
+				<negative ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+				<adf>50.000000</adf>
+			</clogical>
+			<clogical id="39DA98D5-41A5-4B90-9226-EBFDB3CBC1D1">
+				<name>Cz</name>
+				<positive ref="6FAA6315-9967-4996-B4DC-31A236CC59B5" />
+				<negative ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+				<adf>50.000000</adf>
+			</clogical>
+			<clogical id="B89684A4-CC3C-4EED-8769-60A4D25FEB55">
+				<name>C2</name>
+				<positive ref="239BDA22-C13C-43A7-9D6C-5C6387A702BD" />
+				<negative ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+				<adf>50.000000</adf>
+			</clogical>
+			<clogical id="69610ED7-016B-477E-ACB7-7488E003374B">
+				<name>C4</name>
+				<positive ref="AE95201D-C087-4711-9B45-55752BA42EA7" />
+				<negative ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+				<adf>50.000000</adf>
+			</clogical>
+			<clogical id="D113B423-E041-4947-BA33-DB93500F484D">
+				<name>Pz</name>
+				<positive ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<negative ref="9A126506-CDE0-43EB-9178-62302E969F6D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+				<adf>50.000000</adf>
+			</clogical>
+			<clogical id="5B3E08EC-7257-4980-BDEA-6D883AA51C2B">
+				<name>Fpz</name>
+				<positive ref="CE4D67D6-9729-43EE-81CC-8FE987BC6ED7" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C4BC28DF-40A7-4EC0-B3C7-53CD1B05E645">
+				<name>Af7</name>
+				<positive ref="93F11D36-077C-4CD3-BF8B-4C1502C5C7CF" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="FEFE556B-856A-4B44-896C-2CFBCE6F7A10">
+				<name>Af3</name>
+				<positive ref="06D9549B-9764-41CD-8110-371EC0AB92E6" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A992CAAF-7706-4401-A91B-C6030B814739">
+				<name>Af4</name>
+				<positive ref="FBC2F990-341C-4624-9368-4FA6A136F502" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E5EB2992-77AA-4EEC-83FA-F349064E1C21">
+				<name>Af8</name>
+				<positive ref="75D8D0F4-FFEA-43DC-8C46-2B275BDFA747" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="7D0DA88B-2FE4-4D11-AAB9-2008F8F7725E">
+				<name>F5</name>
+				<positive ref="B976C24C-04BE-4B18-ACF0-8293FE38A472" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="F894F076-9977-4A5E-8CAA-DE5F4AD2D210">
+				<name>F1</name>
+				<positive ref="617BD87E-D2D0-46A2-8142-E80B1A84136E" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A46D2F00-1B67-4F4C-A115-C2AB942EF7C7">
+				<name>F2</name>
+				<positive ref="BD962458-D5EF-4F4D-970C-70EF11531419" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="85758356-7574-406B-92D3-F1098C4338A3">
+				<name>F6</name>
+				<positive ref="88D7F641-F6D6-4825-9A37-21932E84CD08" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="466D1BF0-329E-40DC-A4C0-61C82DA40F07">
+				<name>Ft7</name>
+				<positive ref="AE9733FE-2C62-40E8-A63A-73B2FFBFCF0C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="8AFCE13B-E78F-40E6-826E-D55029E9E6F2">
+				<name>Fc3</name>
+				<positive ref="89FCB65B-8157-411C-84A5-D943D4AF0213" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="1A3A5CBF-36B5-4C7D-8E92-AFEF1ABEDB89">
+				<name>Fcz</name>
+				<positive ref="3D63D00E-4FE6-4409-816B-84321B77FF95" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="977327C2-CEF4-4CCA-8C4D-6C2DF656F1A0">
+				<name>Fc4</name>
+				<positive ref="0EA1C694-8EDC-4DC1-912C-E76B196104E7" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="EE17466A-9CBA-4EFC-AE68-36D91E5826CB">
+				<name>Ft8</name>
+				<positive ref="3019F407-6583-4E57-A6B6-71D8A456E821" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="2B4966CC-F022-46A4-AE00-3739E11ED8FC">
+				<name>C5</name>
+				<positive ref="279D91FC-4B65-42C2-9E66-E357CC5B3614" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C54ABC21-0180-4376-BF98-D8D9600997FE">
+				<name>C6</name>
+				<positive ref="DC8FF929-8DF7-461D-96E8-A3FF588BFF1D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="7824D9BD-722E-460A-8F10-D3E583FA6162">
+				<name>Tp7</name>
+				<positive ref="15C67555-FEFB-48BB-828D-1BF8DE8853B3" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C99B3395-B0A5-4C26-91A8-F405F393C4E7">
+				<name>Cp3</name>
+				<positive ref="4DEF8B3A-E407-433F-A8C3-67067D938B7A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="06E09D43-3CA4-4F86-9B38-9E18FF8FB95A">
+				<name>Cpz</name>
+				<positive ref="0743E7F5-F3CA-4CEF-994B-A9856F8F285E" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="F884AC2B-BBEA-4791-A035-36A175CF8E09">
+				<name>Cp4</name>
+				<positive ref="B5CDDDD1-E04F-4F22-93A3-5557E1A31C0F" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="CD8BEDF8-C0A9-4ABC-9F4C-19FFBFB5B2EB">
+				<name>Tp8</name>
+				<positive ref="30851927-906F-406B-A47D-9C17FFE2430D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="591C7FAF-DE97-404E-8CD2-615BE820AE1C">
+				<name>P5</name>
+				<positive ref="6CB6D075-F943-4E3A-A46B-74911269E086" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="1AF1097E-A18F-4BFF-BABE-55506B7F242C">
+				<name>P1</name>
+				<positive ref="C7D28818-D5ED-4A67-979B-83B2262D00E0" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="88053D3F-5035-4C46-A06E-D7D1C1AEE4DB">
+				<name>P2</name>
+				<positive ref="FD424324-1465-46F7-AA60-FD3AD361B241" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="6250AD60-A6C0-4207-BDFE-A4BD270DB71A">
+				<name>P6</name>
+				<positive ref="1765369A-ADF0-494A-A764-C4FF48CDE014" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E4059830-D29A-40FE-B357-9A884971E03D">
+				<name>Po7</name>
+				<positive ref="7EA52BE0-497D-4156-B68B-0C18A8F10C97" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="8F2E84D9-B7E5-4BFA-9C4B-0DBBE2458300">
+				<name>Po3</name>
+				<positive ref="F8B77CB6-9F82-440C-BD72-FE9DEB03132E" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C8292310-8F5A-43C5-85DF-4BD9C623CB8F">
+				<name>Poz</name>
+				<positive ref="3A2AC2F7-E170-427B-B04B-DC2B30F0DC6A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="92630042-C3CC-467E-8A93-3188644977A4">
+				<name>Po4</name>
+				<positive ref="A23CE6BA-1154-4B31-93CF-6ED87B2BE211" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="35BF7149-4F1D-4398-94EF-314F48147A6D">
+				<name>Po8</name>
+				<positive ref="742C3B2B-7DF4-4750-AA73-E19A57531766" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E6A88774-E6A7-4B47-A1EF-AA17D914963A">
+				<name>Fp1</name>
+				<positive ref="9F70551A-DEB3-47FC-9B03-4C6ACD8E696C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E29BC72C-DCEE-4BDE-A324-218F86C94987">
+				<name>Fp2</name>
+				<positive ref="8C7BDBFA-AE4C-4BC2-9DAE-23E105A7F894" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C6790D38-1853-442E-BAD8-23DB4EE7A34D">
+				<name>F7</name>
+				<positive ref="86C5FC1F-72EC-46EA-8FFA-73C007A8FA56" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B0CB3543-40CE-4AAB-B200-78C04C7ADDEC">
+				<name>F3</name>
+				<positive ref="9B4B2B4B-8EA9-40C2-BB9A-C6A3768C1477" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="9C85DE12-4E44-4508-8CA6-E587BFC4DB36">
+				<name>Fz</name>
+				<positive ref="A3A04149-0AD6-4415-AB5A-ADA71B7751C9" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="FC5738CB-112D-411A-8356-E3AA2878D1DC">
+				<name>F4</name>
+				<positive ref="5DF309D8-DA1F-4535-8D89-699AF7C00D7F" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C870DA89-A3C7-40C2-845A-5BF84D41173C">
+				<name>F8</name>
+				<positive ref="8604C079-3BEF-49E4-A403-BBAB5500C5A1" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="9DA86154-2F50-4FEE-A9C3-17E502517B3A">
+				<name>Ft9</name>
+				<positive ref="A0BC01E5-59C9-4F52-84ED-D0B696E9C182" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="338AFE07-B5CB-4EC4-BAAA-817055367D28">
+				<name>Fc5</name>
+				<positive ref="0696DCB3-87C2-43A9-AF7C-5B0506863AF8" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="D798D03A-5FFB-4599-8F7E-9F8BE498F6D7">
+				<name>Fc1</name>
+				<positive ref="4DD5B4D3-D24F-4B67-B4CD-1C32E120B3B7" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="AB387E21-6C61-4BA6-B40B-A51405A48C3D">
+				<name>Fc2</name>
+				<positive ref="FEA98C84-9F29-4A0C-BFB4-CB56EE95E1C4" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C300F554-499E-4DD4-B363-CDD03613A573">
+				<name>Fc6</name>
+				<positive ref="82F5CBD9-61A4-4479-8A69-6A0463909012" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="8A354212-C82F-4221-A374-B3473C95ABDD">
+				<name>Ft10</name>
+				<positive ref="28464E96-CC18-4E20-84B3-33358B6B99F0" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="0F497C0D-32E6-421D-A2AE-F5B55F6D2AA2">
+				<name>T3</name>
+				<positive ref="1EEEEA0A-424E-49CA-8BC2-7905515C2823" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="EF6003A5-3B3E-4C50-9FE1-8494639DE9E0">
+				<name>T4</name>
+				<positive ref="9AC2200B-22CB-4993-8E28-0BC218E77B24" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="66AE6A98-9DEC-4AB5-98DB-F93E98A2EC69">
+				<name>Tp9</name>
+				<positive ref="32E6CB0B-F393-4F5B-8E42-3B7FD220758D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B8D11D11-69CA-419A-9C92-238EA4B882F5">
+				<name>Cp5</name>
+				<positive ref="3B9F441D-E885-412D-9987-5CB719FFB97E" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="868D6211-5F20-4CAA-A523-4A9E97942500">
+				<name>Cp1</name>
+				<positive ref="6DD9665F-E5BA-42DF-83BE-CB1E893B93A8" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="88DFB09F-29C0-482E-B622-1C9DDCA5673A">
+				<name>Cp2</name>
+				<positive ref="9B4649E4-501A-477E-961D-5A6A874A428E" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4800CB1E-6B86-4D02-9FFA-5DE9A80830B5">
+				<name>Cp6</name>
+				<positive ref="8CF375DD-305B-4350-98DD-FBD0DD03DF30" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="CAC26CCA-82B1-459B-8C75-1FEC60285659">
+				<name>Tp10</name>
+				<positive ref="F564907E-A78D-4639-A7D1-FE145606C132" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="06DC24AD-046C-4093-B02C-C72A7D872EAF">
+				<name>T5</name>
+				<positive ref="12130A9E-91A5-4BE5-9895-AE26084AD470" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="2A82FA3E-615A-4ABB-A134-7E83D19560D9">
+				<name>P3</name>
+				<positive ref="471D9915-B2FE-4385-AB11-8312CC5CD33C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A18181B3-E896-4E1F-A084-4975E03DB15C">
+				<name>P4</name>
+				<positive ref="B0E5E1D2-5132-4291-8D14-1C1CD61A97B8" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B96B0304-C069-45CC-A6D9-07BA9181E8ED">
+				<name>T6</name>
+				<positive ref="A13CD0D0-D260-4232-BA1B-D24A4AA36E0F" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="DCEF4B28-5CA3-4500-AEE7-DBA46AB10B16">
+				<name>O1</name>
+				<positive ref="CCE390F6-B354-4F5B-8A79-3681E05EA56F" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="498D8456-FAAE-4589-88A3-396FE3BACA78">
+				<name>Oz</name>
+				<positive ref="590D9308-7DD3-45F2-8825-D1615BE7CAC8" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4D49CAF1-988D-48F4-B507-3F090F8D15B9">
+				<name>O2</name>
+				<positive ref="C94951AB-C3D4-4CBE-8CEB-30245B4D37ED" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="745796EA-EDA4-4646-B35F-E0A0BF909905">
+				<name>Aff1h</name>
+				<positive ref="26D480F4-23D8-441A-B320-26834FB7B36D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="2BBD9B66-F3B5-484B-9E8D-8D2BC2A23F37">
+				<name>Aff2h</name>
+				<positive ref="652B8B18-9D5C-46A7-BA9F-44767B568C5D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="5386A972-B417-4882-81B2-2724896B5EAD">
+				<name>F9</name>
+				<positive ref="47875884-6B1E-4E49-A98E-23874316007C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A963EC68-59C5-4C67-AE93-67FE824BD588">
+				<name>F10</name>
+				<positive ref="DF8B5919-ABE9-48FA-9F03-F49106B9384B" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="665AFDC6-DF2F-4637-BFD9-0E67885DED32">
+				<name>Fft5h</name>
+				<positive ref="5EAE760F-B551-4D52-8629-A56888B7982D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="F9D99A60-BC2F-4170-B436-C890C92384C2">
+				<name>Fft1h</name>
+				<positive ref="91CD56C3-EBC3-4EA7-B968-A4FD283A395D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B77EA427-7E9E-403B-9CE1-CDAB02BD101A">
+				<name>Fft2h</name>
+				<positive ref="EC03B5E9-3879-41E6-B765-B03DC7DA5062" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="ADAA8B65-A3A7-43B9-8DB6-2F9268CCC0FB">
+				<name>Fft6h</name>
+				<positive ref="197B732C-2787-438D-A14F-025387E95F06" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="2704F688-45C2-496E-8F92-B39A346F7095">
+				<name>Ftt7h</name>
+				<positive ref="8171FAB2-9749-4797-9990-8C7B96A6DCF9" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="5A4C8C2F-178E-497F-953E-583AFA0DED4E">
+				<name>Fcc3h</name>
+				<positive ref="47777B0B-C057-4BCC-B979-CBCC2680B6EF" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E11F5010-7A3E-49B9-894D-6CAC89213D35">
+				<name>Fcc4h</name>
+				<positive ref="44EA9421-A288-41F6-9ED6-F5D01DA8F073" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A7F9385E-1334-40D4-9588-708416C5E627">
+				<name>Ftt8h</name>
+				<positive ref="4DC307BC-3A34-4221-91D8-828B730CEE8E" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="45BE405B-98E6-4C34-B695-7869591C90D2">
+				<name>Ccp5h</name>
+				<positive ref="E301A4DF-2CBD-44E1-A7DE-961BDD86A236" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="43FB13A9-41F8-4031-AF87-15DBEB6BE9F1">
+				<name>Ccp1h</name>
+				<positive ref="A9C2D182-D7D2-4477-AE16-83D53057BD39" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="10362B7D-620F-46EC-95D9-AF5B2E14929A">
+				<name>Ccp2h</name>
+				<positive ref="D9EC1B82-BE1D-40E4-AF19-F4CC09D71FF1" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="D6D97E51-1911-47F6-A519-C72D54C31C05">
+				<name>Ccp6h</name>
+				<positive ref="82819470-1381-4873-9F7D-97F788FEAD5A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4D70F7C4-3E96-4396-B306-9D9D02622BC9">
+				<name>Tpp7h</name>
+				<positive ref="6A12B4B2-4595-41E1-A688-7D59670E5B31" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C43D0E53-6313-4BB4-87A2-9A3198C2AE95">
+				<name>Cpp3h</name>
+				<positive ref="B9B018F5-FD60-42B5-A950-2464DF2DE2BD" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A43C6110-EC4F-4FBC-A95B-1B5EE0B4658A">
+				<name>Cpp4h</name>
+				<positive ref="F775C383-0A6F-422E-9BD5-F8046915E572" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="BAD9A351-E4A9-463F-835D-653FFE159D79">
+				<name>Tpp8h</name>
+				<positive ref="310B5E1C-94DD-4FD1-9A69-9C92FE8C4F14" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="014BE6B1-CB08-4C08-9334-B5200F00AB27">
+				<name>P9</name>
+				<positive ref="F3AF8EFC-E0B0-4495-B689-7222FC7F9C82" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="F50B2984-1EBE-4538-A614-1788265E4FD2">
+				<name>P10</name>
+				<positive ref="CA50AB81-561D-4175-B316-641119B15BFD" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4901E5C6-1FAE-4A77-AE2D-453BD0C93B90">
+				<name>Ppo9h</name>
+				<positive ref="0ADC3394-F303-4134-A2AB-75680B361A67" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A4CA5A14-BB83-4643-8968-8CF39F9078B5">
+				<name>Ppo1h</name>
+				<positive ref="DF9DA2F9-7788-47FE-B116-F3FE7369AD3F" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="1020F01A-A7CB-4EE8-A9A9-35168866CA77">
+				<name>Ppo2h</name>
+				<positive ref="77F33993-E205-48D1-BD80-303F46986D25" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="DC37AC3C-181F-4712-BD02-574937548509">
+				<name>Ppo10h</name>
+				<positive ref="7A97ECC1-6D12-43A1-BBF2-5ABE28CC379C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="0BE4C3E9-F0A1-437D-B884-38E0B03F3214">
+				<name>Po9</name>
+				<positive ref="5B279A02-5D50-455C-B066-7D45B59A34D6" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="970276D2-300D-4AA5-850F-56B81C8F56C0">
+				<name>Po10</name>
+				<positive ref="46FC7894-F9E4-4A62-8577-C4280D7D02DB" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="1144DBFE-DA09-4C00-B557-DB4C143E83DB">
+				<name>I1</name>
+				<positive ref="8B45CE85-8F90-42E0-86BD-77ECCC03AA3C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="245F04E0-946C-4945-9ED0-D784E5EE3668">
+				<name>Oi1h</name>
+				<positive ref="1C50E986-7C3E-44BF-A232-7009C97B894A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="DAC63553-F4D9-48BE-A0B1-FB567FCFDE7A">
+				<name>Oi2h</name>
+				<positive ref="2924AE1E-D64C-4EB3-BFDA-4207C27112AE" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="9DD8F84F-AEA2-46ED-8393-FDFB481E194A">
+				<name>I2</name>
+				<positive ref="BFD1C7C6-F47F-4E0D-831F-5F2CE2B76E16" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C138CE09-5CA9-4B19-81BB-85E02BF50682">
+				<name>Afp1</name>
+				<positive ref="63D8D8A2-E362-42B7-9608-84E2FA529295" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E763619A-FC7A-481E-B900-3C1CE09144A3">
+				<name>Afp2</name>
+				<positive ref="297235AA-4727-4B14-805A-199D96CDA146" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="69AD90EE-B010-4F71-8005-5ABBA3136483">
+				<name>Aff5h</name>
+				<positive ref="DEC2294B-63AD-4ACF-AA96-FEF25ACAC79A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="EB40111C-BE97-451E-AE41-C577F0E4CB32">
+				<name>Aff6h</name>
+				<positive ref="DD35C69A-3510-4C2D-89A0-02D32AF964DA" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="1602D1A3-FD21-4821-8CC6-B9EAA1209752">
+				<name>Fft9h</name>
+				<positive ref="DB6D175D-1B3E-4C32-B35F-85B914883931" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="D0E6F3EA-9A21-4740-898A-32BDE145D6BC">
+				<name>Fft7h</name>
+				<positive ref="7C6E8C4C-FF42-45DB-9B74-C7EC0A009916" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="2889F225-E23A-4ECD-A99A-7BE2BD1C8073">
+				<name>Fft3h</name>
+				<positive ref="36832B3F-DFA6-4A7F-835A-45FB33D8AC5D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="DA07A7A0-E5FD-4E48-AB21-321CFB0D47D7">
+				<name>Fft4h</name>
+				<positive ref="AE8EF1A4-05F1-421C-9D6B-D7197B5184D1" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="8B65C85F-C057-457D-8795-1966057E2112">
+				<name>Fft8h</name>
+				<positive ref="465B8C1F-AEF2-4C2A-987B-B8884D95125D" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="69546D10-9DB5-4494-9CCB-AD9F782C904B">
+				<name>Fft10h</name>
+				<positive ref="ADE9FA8C-25F6-40AA-8EE3-3294E70A6C29" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4CEAD4E8-0277-4A65-AB0C-49BBC8DAC231">
+				<name>Ftt9h</name>
+				<positive ref="D5D933B7-8F9B-4533-B97B-2C8CE1CBC30A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="62F3C86B-D500-49E0-8B59-506F5F7445D6">
+				<name>Fcc5h</name>
+				<positive ref="0EE8D38C-1A2B-4DC2-98E5-677140557F3C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="89F469EC-4C8F-4362-9037-145DB1DAF5AE">
+				<name>Fcc1h</name>
+				<positive ref="5AEA2133-024B-4071-8BAB-DFD0252D9951" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B3A3A9CD-25FD-4622-AA61-5968964E3541">
+				<name>Fcc2h</name>
+				<positive ref="89C8F376-BF1C-4E7B-A79D-F570C08129F0" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="FEE3FAF7-D0D3-4602-A922-C5C2920A15B6">
+				<name>Fcc6h</name>
+				<positive ref="A458829A-C033-4178-B985-19830E968E81" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="916C7377-5591-4366-8A6C-7738607A574B">
+				<name>Ftt10h</name>
+				<positive ref="80CE2F60-F48F-468C-8DE2-6B159BE60AFB" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="FE352E52-CC77-4FE8-905D-EBFDD47716BA">
+				<name>Ttp7h</name>
+				<positive ref="46D09B7B-A365-45EE-B7D3-385258F7CDE8" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="DAE36B00-CE6A-4D3A-8FB0-776B351EE058">
+				<name>Ccp3h</name>
+				<positive ref="6BC82430-920D-4B62-A0B9-DD24A95BA267" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="23E7B01C-B72B-4026-A937-6AF929DCCF7F">
+				<name>Ccp4h</name>
+				<positive ref="37A433ED-9679-4B30-A6BB-34D606B7DDAF" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B4612815-E639-4FBB-B420-893772CB1548">
+				<name>Ttp8h</name>
+				<positive ref="499ED3E4-17EA-4188-B89B-CE4FE382771C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4F2A8329-D800-4373-8226-CB7073999363">
+				<name>Tpp9h</name>
+				<positive ref="49EBCDF1-5719-4538-909D-C2B961BD22CC" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="1FCAB888-4A70-4085-9CDF-37C09E24EA3E">
+				<name>Cpp5h</name>
+				<positive ref="91A02716-BE85-4FEE-8D9B-6C9556E97808" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="35D2C4EC-43F4-414C-A022-78EDB14F9D25">
+				<name>Cpp1h</name>
+				<positive ref="1B55EA6E-B102-4777-9668-38BE9EA23052" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="6E8C878E-4AB5-492A-A10B-870C338C2DA5">
+				<name>Cpp2h</name>
+				<positive ref="CC9164A9-9D6B-415A-9C04-3CC72E08CE39" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="B9AA4D7E-0329-47F3-9C8D-C8A14B66DC22">
+				<name>Cpp6h</name>
+				<positive ref="5EDE65D6-F12A-4455-A6FE-2E2B068F59F3" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="489CFD0E-4598-463C-B4FB-A7346CC597FB">
+				<name>Tpp10h</name>
+				<positive ref="E17A29FD-C609-42C4-BF19-62041964E9AA" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="DC0698A8-9CA1-4086-8AA7-38B04CFF1494">
+				<name>Ppo5h</name>
+				<positive ref="107E2C52-4F33-46FE-8EDF-8D63D7BB08CC" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4CA1972F-E911-4093-956E-7B6871793DDB">
+				<name>Ppo6h</name>
+				<positive ref="FBF9DC9C-0D22-4AD6-967E-0CE944B03A42" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E39ACD15-869E-4BBD-BEB4-F155CCECB45F">
+				<name>Poo9h</name>
+				<positive ref="7CB80F45-2EA2-4E2A-9477-0D4969C8F803" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="EE081C32-7C08-4C70-93F8-B35E144BF8C2">
+				<name>Poo1</name>
+				<positive ref="34F2F9BF-AFAA-44B1-9705-D9AA82DC022A" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="A1431D8C-5D8F-42A4-A7C5-121D22E75CD2">
+				<name>Poo2</name>
+				<positive ref="17128117-88C8-49D3-B953-D96704C4C725" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="C4D91F25-4377-4F22-B8AB-8300D8335719">
+				<name>Poo10h</name>
+				<positive ref="C6BF9581-8F18-4B2B-A143-89A97AC22649" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="51ACB681-3CD1-4F98-AA6E-19EBBC299BB8">
+				<name>Aux 1.1</name>
+				<positive ref="EC90D389-B92E-48F6-B69B-7BF9CD1B5BD5" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4698EB56-07EF-40AB-9B82-1FC20AF56697">
+				<name>Aux 1.2</name>
+				<positive ref="A3D202F3-06FF-412B-A682-7CABA70712DC" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="07D9798F-2E6E-4FC4-951D-6E6591A9F0DE">
+				<name>Aux 2.1</name>
+				<positive ref="C8B39BE8-9621-4795-A0C5-A6F1D5D1D5A3" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="9BEF1B40-EF4C-4DD6-9FC2-40D5902566AA">
+				<name>Aux 2.2</name>
+				<positive ref="0DCE7B6E-9914-4E13-9470-7112E04ADE70" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="18915FB7-56D0-410B-BE0F-6F4D6B4CFCCB">
+				<name>Aux 3.1</name>
+				<positive ref="08477789-4194-4243-996F-DBAC35BAAF9C" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="4FBB949E-8CFA-4825-A027-7C32F672B902">
+				<name>Aux 3.2</name>
+				<positive ref="3D5DF7C8-F00F-4577-992F-33C071378700" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="D1EAD8A8-CC30-4549-903A-9B29A2426EC2">
+				<name>Aux 4.1</name>
+				<positive ref="91F5DDF5-7A81-4E18-A813-E48A3DDCA44B" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+			<clogical id="E4A6C8C0-DB74-43F2-BD42-8F77B6C3C616">
+				<name>Aux 4.2</name>
+				<positive ref="2F4CB4E7-B135-447A-BA37-88DE0CA766FF" />
+				<lpf>70.000000</lpf>
+				<hpf>0.500000</hpf>
+			</clogical>
+		</clogicals>
+	</transmission>
+	<plotter>
+		<groups>
+			<group id="548A7762-728A-4224-9375-2E37CBDEE4FC">
+				<name>Ch 1..32</name>
+				<curves>
+					<curve ref="DDBDD12C-34A6-4A14-8904-4ED11404494F">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="1246ADD1-6FD1-4C54-A5E3-390CF25B8470">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="39DA98D5-41A5-4B90-9226-EBFDB3CBC1D1">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="B89684A4-CC3C-4EED-8769-60A4D25FEB55" />
+					<curve ref="69610ED7-016B-477E-ACB7-7488E003374B" />
+					<curve ref="D113B423-E041-4947-BA33-DB93500F484D">
+						<color>#d8d394</color>
+					</curve>
+				</curves>
+			</group>
+			<group id="98E95CF1-7BE8-4C69-BD36-F61BCEAC5F01">
+				<name>Ch 33..64</name>
+				<curves>
+					<curve ref="5B3E08EC-7257-4980-BDEA-6D883AA51C2B">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="C4BC28DF-40A7-4EC0-B3C7-53CD1B05E645">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="FEFE556B-856A-4B44-896C-2CFBCE6F7A10">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A992CAAF-7706-4401-A91B-C6030B814739" />
+					<curve ref="E5EB2992-77AA-4EEC-83FA-F349064E1C21" />
+					<curve ref="7D0DA88B-2FE4-4D11-AAB9-2008F8F7725E">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="F894F076-9977-4A5E-8CAA-DE5F4AD2D210">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A46D2F00-1B67-4F4C-A115-C2AB942EF7C7" />
+					<curve ref="85758356-7574-406B-92D3-F1098C4338A3" />
+					<curve ref="466D1BF0-329E-40DC-A4C0-61C82DA40F07">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="8AFCE13B-E78F-40E6-826E-D55029E9E6F2">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="1A3A5CBF-36B5-4C7D-8E92-AFEF1ABEDB89">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="977327C2-CEF4-4CCA-8C4D-6C2DF656F1A0" />
+					<curve ref="EE17466A-9CBA-4EFC-AE68-36D91E5826CB" />
+					<curve ref="2B4966CC-F022-46A4-AE00-3739E11ED8FC">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="C54ABC21-0180-4376-BF98-D8D9600997FE" />
+					<curve ref="7824D9BD-722E-460A-8F10-D3E583FA6162">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="C99B3395-B0A5-4C26-91A8-F405F393C4E7">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="06E09D43-3CA4-4F86-9B38-9E18FF8FB95A">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="F884AC2B-BBEA-4791-A035-36A175CF8E09" />
+					<curve ref="CD8BEDF8-C0A9-4ABC-9F4C-19FFBFB5B2EB" />
+					<curve ref="591C7FAF-DE97-404E-8CD2-615BE820AE1C">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="1AF1097E-A18F-4BFF-BABE-55506B7F242C">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="88053D3F-5035-4C46-A06E-D7D1C1AEE4DB" />
+					<curve ref="6250AD60-A6C0-4207-BDFE-A4BD270DB71A" />
+					<curve ref="E4059830-D29A-40FE-B357-9A884971E03D">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="8F2E84D9-B7E5-4BFA-9C4B-0DBBE2458300">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="C8292310-8F5A-43C5-85DF-4BD9C623CB8F">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="92630042-C3CC-467E-8A93-3188644977A4" />
+					<curve ref="35BF7149-4F1D-4398-94EF-314F48147A6D" />
+					<curve ref="E6A88774-E6A7-4B47-A1EF-AA17D914963A">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="E29BC72C-DCEE-4BDE-A324-218F86C94987" />
+					<curve ref="C6790D38-1853-442E-BAD8-23DB4EE7A34D">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="B0CB3543-40CE-4AAB-B200-78C04C7ADDEC">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="9C85DE12-4E44-4508-8CA6-E587BFC4DB36">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="FC5738CB-112D-411A-8356-E3AA2878D1DC" />
+					<curve ref="C870DA89-A3C7-40C2-845A-5BF84D41173C" />
+					<curve ref="9DA86154-2F50-4FEE-A9C3-17E502517B3A">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="338AFE07-B5CB-4EC4-BAAA-817055367D28">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="D798D03A-5FFB-4599-8F7E-9F8BE498F6D7">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="AB387E21-6C61-4BA6-B40B-A51405A48C3D" />
+					<curve ref="C300F554-499E-4DD4-B363-CDD03613A573" />
+					<curve ref="8A354212-C82F-4221-A374-B3473C95ABDD" />
+					<curve ref="0F497C0D-32E6-421D-A2AE-F5B55F6D2AA2">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="EF6003A5-3B3E-4C50-9FE1-8494639DE9E0" />
+					<curve ref="66AE6A98-9DEC-4AB5-98DB-F93E98A2EC69">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="B8D11D11-69CA-419A-9C92-238EA4B882F5">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="868D6211-5F20-4CAA-A523-4A9E97942500">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="88DFB09F-29C0-482E-B622-1C9DDCA5673A" />
+					<curve ref="4800CB1E-6B86-4D02-9FFA-5DE9A80830B5" />
+					<curve ref="CAC26CCA-82B1-459B-8C75-1FEC60285659" />
+					<curve ref="06DC24AD-046C-4093-B02C-C72A7D872EAF">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="2A82FA3E-615A-4ABB-A134-7E83D19560D9">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A18181B3-E896-4E1F-A084-4975E03DB15C" />
+					<curve ref="B96B0304-C069-45CC-A6D9-07BA9181E8ED" />
+					<curve ref="DCEF4B28-5CA3-4500-AEE7-DBA46AB10B16">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="498D8456-FAAE-4589-88A3-396FE3BACA78">
+						<color>#d8d394</color>
+					</curve>
+					<curve ref="4D49CAF1-988D-48F4-B507-3F090F8D15B9" />
+				</curves>
+			</group>
+			<group id="C2EE1F02-241D-409A-A4B8-F3DE70A268B4">
+				<name>Ch 65..96</name>
+				<curves>
+					<curve ref="745796EA-EDA4-4646-B35F-E0A0BF909905">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="2BBD9B66-F3B5-484B-9E8D-8D2BC2A23F37" />
+					<curve ref="5386A972-B417-4882-81B2-2724896B5EAD">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A963EC68-59C5-4C67-AE93-67FE824BD588" />
+					<curve ref="665AFDC6-DF2F-4637-BFD9-0E67885DED32">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="F9D99A60-BC2F-4170-B436-C890C92384C2">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="B77EA427-7E9E-403B-9CE1-CDAB02BD101A" />
+					<curve ref="ADAA8B65-A3A7-43B9-8DB6-2F9268CCC0FB" />
+					<curve ref="2704F688-45C2-496E-8F92-B39A346F7095">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="5A4C8C2F-178E-497F-953E-583AFA0DED4E">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="E11F5010-7A3E-49B9-894D-6CAC89213D35" />
+					<curve ref="A7F9385E-1334-40D4-9588-708416C5E627" />
+					<curve ref="45BE405B-98E6-4C34-B695-7869591C90D2">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="43FB13A9-41F8-4031-AF87-15DBEB6BE9F1">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="10362B7D-620F-46EC-95D9-AF5B2E14929A" />
+					<curve ref="D6D97E51-1911-47F6-A519-C72D54C31C05" />
+					<curve ref="4D70F7C4-3E96-4396-B306-9D9D02622BC9">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="C43D0E53-6313-4BB4-87A2-9A3198C2AE95">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A43C6110-EC4F-4FBC-A95B-1B5EE0B4658A" />
+					<curve ref="BAD9A351-E4A9-463F-835D-653FFE159D79" />
+					<curve ref="014BE6B1-CB08-4C08-9334-B5200F00AB27">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="F50B2984-1EBE-4538-A614-1788265E4FD2" />
+					<curve ref="4901E5C6-1FAE-4A77-AE2D-453BD0C93B90">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A4CA5A14-BB83-4643-8968-8CF39F9078B5">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="1020F01A-A7CB-4EE8-A9A9-35168866CA77" />
+					<curve ref="DC37AC3C-181F-4712-BD02-574937548509" />
+					<curve ref="0BE4C3E9-F0A1-437D-B884-38E0B03F3214">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="970276D2-300D-4AA5-850F-56B81C8F56C0" />
+					<curve ref="1144DBFE-DA09-4C00-B557-DB4C143E83DB">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="245F04E0-946C-4945-9ED0-D784E5EE3668">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="DAC63553-F4D9-48BE-A0B1-FB567FCFDE7A" />
+					<curve ref="9DD8F84F-AEA2-46ED-8393-FDFB481E194A" />
+				</curves>
+			</group>
+			<group id="3C8986B4-B2D5-40B8-A0F4-3FF4007B00DB">
+				<name>Ch 97..128</name>
+				<curves>
+					<curve ref="C138CE09-5CA9-4B19-81BB-85E02BF50682">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="E763619A-FC7A-481E-B900-3C1CE09144A3" />
+					<curve ref="69AD90EE-B010-4F71-8005-5ABBA3136483">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="EB40111C-BE97-451E-AE41-C577F0E4CB32" />
+					<curve ref="1602D1A3-FD21-4821-8CC6-B9EAA1209752">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="D0E6F3EA-9A21-4740-898A-32BDE145D6BC">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="2889F225-E23A-4ECD-A99A-7BE2BD1C8073">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="DA07A7A0-E5FD-4E48-AB21-321CFB0D47D7" />
+					<curve ref="8B65C85F-C057-457D-8795-1966057E2112" />
+					<curve ref="69546D10-9DB5-4494-9CCB-AD9F782C904B" />
+					<curve ref="4CEAD4E8-0277-4A65-AB0C-49BBC8DAC231">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="62F3C86B-D500-49E0-8B59-506F5F7445D6">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="89F469EC-4C8F-4362-9037-145DB1DAF5AE">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="B3A3A9CD-25FD-4622-AA61-5968964E3541" />
+					<curve ref="FEE3FAF7-D0D3-4602-A922-C5C2920A15B6" />
+					<curve ref="916C7377-5591-4366-8A6C-7738607A574B" />
+					<curve ref="FE352E52-CC77-4FE8-905D-EBFDD47716BA">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="DAE36B00-CE6A-4D3A-8FB0-776B351EE058">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="23E7B01C-B72B-4026-A937-6AF929DCCF7F" />
+					<curve ref="B4612815-E639-4FBB-B420-893772CB1548" />
+					<curve ref="4F2A8329-D800-4373-8226-CB7073999363">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="1FCAB888-4A70-4085-9CDF-37C09E24EA3E">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="35D2C4EC-43F4-414C-A022-78EDB14F9D25">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="6E8C878E-4AB5-492A-A10B-870C338C2DA5" />
+					<curve ref="B9AA4D7E-0329-47F3-9C8D-C8A14B66DC22" />
+					<curve ref="489CFD0E-4598-463C-B4FB-A7346CC597FB" />
+					<curve ref="DC0698A8-9CA1-4086-8AA7-38B04CFF1494">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="4CA1972F-E911-4093-956E-7B6871793DDB" />
+					<curve ref="E39ACD15-869E-4BBD-BEB4-F155CCECB45F">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="EE081C32-7C08-4C70-93F8-B35E144BF8C2">
+						<color>#00aa00</color>
+					</curve>
+					<curve ref="A1431D8C-5D8F-42A4-A7C5-121D22E75CD2" />
+					<curve ref="C4D91F25-4377-4F22-B8AB-8300D8335719" />
+				</curves>
+			</group>
+			<group id="82B8F452-0579-4511-81A9-EBE69290041E">
+				<name>Aux 1.1 .. 4.2</name>
+				<curves>
+					<curve ref="51ACB681-3CD1-4F98-AA6E-19EBBC299BB8">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="4698EB56-07EF-40AB-9B82-1FC20AF56697">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="07D9798F-2E6E-4FC4-951D-6E6591A9F0DE">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="9BEF1B40-EF4C-4DD6-9FC2-40D5902566AA">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="18915FB7-56D0-410B-BE0F-6F4D6B4CFCCB">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="4FBB949E-8CFA-4825-A027-7C32F672B902">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="D1EAD8A8-CC30-4549-903A-9B29A2426EC2">
+						<color>#ffaa00</color>
+					</curve>
+					<curve ref="E4A6C8C0-DB74-43F2-BD42-8F77B6C3C616">
+						<color>#ffaa00</color>
+					</curve>
+				</curves>
+			</group>
+		</groups>
+		<eventlabels>
+			<eventlabel text="Record">
+				<color>#ff5500</color>
+			</eventlabel>
+			<eventlabel text="Stop" />
+			<eventlabel text="Pause" />
+			<eventlabel text="Resume">
+				<color>#ff5500</color>
+			</eventlabel>
+			<eventlabel text="Key Space">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 0">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 1">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 2">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 3">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 4">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 5">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 6">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="In\ 7">
+				<color>#55aa7f</color>
+			</eventlabel>
+			<eventlabel text="PS">
+				<color>yellow</color>
+			</eventlabel>
+		</eventlabels>
+	</plotter>
+	<eventfilter>
+		<events>
+			<event>
+				<type>State</type>
+				<text>Record</text>
+			</event>
+			<event>
+				<type>State</type>
+				<text>Stop</text>
+				<sender>stop</sender>
+			</event>
+			<event>
+				<type>State</type>
+				<text>Pause</text>
+				<sender>pause</sender>
+			</event>
+			<event>
+				<type>State</type>
+				<text>Resume</text>
+				<sender>resume</sender>
+			</event>
+			<event>
+				<text>Key Space</text>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 0</text>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 1</text>
+				<sender>1</sender>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 2</text>
+				<sender>2</sender>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 3</text>
+				<sender>3</sender>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 4</text>
+				<sender>4</sender>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 5</text>
+				<sender>5</sender>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 6</text>
+				<sender>6</sender>
+			</event>
+			<event>
+				<type>TriggerIn\</type>
+				<text>In\ 7</text>
+				<sender>7</sender>
+			</event>
+			<event>
+				<type>PhoticStimulation</type>
+				<text>PS</text>
+			</event>
+		</events>
+	</eventfilter>
+	<stimulation>
+		<photo>
+			<stages>
+				<stage>
+					<duration>60.000000</duration>
+					<frequency>2.000000</frequency>
+				</stage>
+				<stage>
+					<duration>60.000000</duration>
+					<frequency>10.000000</frequency>
+				</stage>
+			</stages>
+		</photo>
+	</stimulation>
+</neorec>
