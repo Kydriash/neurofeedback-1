@@ -56,6 +56,8 @@ classdef EEGLSL < handle
         write_notes %pushbutton
         raw_scale_slider
         ds_scale_slider
+        montage_fname
+        montage_fname_text
         %data
         channel_labels
         %%%%%%%%%%%% LSL and data input related objects %%%%%%
@@ -97,19 +99,17 @@ classdef EEGLSL < handle
         samples_acquired
         signal_to_feedback
         used_ch
+        last_to_fb
+        to_proceed
+        last_proceed
+        count
+        to_fb
         %%%%%% subject data management related
         subject_record
         path
         exp_data_length
         %other
         tstop
-        last_to_fb
-        to_proceed
-        last_proceed
-        count
-        to_fb
-        montage_fname
-        montage_fname_text
         sizes
     end
     
@@ -196,7 +196,7 @@ classdef EEGLSL < handle
             if(self.current_protocol>0)
                 N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                 if(N>0)
-                    ds_d = -Inf;
+%                     ds_d = -Inf;
                     self.ds_mean = -Inf;
                     for s = 2:length(self.derived_signals)
                         if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
@@ -206,25 +206,18 @@ classdef EEGLSL < handle
                         end
                         self.feedback_manager.average(s-1) = mean(values);
                         self.feedback_manager.standard_deviation(s-1) = std(values);
-                        if ds_d < std(values)
-                            ds_d = std(values);
-                        end
+%                         if ds_d < std(values)
+%                             ds_d = std(values);
+%                         end
                         if self.ds_mean < mean(values)
                             self.ds_mean = mean(values);
                         end
                     end
-%                     if abs(ds_d)*6 > abs(self.ds_mean)
-%                         self.ds_shift = abs(2*self.ds_mean);
-%                         set(self.ds_subplot,'YLim',[0.5*self.ds_mean abs(self.ds_mean*(length(self.derived_signals)+0.5))]);
-%                     else
-%                         self.ds_shift = abs(ds_d*6)+self.ds_mean;
-%                         set(self.ds_subplot,'YLim',[self.ds_mean - abs(ds_d*3) self.ds_mean - abs(ds_d)*3+self.ds_shift*length(self.derived_signals)]);
-%                     end
                     
-                    set(self.ds_plot_min,'String',num2str(self.ds_mean-abs(ds_d*3)));
-                    set(self.ds_plot_max,'String',num2str(((self.ds_mean - abs(ds_d*3)) +self.ds_shift*(length(self.derived_signals)))));
-                    set(self.ds_plot_shift,'String', num2str(self.ds_shift));
-                    raw_d = -Inf;
+%                     set(self.ds_plot_min,'String',num2str(self.ds_mean-abs(ds_d*3)));
+%                     set(self.ds_plot_max,'String',num2str(((self.ds_mean - abs(ds_d*3)) +self.ds_shift*(length(self.derived_signals)))));
+%                     set(self.ds_plot_shift,'String', num2str(self.ds_shift));
+%                     raw_d = -Inf;
                     self.raw_mean = -Inf;
                     for ch = 1:length(self.used_ch)
                         if self.derived_signals{1}.collect_buff.lst - N+1 < self.derived_signals{1}.collect_buff.fst
@@ -233,24 +226,16 @@ classdef EEGLSL < handle
                             v = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
                         end
                         values = v(:,ch);
-                        if raw_d < std(values)
-                            raw_d = std(values);
-                        end
+%                         if raw_d < std(values)
+%                             raw_d = std(values);
+%                         end
                         if self.raw_mean < mean(values)
                             self.raw_mean = mean(values);
                         end
                     end
-                    
-%                     if abs(raw_d*6) > abs(self.raw_mean)
-%                         self.raw_shift = abs(2*self.raw_mean);
-%                         set(self.raw_subplot,'YLim',[0.5*self.raw_mean abs(self.raw_mean*(length(self.used_ch)+1.5))]);
-%                     else
-%                         self.raw_shift = abs(raw_d*6)+self.raw_mean;
-%                         set(self.raw_subplot,'YLim',[(self.raw_mean - abs(raw_d*3)) ((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))]);
-%                     end
-                    set(self.raw_plot_min,'String',num2str(self.raw_mean-abs(raw_d*3)));
-                    set(self.raw_plot_max,'String',num2str(((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))));
-                    set(self.raw_plot_shift,'String', num2str(self.raw_shift));
+%                     set(self.raw_plot_min,'String',num2str(self.raw_mean-abs(raw_d*3)));
+%                     set(self.raw_plot_max,'String',num2str(((self.raw_mean - abs(raw_d*3)) +self.raw_shift*(length(self.used_ch)+1))));
+%                     set(self.raw_plot_shift,'String', num2str(self.raw_shift));
                     self.SetRawYTicks;
                     self.SetDSYTicks;
                     self.yscales_fixed = 1;
@@ -263,7 +248,6 @@ classdef EEGLSL < handle
         function Receive(self,timer_obj, event)
             [sample, timestamp] = self.inlet.pull_chunk();
             self.nd = [self.nd sample];
-            %self.sizes(end+1) = size(self.nd,2);
             sz = size(self.nd,2);
             if (sz > self.feedback_manager.window_length)   
                 for ds = 1:length(self.derived_signals)
@@ -326,15 +310,7 @@ classdef EEGLSL < handle
                 self.channel_count = self.max_ch_count;
             end
             self.inlet = lsl_inlet(self.streams{1});
-%              try
-%                  self.channel_labels = read_montage_file(self.montage_fname);
-%                  %self.channel_labels = check_channels();
-%                  %self.channel_labels = get_channel_labels(self.inlet);
-%                  %self.channel_labels = derive_channel_labels(self.inlet.info);
-%              end
-%             if length(self.channel_labels) ~= self.channel_count
-%                 self.channel_labels = read_channel_file();
-%             end
+
             
             self.plot_size = self.plot_length * self.sampling_frequency;
             self.RunInterface;
@@ -378,6 +354,7 @@ classdef EEGLSL < handle
                 self.subject_record.subject_name = sn.String;
                 self.fig_interface.Visible = 'off';
             end
+            %cursed channel labels
             self.channel_labels = read_montage_file(self.montage_fname);
             nfs = NeurofeedbackSession;
             nfs.LoadFromFile(self.settings_file);
@@ -470,10 +447,6 @@ classdef EEGLSL < handle
             
             
             for ds = 1:length(self.derived_signals)
-%                 if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
-%                     self.derived_signals{ds}.composite_montage = self.composite_montage;
-%                     
-%                 else
                     self.derived_signals{ds}.composite_montage = self.allxall;
                     for i = 1:length(self.derived_signals{ds}.spatial_filter)
                         if ~self.derived_signals{ds}.spatial_filter(i)
@@ -518,12 +491,6 @@ classdef EEGLSL < handle
            
             r_sp = get(self.raw_subplot);
             ds_sp = get(self.ds_subplot);
-%             self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
-%             self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals));
-%self.raw_shift = 150;
-%self.ds_shift = 150;
-           % self.SetDSYTicks;
-            %self.SetRawYTicks;
             if ~self.ylabels_fixed
                 self.ds_ytick_labels = {' '};
                 self.r_ytick_labels = {' '};
@@ -562,30 +529,17 @@ classdef EEGLSL < handle
                             ds_d = ds_max - ds_min;
                             set(self.ds_plot(i-1), 'YData',(pulled(1,:)-self.ds_mean)*self.ds_ydata_scale+self.ds_shift*(i-1)); 
                         end
-%                         if all([isnumeric(ds_d),~isinf(ds_d)])
-%                             ylim(self.ds_subplot,[ds_d/2 (2*length(self.derived_signals)+1)*ds_d]);
-%                         end
-                        
+
                         
                     elseif ~self.raw_yscale_fixed
-%                         r_min = Inf;
-%                         r_max = 0;
+
                         r_min = 10^-4;
                         r_max = length(self.used_ch)*2*r_min;
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
-                        %ylim(self.raw_subplot,[r_min r_max]);
+
                          for i = 1:size(raw_data,1)
-%                             if min(raw_data(i:i,:)) < r_min
-%                                 r_min = min(raw_data(i:i,:));
-%                             end
-%                             if max(raw_data(i:i,:)) > r_min
-%                                 r_max = max(raw_data(i:i,:));
-%                             end
-%                             r_d = r_max - r_min;
-%                             if all([isnumeric(r_d),~isinf(r_d)])
-%                                 ylim(self.raw_subplot,[r_d/2 2*(length(self.used_ch)+2)*r_d]);
-%                             end
+
                             
                              set(self.raw_plot(i),'YData', (raw_data(i:i,:)-self.raw_mean)*self.raw_ydata_scale+self.raw_shift*i);
                         end
@@ -887,8 +841,7 @@ classdef EEGLSL < handle
             cpt = findobj('Tag','curr_protocol_text');
             rl = findobj('Tag', 'raw_line');
             dsl = findobj('Tag','ds_line');
-            %rfp = findobj('Tag', 'raw_fit_plot');
-            %dfp = findobj('Tag', 'ds_fit_plot');
+
             set(db,'Position',[0.85*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
             set(cb,'Position',[0.03*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
             set(dss,'Position',[0.93*fp(3),0.12*fp(4) , 0.02*fp(3), 0.3*fp(4)]);
@@ -899,17 +852,14 @@ classdef EEGLSL < handle
             set(dm,'Position', [0.45*fp(3), 0.015*fp(4),0.12*fp(3),0.04*fp(4)]);
             set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
             set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
-            % set(rfp,'Position',[0.8 * fp(3), 0.60 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
-            % set(dfp,'Position', [0.8 * fp(3), 0.13 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
+
             self.SetRawYTicks;
             self.SetDSYTicks;
         end
         function SetRawYTicks(self)
             try
                 r_sp = get(self.raw_subplot);
-%                 if ~self.yscales_fixed
-%                     self.raw_shift = (r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1);
-%                 end
+
                 r_yticks = [r_sp.YLim(1):self.raw_shift:r_sp.YLim(2)];
                 set(self.raw_subplot, 'YTick', r_yticks);
                 set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
@@ -919,9 +869,7 @@ classdef EEGLSL < handle
         function SetDSYTicks(self)
             try
                 ds_sp = get(self.ds_subplot);
-%                 if ~self.yscales_fixed
-%                     self.ds_shift = (ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals)+1);
-%                 end
+
                 ds_yticks = [ds_sp.YLim(1):self.ds_shift:ds_sp.YLim(2)];
                 set(self.ds_subplot, 'YTick', ds_yticks);
                 set(self.ds_subplot, 'YTickLabel', self.ds_ytick_labels);
