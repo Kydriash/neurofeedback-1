@@ -110,6 +110,7 @@ classdef EEGLSL < handle
         to_fb
         montage_fname
         montage_fname_text
+        sizes
     end
     
     methods
@@ -164,6 +165,7 @@ classdef EEGLSL < handle
             self.montage_fname_text = 'nvx136.nvx136.monopolar-Pz';
             self.raw_shift = 150;
             self.ds_shift = 150;
+            self.sizes = [0];
 
             
         end
@@ -261,6 +263,7 @@ classdef EEGLSL < handle
         function Receive(self,timer_obj, event)
             [sample, timestamp] = self.inlet.pull_chunk();
             self.nd = [self.nd sample];
+            %self.sizes(end+1) = size(self.nd,2);
             sz = size(self.nd,2);
             if (sz > self.feedback_manager.window_length)   
                 for ds = 1:length(self.derived_signals)
@@ -269,7 +272,8 @@ classdef EEGLSL < handle
                 self.UpdateFeedbackSignal;
                 self.nd =self.nd(:,self.feedback_manager.window_length+1:end);
             end;
-              self.samples_acquired = self.samples_acquired+size(sample,2);
+
+               self.samples_acquired = self.samples_acquired+size(sample,2);
             
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + size(sample,2);
@@ -384,6 +388,10 @@ classdef EEGLSL < handle
             self.protocol_sequence = nfs.protocol_sequence;
             for i = 1:length(self.feedback_protocols)
                 self.feedback_protocols{i}.protocol_size = self.feedback_protocols{i}.protocol_duration * self.sampling_frequency;
+                try
+                    self.feedback_manager.window_size = self.feedback_protocols{i}.window_size;
+                end
+            
             end
             for j = 1:length(self.feedback_protocols)
                 self.exp_data_length = self.exp_data_length + self.feedback_protocols{j}.protocol_size;
@@ -391,7 +399,18 @@ classdef EEGLSL < handle
             self.exp_data_length = fix(self.exp_data_length * 1.1); %just in case
             self.derived_signals = cell(1,length(self.signals));
             for i = 1: length(self.signals)
+                
                 self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.channel_count,self.plot_length);
+                sp_filter = zeros(1,length(self.channel_labels));
+                for channel = 1:length(self.channel_labels)
+                    for ch = 1:length(self.signals{i}.channels)
+                        if strcmp(self.signals{i}.channels{ch,1}, self.channel_labels(channel))
+                            sp_filter(channel) = self.signals{i}.channels{ch,2};
+                        end
+                    end
+                    
+                end
+                self.derived_signals{i}.spatial_filter = sp_filter;
             end
             self.last_proceed = self.derived_signals{2}.collect_buff.fst;
             self.feedback_manager.window_length = round(self.feedback_manager.window_size*self.sampling_frequency / 1000);
@@ -451,10 +470,10 @@ classdef EEGLSL < handle
             
             
             for ds = 1:length(self.derived_signals)
-                if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
-                    self.derived_signals{ds}.composite_montage = self.composite_montage;
-                    
-                else
+%                 if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
+%                     self.derived_signals{ds}.composite_montage = self.composite_montage;
+%                     
+%                 else
                     self.derived_signals{ds}.composite_montage = self.allxall;
                     for i = 1:length(self.derived_signals{ds}.spatial_filter)
                         if ~self.derived_signals{ds}.spatial_filter(i)
@@ -462,7 +481,7 @@ classdef EEGLSL < handle
                             self.derived_signals{ds}.composite_montage(i,:) = 0;
 
                         end
-                    end
+                    
                 end
             end
             %connect
@@ -723,12 +742,31 @@ classdef EEGLSL < handle
             cd(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start));
             idx = 0;
             for i = 1:length(self.feedback_protocols)
+                
+                
+                if self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size > self.feedback_manager.feedback_records.lst
+                    
+                    fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx+1:self.feedback_manager.feedback_records.lst, :);
+                    raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx+1:self.derived_signals{1}.collect_buff.lst,:);
+                    data_matrix = zeros(size(fb_matrix,1), length(self.derived_signals)-1);
+                    for j = 2:length(self.derived_signals)
+                        data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx+1:self.derived_signals{j}.collect_buff.lst, :);
+                    end
+                else
+                
+                fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx+1:self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
+                raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx+1:self.derived_signals{1}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
+                data_matrix = zeros(self.feedback_protocols{i}.actual_protocol_size, length(self.derived_signals)-1);
+                
+                for j = 2:length(self.derived_signals)
+                    data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx+1:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
+                end
+                end
+                
                 filename = strcat(num2str(i),self.feedback_protocols{i}.protocol_name,'.bin');
                 string = '';
-                fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx+1:self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
-                data_matrix = zeros(self.feedback_protocols{i}.actual_protocol_size, length(self.derived_signals)-1);
-                raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx+1:self.derived_signals{1}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
-                for c = 1:length(self.used_ch)
+                
+                 for c = 1:length(self.used_ch)
                     if c == 1
                         string = self.used_ch{c,1};
                     else
@@ -737,8 +775,9 @@ classdef EEGLSL < handle
                 end
                 for j = 2:length(self.derived_signals)
                     string = strcat(string,',',self.derived_signals{j}.signal_name);
-                    data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx+1:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size, :);
                 end
+
+               
                 string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev',',','Chunk_size');
                 whole_data = [raw_data_matrix data_matrix fb_matrix];
                 idx = idx+self.feedback_protocols{i}.actual_protocol_size;

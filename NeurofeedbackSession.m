@@ -94,8 +94,9 @@ classdef NeurofeedbackSession < handle
                         rtp.protocol_duration = protocols{i}.fDuration;
                         rtp.stop_after = protocols{i}.bStopAfter;
                         rtp.string_to_show = protocols{i}.cString;
+                        
                         try
-                            rtp.window_length = protocols{i}.nMSecondsPerWindow;
+                            rtp.window_size = protocols{i}.nMSecondsPerWindow;
                         end
 
                         self.feedback_protocols{end+1} = rtp;
