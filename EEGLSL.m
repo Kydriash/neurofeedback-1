@@ -361,7 +361,7 @@ classdef EEGLSL < handle
             settings_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp.design', 'Callback', @self.SetDesignFile, 'Position', [20 100 100 35]); %#ok<NASGU>
             set_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Run the experiment', 'Position', [100 20 200 40],'Callback','uiresume'); %#ok<NASGU>
             montage_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp. montage', 'Callback', @self.SetMontageFile, 'Position', [20 60 100 35]);
-            montage_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
+            self.montage_fname_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
             uiwait();
             if verLessThan('matlab','8.4.0')
                 self.plot_refresh_rate = str2num(get(prr,'String'));
@@ -820,11 +820,11 @@ classdef EEGLSL < handle
         function SetMontageFile(self,~,~)
             [fname fpath fspec] = uigetfile('*.*');
             if ~isempty(nonzeros([fname fpath fspec]))
-                self.montage_file = strcat(fpath,fname);
+                self.montage_fname = strcat(fpath,fname);
                 if verLessThan('matlab','8.4.0')
-                    set(self.montage_fname_text, 'String',self.settings_file);
+                    set(self.montage_fname_text, 'String',fname);
                 else
-                    self.montage_fname_text.String = self.settings_file;
+                    self.montage_fname_text.String = self.montage_fname;
                 end
             end
         end
