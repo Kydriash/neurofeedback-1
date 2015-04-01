@@ -255,9 +255,10 @@ classdef EEGLSL < handle
                 end
                 self.UpdateFeedbackSignal;
                 self.nd =self.nd(:,self.feedback_manager.window_length+1:end);
+				self.samples_acquired = self.samples_acquired+self.feedback_manager.window_length;
             end;
 
-               self.samples_acquired = self.samples_acquired+size(sample,2);
+               
             
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + size(sample,2);
