@@ -99,7 +99,6 @@ classdef EEGLSL < handle
         used_ch
         last_to_fb
         to_proceed
-        last_proceed
         count
         to_fb
         %%%%%% subject data management related
@@ -148,7 +147,7 @@ classdef EEGLSL < handle
             self.raw_ydata_scale = 1;
             self.ds_ydata_scale = 1;
             self.nd = [];
-
+            
             self.last_to_fb = 0;
             self.to_proceed = [];
             self.samples_acquired = 0;
@@ -163,20 +162,19 @@ classdef EEGLSL < handle
             
         end
         function UpdateFeedbackSignal(self)
-
+            
             
             n = self.feedback_manager.window_length;
             
             for s = 2:length(self.derived_signals)
                 
-                index2 = self.derived_signals{s}.ring_buff.lst-mod((self.derived_signals{s}.ring_buff.lst - self.derived_signals{s}.ring_buff.fst),n);
-                dat = self.derived_signals{s}.ring_buff.raw(self.last_proceed(s)+1:index2);
-                %dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-n+1:self.derived_signals{s}.ring_buff.lst);
+                dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-n+1:self.derived_signals{s}.ring_buff.lst);
                 avg  = self.feedback_manager.average(s-1);
                 sdev = self.feedback_manager.standard_deviation(s-1);
                 val = sum(abs(dat))/n;
                 self.feedback_manager.feedback_vector(s-1)  = (val-avg)/sdev;
-                self.last_proceed(s) = index2;
+
+                
             end
             
             
@@ -193,13 +191,14 @@ classdef EEGLSL < handle
                 fb(:,5) = self.feedback_manager.window_length;
                 fb(:,6) = self.window;
                 self.feedback_manager.feedback_records.append(fb);
+                
             end
         end
         function Update_Statistics(self)
             if(self.current_protocol>0)
                 N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                 if(N>0)
-
+                    
                     for s = 2:length(self.derived_signals)
                         if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
                             values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
@@ -208,9 +207,9 @@ classdef EEGLSL < handle
                         end
                         self.feedback_manager.average(s-1) = mean(values);
                         self.feedback_manager.standard_deviation(s-1) = std(values);
-
+                        
                     end
-
+                    
                     self.SetRawYTicks;
                     self.SetDSYTicks;
                     self.yscales_fixed = 1;
@@ -219,7 +218,7 @@ classdef EEGLSL < handle
                     self.fb_statistics_set = 1;
                 end;
             end;
-
+            
             
         end
         function Receive(self,timer_obj, event)
@@ -232,48 +231,43 @@ classdef EEGLSL < handle
                 end
                 self.UpdateFeedbackSignal;
                 self.nd =self.nd(:,self.feedback_manager.window_length+1:end);
-
+                
                 self.samples_acquired = self.samples_acquired+self.feedback_manager.window_length;
-
-            
-
-
-            
-            if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
-                self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + self.feedback_manager.window_length;
-                if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
-                    
-                    try
-                        temp_log_str = get(self.log_text,'String');
-                        temp_log_str{end+1} = self.feedback_protocols{self.current_protocol}.protocol_name;
-                        set(self.log_text,'String', temp_log_str);
-                        if self.feedback_protocols{self.current_protocol}.to_update_statistics
-                            self.Update_Statistics();
-                        end
+                if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
+                    self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + self.feedback_manager.window_length;
+                    if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
                         
-                    catch
-                        0
-                    end
-                    try
-                        
-                        if self.feedback_protocols{self.current_protocol}.stop_after
-                            set(self.connect_button, 'String', 'Start recording');
-                            set(self.connect_button, 'Callback',@self.StartRecording);%%%%%
-                            self.StopRecording();
-                        else
-                            self.current_protocol = self.next_protocol;
-                            self.next_protocol = self.next_protocol + 1;
-                            if self.current_protocol > length(self.feedback_protocols)
-                                self.StopRecording();
+                        try
+                            temp_log_str = get(self.log_text,'String');
+                            temp_log_str{end+1} = self.feedback_protocols{self.current_protocol}.protocol_name;
+                            set(self.log_text,'String', temp_log_str);
+                            if self.feedback_protocols{self.current_protocol}.to_update_statistics
+                                self.Update_Statistics();
                             end
+                            
+                        catch
+                            0
                         end
-                    catch
-                        1
-                    end
+                        try
+                            
+                            if self.feedback_protocols{self.current_protocol}.stop_after
+                                set(self.connect_button, 'String', 'Start recording');
+                                set(self.connect_button, 'Callback',@self.StartRecording);%%%%%
+                                self.StopRecording();
+                            else
+                                self.current_protocol = self.next_protocol;
+                                self.next_protocol = self.next_protocol + 1;
+                                if self.current_protocol > length(self.feedback_protocols)
+                                    self.StopRecording();
+                                end
+                            end
+                        catch
+                            1
+                        end
                     end;
                 end
-                end;
-            end
+            end;
+        end
         
         function Connect(self,predicate, value)
             
@@ -353,7 +347,7 @@ classdef EEGLSL < handle
                 end
                 
             end
-           
+            
             for j = 1:length(self.feedback_protocols)
                 self.exp_data_length = self.exp_data_length + self.feedback_protocols{j}.protocol_size;
             end
@@ -373,10 +367,7 @@ classdef EEGLSL < handle
                 end
                 self.derived_signals{i}.spatial_filter = sp_filter;
             end
-            self.last_proceed = zeros(length(self.derived_signals)-1);
-            for signal = 2:length(self.derived_signals)
-                self.last_proceed(signal) = self.derived_signals{signal}.ring_buff.fst;
-            end
+
             self.feedback_manager.window_length = round(self.feedback_manager.window_size*self.sampling_frequency / 1000);
             if self.feedback_manager.window_size/1000 <= self.data_receive_rate
                 warning('The window size is too small. Increase the window size or decrease data receive rate')
@@ -508,14 +499,14 @@ classdef EEGLSL < handle
                         for i = 2:length(self.derived_signals)
                             pulled = self.derived_signals{i}.ring_buff.raw(first_to_show:last_to_show,:);
                             pulled = pulled';
-
-                             set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1));
+                            
+                            set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1));
                         end
                         
                         
                     elseif ~self.raw_yscale_fixed
                         
-
+                        
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
                         
