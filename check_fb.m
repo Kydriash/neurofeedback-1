@@ -1,4 +1,4 @@
-mulr = ReadEEGData('D:\neurofeedback\results\2015-04-02\Null\13-40-11\2Feedback.bin');
+mulr = ReadEEGData('D:\neurofeedback\results\2015-04-02\Null\13-43-30\2Feedback.bin');
 %mulr(end-15:end,:) = [];
 signal_to_fb = mulr(1,9);
 used_ch = 5;

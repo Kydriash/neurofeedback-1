@@ -232,10 +232,12 @@ classdef EEGLSL < handle
                 end
                 self.UpdateFeedbackSignal;
                 self.nd =self.nd(:,self.feedback_manager.window_length+1:end);
+
                 self.samples_acquired = self.samples_acquired+self.feedback_manager.window_length;
+
             
-            
-            
+
+
             
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + self.feedback_manager.window_length;
@@ -268,11 +270,11 @@ classdef EEGLSL < handle
                     catch
                         1
                     end
-                    
+                    end;
                 end
                 end;
             end
-        end
+        
         function Connect(self,predicate, value)
             
             lsllib = lsl_loadlib();
