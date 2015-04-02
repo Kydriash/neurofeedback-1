@@ -33,7 +33,7 @@
 			<sProtocolName>Baseline</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
-			<fDuration>10</fDuration>
+			<fDuration>3</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
@@ -58,6 +58,10 @@
 	<vPSequence>
 		<s>Baseline</s>
           	<s>Feedback</s>
+<s>Baseline</s>
+<s>Feedback</s>
+<s>Baseline</s>
+<s>Feedback</s>
 
 	</vPSequence>
 </NeurofeedbackSignalSpecs>

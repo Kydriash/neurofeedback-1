@@ -30,7 +30,13 @@ classdef DerivedSignal < handle
                 self.collect_buff = circVBuf(data_length, length(signal.channels), 0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),length(signal.channels), 0); 
 % 
-                for i = 1:channel_count
+                   
+            else
+                self.collect_buff = circVBuf(data_length*10,1,0);
+                self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
+
+            end
+            for i = 1:channel_count
                     for j = 1:length(self.channels)
                         if strcmp(channels{i},self.channels{j,1})
                             try
@@ -39,12 +45,7 @@ classdef DerivedSignal < handle
                             end
                         end
                     end
-                end     
-            else
-                self.collect_buff = circVBuf(data_length*10,1,0);
-                self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
-
-            end
+                end  
             self.temporal_filter = cell(1,length(signal.filters));
             for c = 1:length(self.temporal_filter)
                     self.temporal_filter{c}.order = signal.filters(c).order;

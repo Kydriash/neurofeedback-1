@@ -135,7 +135,7 @@ classdef EEGLSL < handle
             [p, ~, ~] = fileparts(which(mfilename));
             self.path = strcat(p,'\results');
             self.signal_to_feedback = 2;
-            self.composite_montage = [];
+
             self.settings_file_text = 'LeftVsRightMu.nss.xml';
             self.settings_file =  'settings\LeftVsRightMu.nss.xml';
             self.recording = 0;
@@ -403,7 +403,7 @@ classdef EEGLSL < handle
             end
             all_ch = self.channel_labels;
             
-            self.composite_montage = zeros(length(self.used_ch), length(self.used_ch)); %for raw
+           
             self.allxall = zeros(length(all_ch), length(all_ch)); %136x136 for ds
             
             used_ch_labels = self.used_ch(:,1);
@@ -415,8 +415,7 @@ classdef EEGLSL < handle
                         used_ch_indices(i) = j;
                         self.allxall(:,j) = 1/length(self.used_ch);
                         self.allxall(j,j) = 1-1/length(self.used_ch);
-                        self.composite_montage(:,i) = 1/length(self.used_ch);
-                        self.composite_montage(i,i) = 1-1/length(self.used_ch);
+
                     end
                 end
             end
