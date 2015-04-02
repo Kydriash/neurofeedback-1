@@ -48,7 +48,7 @@
 		<FeedbackProtocol>
 			<sProtocolName>Feedback</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
-			<nMSecondsPerWindow>30</nMSecondsPerWindow>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>10</fDuration>
 			<bStopAfter>0</bStopAfter>

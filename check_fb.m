@@ -1,6 +1,8 @@
-mulr = ReadEEGData('D:\neurofeedback\results\2015-04-01\Null\14-33-12\2Feedback.bin');
+mulr = ReadEEGData('D:\neurofeedback\results\2015-04-02\Null\13-40-11\2Feedback.bin');
 %mulr(end-15:end,:) = [];
-mul = mulr(:,6); % mu from the left and right side
+signal_to_fb = mulr(1,9);
+used_ch = 5;
+mul = mulr(:,signal_to_fb+used_ch); % mu from the left and right side
 
 fb = mulr(:,10); %feedback
 fb5 = zeros(size(mulr,1),1);
@@ -12,10 +14,10 @@ window = mulr(1,13);
 step = mulr(1,13);
 shift = 0;
 
- for i = window:step:size(mulr,1)-step
-     dat = mul(i-window+1:i);
+ for i = window:step:size(mulr,1)-step-shift
+     dat = mul(i-window+1+shift:i+shift);
 val = sum(abs(dat))/window;
-fb5(i-window+1:i) = (val-av)/s;
+fb5(i-window+1+shift:i+shift) = (val-av)/s;
  end
 %  step = mulr(window,13);
 %  i = window;
@@ -63,6 +65,8 @@ figure;
 plot(fb);
 hold on;
 plot(fb5,'r-');
+hold on;
+%plot(mulr(:,end)); %windows
 grid on;
 % hold on;
 % plot(fb10, 'k-');
