@@ -38,6 +38,8 @@ classdef EEGLSL < handle
         fbplot_handle %bar
         feedback_axis_handle
         fb_stub %text
+        show_fb %bool
+        fb_type %string
         
         %%%uicontrol
         connect_button
@@ -120,6 +122,7 @@ classdef EEGLSL < handle
             self.streams = {};
             self.plot_refresh_rate = 0.075;
             self.data_receive_rate = 0.01;
+            self.show_fb = 1;
             
             self.max_ch_count = -1; % -1 to get all the channels
             self.connected = false;
@@ -158,7 +161,8 @@ classdef EEGLSL < handle
             self.ds_shift = 150;
             self.sizes = [0];
             self.window = 0;
-            
+            %self.fb_type = 'Bar';
+            self.fb_type= 'Color intensity';
             
         end
         function UpdateFeedbackSignal(self)
@@ -251,6 +255,7 @@ classdef EEGLSL < handle
                         try
                             
                             if self.feedback_protocols{self.current_protocol}.stop_after
+                                
                                 set(self.connect_button, 'String', 'Start recording');
                                 set(self.connect_button, 'Callback',@self.StartRecording);%%%%%
                                 self.StopRecording();
@@ -313,17 +318,29 @@ classdef EEGLSL < handle
             set_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Run the experiment', 'Position', [100 20 200 40],'Callback','uiresume'); %#ok<NASGU>
             montage_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp. montage', 'Callback', @self.SetMontageFile, 'Position', [20 60 100 35]);
             self.montage_fname_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
+            show_feedback = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Show feedback to subject','Position', [20 290 135 20],'HorizontalAlignment','left');
+            show_fb_check = uicontrol('Parent', self.fig_interface, 'Style', 'checkbox' ,'Position', [160 295 20 20],'HorizontalAlignment','left','Value',1);
+            fb_type_string = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Feedback type','Position', [200 290 100 20],'HorizontalAlignment','left');
+            fb_type_menu = uicontrol('Parent', self.fig_interface, 'Style', 'popupmenu', 'String', {'Bar','Color intensity'},'Position', [310 295 100 20],'HorizontalAlignment','left','Value',1);
+
+
             uiwait();
             if verLessThan('matlab','8.4.0')
                 self.plot_refresh_rate = str2num(get(prr,'String'));
                 self.data_receive_rate = str2num(get(drr,'String'));
                 self.subject_record.subject_name = get(sn,'String');
                 set(self.fig_interface,'Visible', 'off');
+                self.show_fb = get(show_fb_check, 'Value');
+                fb_type_num = get(fb_type_menu, 'Value');
+                fb_type_str = get(fb_type_menu,'String');
+                self.fb_type = fb_type_str{fb_type_num};
             else
                 self.plot_refresh_rate = str2num(prr.String);
                 self.data_receive_rate = str2num(drr.String);
                 self.subject_record.subject_name = sn.String;
                 self.fig_interface.Visible = 'off';
+                self.show_fb = show_fb_check.Value;
+                self.fb_type = fb_type_menu.String(fb_type_menu.Value);
             end
             self.timer_new_data_function = @self.Receive;
             self.timer_new_data = timer('Name','receive_data','TimerFcn', self.timer_new_data_function,'ExecutionMode','fixedRate',...
@@ -388,12 +405,29 @@ classdef EEGLSL < handle
             figure(self.fig_feedback);
             set(self.fig_feedback, 'OuterPosition', [-1280 0 1280 1024]);
             self.feedback_axis_handle = axes;
-            self.fbplot_handle = bar(self.feedback_axis_handle,[0 1 0],'FaceColor',[1 1 1]);
             self.fb_stub = uicontrol('Parent', self.fig_feedback, 'String', 'Baseline acquisition', 'Style', 'text', 'ForegroundColor',[0 1 0],'Position', [200 500 900 250], 'FontSize', 75, 'BackgroundColor',[1 1 1], 'FontName', 'Courier New', 'Visible', 'off' );
-            % assume standardized FB signal
-            self.y_limit = [-4 4];
+            self.fbplot_handle = bar(self.feedback_axis_handle,[0 1 0],'FaceColor',[1 1 1]);
+            if strcmp(self.fb_type,'Bar')
+                
+                
+                % assume standardized FB signal
+                self.y_limit = [-4 4];
+                xlim(self.feedback_axis_handle, [1 3]);
+            elseif strcmp(self.fb_type,'Color intensity')
+                self.y_limit = [0 0.99];
+                xlim(self.feedback_axis_handle, [1.61 2]);
+                set(self.feedback_axis_handle,'visible','off');
+                set(self.feedback_axis_handle,'Box','off');
+                self.feedback_axis_handle.Color = 'none';
+                self.feedback_axis_handle.XColor = [1 1 1];
+                self.feedback_axis_handle.YColor = [1 1 1];
+                self.feedback_axis_handle.ZColor = [1 1 1];
+                self.feedback_axis_handle.GridColor = [1 1 1];
+                self.feedback_axis_handle.MinorGridColor = [1 1 1];
+                %self.feedback_axis_handle.LineWidth = 0;
+            end
             ylim(self.feedback_axis_handle,self.y_limit);
-            xlim(self.feedback_axis_handle, [1 3]);
+            
             %set average reference (composite montage)
             for ds = 1:length(self.derived_signals)
                 if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
@@ -404,39 +438,42 @@ classdef EEGLSL < handle
             all_ch = self.channel_labels;
             
            
-            self.allxall = zeros(length(all_ch), length(all_ch)); %136x136 for ds
+%             self.allxall = zeros(length(all_ch), length(all_ch)); %136x136 for ds
             
             used_ch_labels = self.used_ch(:,1);
             used_ch_indices = zeros(length(self.used_ch),1);
             
-            for i = 1:length(used_ch_labels)
-                for j = 1:length(all_ch)
-                    if strcmp(self.used_ch{i,1},all_ch{j})
-                        used_ch_indices(i) = j;
-                        self.allxall(:,j) = 1/length(self.used_ch);
-                        self.allxall(j,j) = 1-1/length(self.used_ch);
-
-                    end
-                end
-            end
-            for j = 1:length(all_ch)
-                if  ~ismember(j,used_ch_indices)
-                    self.allxall(j,:) = 0;
-                end
-            end
             
+            %add composite montage
             
-            for ds = 1:length(self.derived_signals)
-                self.derived_signals{ds}.composite_montage = self.allxall;
-                for i = 1:length(self.derived_signals{ds}.spatial_filter)
-                    if ~self.derived_signals{ds}.spatial_filter(i)
-                        self.derived_signals{ds}.composite_montage(:,i) = 0;
-                        self.derived_signals{ds}.composite_montage(i,:) = 0;
-                        
-                    end
-                    
-                end
-            end
+%             for i = 1:length(used_ch_labels)
+%                 for j = 1:length(all_ch)
+%                     if strcmp(self.used_ch{i,1},all_ch{j})
+%                         used_ch_indices(i) = j;
+%                         self.allxall(:,j) = 1/length(self.used_ch);
+%                         self.allxall(j,j) = 1-1/length(self.used_ch);
+% 
+%                     end
+%                 end
+%             end
+%             for j = 1:length(all_ch)
+%                 if  ~ismember(j,used_ch_indices)
+%                     self.allxall(j,:) = 0;
+%                 end
+%             end
+%             
+            
+%             for ds = 1:length(self.derived_signals)
+%                 self.derived_signals{ds}.composite_montage = self.allxall;
+%                 for i = 1:length(self.derived_signals{ds}.spatial_filter)
+%                     if ~self.derived_signals{ds}.spatial_filter(i)
+%                         self.derived_signals{ds}.composite_montage(:,i) = 0;
+%                         self.derived_signals{ds}.composite_montage(i,:) = 0;
+%                         
+%                     end
+%                     
+%                 end
+%             end
             %connect
             self.connected = 1;
             self.raw_and_ds_figure = figure;
@@ -559,6 +596,7 @@ classdef EEGLSL < handle
                                 };
                         end
                     catch
+                        
                     end
                 else
                     if verLessThan('matlab','8.4.0')
@@ -580,30 +618,61 @@ classdef EEGLSL < handle
                 end
                 self.fig_feedback;
                 try
-                    if (self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols))
-                        set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
-                        
-                        if isempty(get(self.fb_stub,'String'))
-                            set(self.fb_stub, 'Visible', 'off');
+                    if strcmp(self.fb_type,'Bar')
+                        if (self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols))
+                            set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
+                            
+                            if isempty(get(self.fb_stub,'String')) && self.show_fb
+                                set(self.fb_stub, 'Visible', 'off');
+                                
+                                set(self.fbplot_handle,'FaceColor',[1 0 0]);
+                                set(self.fbplot_handle,'EdgeColor',[0 0 0]);
+                            else
+                                set(self.fb_stub,'Visible', 'on');
+                                set(self.fbplot_handle,'FaceColor',[1 1 1]);
+                                set(self.fbplot_handle,'EdgeColor','none');
+                            end
+                        elseif self.fb_statistics_set && self.show_fb %zero protocol after baseline recorded
                             set(self.fbplot_handle,'FaceColor',[1 0 0]);
                             set(self.fbplot_handle,'EdgeColor',[0 0 0]);
-                        else
-                            set(self.fb_stub,'Visible', 'on');
-                            set(self.fbplot_handle,'FaceColor',[1 1 1]);
-                            set(self.fbplot_handle,'EdgeColor','none');
+                            set(self.fb_stub,'Visible','off');
+                        else %zero protocol before baseline recorded
+                            set(self.fbplot_handle,'FaceColor',[1 1 1],'EdgeColor','none');
+                            set(self.fb_stub,'Visible','off');
                         end
-                    elseif self.fb_statistics_set %zero protocol after baseline recorded
-                        set(self.fbplot_handle,'FaceColor',[1 0 0]);
-                        set(self.fbplot_handle,'EdgeColor',[0 0 0]);
-                        set(self.fb_stub,'Visible','off');
-                    else %zero protocol before baseline recorded
-                        set(self.fbplot_handle,'FaceColor',[1 1 1],'EdgeColor','none');
-                        set(self.fb_stub,'Visible','off');
+                        set(self.fbplot_handle,'YData',[0 self.feedback_manager.feedback_vector(self.signal_to_feedback-1) 0]);
+                
+                    elseif strcmp(self.fb_type,'Color intensity')
+                        if (self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols))
+                            set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
+                            
+                            if isempty(get(self.fb_stub,'String')) && self.show_fb
+                                set(self.fb_stub, 'Visible', 'off');
+                                if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
+                                    
+                                set(self.fbplot_handle,'FaceColor',[1 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)) 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1))]);
+                                end
+                                set(self.fbplot_handle,'EdgeColor',[0 0 0]);
+                            else
+                                set(self.fb_stub,'Visible', 'on');
+                                set(self.fbplot_handle,'FaceColor',[1 1 1]);
+                                set(self.fbplot_handle,'EdgeColor','none');
+                            end
+                        elseif self.fb_statistics_set && self.show_fb %zero protocol after baseline recorded
+                             if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
+                            set(self.fbplot_handle,'FaceColor',[1 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)) 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1))]);
+                             end
+                            set(self.fbplot_handle,'EdgeColor',[0 0 0]);
+                            set(self.fb_stub,'Visible','off');
+                        else %zero protocol before baseline recorded
+                            set(self.fbplot_handle,'FaceColor',[1 1 1],'EdgeColor','none');
+                            set(self.fb_stub,'Visible','off');
+                        end
                     end
                 catch
-                    self.current_protocol
+                    %self.current_protocol
+                    1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)
                 end
-                set(self.fbplot_handle,'YData',[0 self.feedback_manager.feedback_vector(self.signal_to_feedback-1) 0]);
                 self.SetRecordingStatus;
             end
         end
@@ -617,14 +686,22 @@ classdef EEGLSL < handle
         end
         function StopRecording(self, obj,event)
             self.recording = 0;
-            if self.current_protocol > length(self.feedback_protocols)
+            
+            if self.current_protocol >= length(self.feedback_protocols)
+                if self.current_protocol == length(self.feedback_protocols) && self.feedback_protocols{self.current_protocol}.stop_after
+                    %self.current_protocol = self.next_protocol;
+                    %self.next_protocol = self.next_protocol + 1;
+                    self.current_protocol = 0;
+                    toc;
+                end
                 self.finished = 1;
                 temp_log_text = get(self.log_text,'String');
                 temp_log_text{end+1} = 'Finished';
                 set(self.log_text,'String',temp_log_text);
                 set(self.disconnect_button,'String','Disconnect and write');
                 set(self.connect_button, 'String', 'Recording finished');
-                toc;
+                
+                
             end
             if  ~self.finished
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
@@ -741,7 +818,7 @@ classdef EEGLSL < handle
                     set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
                 end
             else
-                if self.current_protocol == 0
+                if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
                     self.status_text.String = 'Status: receiving';
                 else
                     self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));

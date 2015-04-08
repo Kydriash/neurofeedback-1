@@ -1,6 +1,6 @@
-mulr = ReadEEGData('D:\neurofeedback\results\2015-04-02\Null\14-19-51\6Feedback.bin');
+mulr = ReadEEGData('D:\neurofeedback\results\2015-04-07\Alexey\12-18-07\3Right_hand.bin');
 %mulr(end-15:end,:) = [];
-signal_to_fb = mulr(1,9);
+signal_to_fb = mulr(1,8);
 used_ch = 5;
 mul = mulr(:,signal_to_fb+used_ch); % mu from the left and right side
 

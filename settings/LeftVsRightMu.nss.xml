@@ -9,22 +9,22 @@
 		<DerivedSignal>
 			<sSignalName>MuL+R</sSignalName>
 			<SpatialFilterMatrix>mu.xml</SpatialFilterMatrix>
-			<fBandpassLowHz>8</fBandpassLowHz>
-			<fBandpassHighHz>12</fBandpassHighHz>
+			<fBandpassLowHz>10</fBandpassLowHz>
+			<fBandpassHighHz>15</fBandpassHighHz>
 			<sType>plain</sType>
 		</DerivedSignal>
 		<DerivedSignal>
 			<sSignalName>MuLeft</sSignalName>
 			<SpatialFilterMatrix>left_mu.xml</SpatialFilterMatrix>
-			<fBandpassLowHz>8</fBandpassLowHz>
-			<fBandpassHighHz>12</fBandpassHighHz>
+			<fBandpassLowHz>10</fBandpassLowHz>
+			<fBandpassHighHz>15</fBandpassHighHz>
 			<sType>plain</sType>
 		</DerivedSignal>
 		<DerivedSignal>
 			<sSignalName>MuRight</sSignalName>
 			<SpatialFilterMatrix>right_mu.xml</SpatialFilterMatrix>
-			<fBandpassLowHz>8</fBandpassLowHz>
-			<fBandpassHighHz>12</fBandpassHighHz>
+			<fBandpassLowHz>10</fBandpassLowHz>
+			<fBandpassHighHz>15</fBandpassHighHz>
 			<sType>plain</sType>
 		</DerivedSignal>
 	</vSignals>
@@ -50,18 +50,43 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>10</fDuration>
-			<bStopAfter>0</bStopAfter>
+			<fDuration>3</fDuration>
+			<bStopAfter>1</bStopAfter>
 			<cString></cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Left_hand</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>120</fDuration>
+			<bStopAfter>1</bStopAfter>
+			<cString>Left hand</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Right_hand</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>120</fDuration>
+			<bStopAfter>1</bStopAfter>
+			<cString>Right hand</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Both_hands</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>3</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString>Both hands</cString>
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
 		<s>Baseline</s>
-          	<s>Feedback</s>
-<s>Baseline</s>
 <s>Feedback</s>
-<s>Baseline</s>
-<s>Feedback</s>
+<s>Both_hands</s>
+
 
 	</vPSequence>
 </NeurofeedbackSignalSpecs>

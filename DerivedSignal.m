@@ -68,10 +68,10 @@ classdef DerivedSignal < handle
             if strcmpi(self.signal_name, 'raw')
                 self.data = zeros(length(self.channels), size(newdata,2));
                 %select only channels we need
-                self.spf_times_cm = self.spatial_filter* self.composite_montage;
+                %self.spf_times_cm = self.spatial_filter* self.composite_montage;
                  for i = 1:length(self.channels_indices)
                      sz = newdata(self.channels_indices(i):self.channels_indices(i),:);
-                    self.data(i:i,:) = sz*self.spf_times_cm(i);
+                    self.data(i:i,:) = sz*self.spatial_filter(self.channels_indices(i));
                  end
                  
 
@@ -82,7 +82,8 @@ classdef DerivedSignal < handle
 
             else
 
-                sz = self.spatial_filter*self.composite_montage * newdata;
+                %sz = self.spatial_filter*self.composite_montage * newdata;
+                sz = self.spatial_filter*newdata;
                 if size(sz,2) > 5
                     %add selection
                     for i = 1:size(sz,1)
