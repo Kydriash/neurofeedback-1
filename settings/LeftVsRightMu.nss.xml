@@ -33,59 +33,110 @@
 			<sProtocolName>Baseline</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
-			<fDuration>3</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<fDuration>60</fDuration>
+			<bStopAfter>0</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
 		<FeedbackProtocol>
 			<sProtocolName>EyeArtifacts</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>1</bUpdateStatistics>
 			<fDuration>10</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<bStopAfter>0</bStopAfter>
 			<cString>EyeArtifacts acquisition</cString>
 		</FeedbackProtocol>
 		<FeedbackProtocol>
-			<sProtocolName>Feedback</sProtocolName>
+			<sProtocolName>Feedback_bar</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+<sFb_type>Bar</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>3</fDuration>
+			<fDuration>120</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString></cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
-			<sProtocolName>Left_hand</sProtocolName>
+			<sProtocolName>Feedback_color</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+<sFb_type>Color intensity</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>120</fDuration>
 			<bStopAfter>1</bStopAfter>
-			<cString>Left hand</cString>
+			<cString></cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
-			<sProtocolName>Right_hand</sProtocolName>
+			<sProtocolName>Left_hand_movement</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>120</fDuration>
-			<bStopAfter>1</bStopAfter>
-			<cString>Right hand</cString>
-		</FeedbackProtocol>
-<FeedbackProtocol>
-			<sProtocolName>Both_hands</sProtocolName>
-			<sSignalComposition>Simple</sSignalComposition>
-			<nMSecondsPerWindow>20</nMSecondsPerWindow>
-			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>3</fDuration>
+			<fDuration>60</fDuration>
 			<bStopAfter>0</bStopAfter>
-			<cString>Both hands</cString>
+			<cString>Move left hand</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Right_hand_movement</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>60</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString>Move right hand</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Both_hands_movement</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>60</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString>Move both hands</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Left_hand_imagination</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>60</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString>Imagine moving left hand</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Right_hand_imagination</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>60</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString>Imagine moving right hand</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Both_hands_imagination</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>60</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString>Imagine moving both hands</cString>
+		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Rest</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+			<fDuration>5</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString> 	 </cString>
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
-		<s>Baseline</s>
-<s>Feedback</s>
-<s>Both_hands</s>
+<s>Baseline</s>
+<s>Feedback_bar</s>
+<s>Feedback_color</s>
+
+
 
 
 	</vPSequence>

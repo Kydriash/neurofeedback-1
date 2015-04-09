@@ -1,9 +1,11 @@
-mulr = ReadEEGData('D:\neurofeedback\results\2015-04-07\Alexey\12-18-07\3Right_hand.bin');
+mulr = ReadEEGData('D:\neurofeedback\results\2015-04-07\Alexey\12-36-51\4Right_hand.bin');
 %mulr(end-15:end,:) = [];
-signal_to_fb = mulr(1,8);
+signal_to_fb = mulr(1,9);
 used_ch = 5;
-mul = mulr(:,signal_to_fb+used_ch); % mu from the left and right side
 
+values = mulr(:,signal_to_fb+used_ch); % mu from the left and right side
+mul = mulr(:,7);
+mur = mulr(:,8);
 fb = mulr(:,10); %feedback
 fb5 = zeros(size(mulr,1),1);
 
@@ -15,7 +17,7 @@ step = mulr(1,13);
 shift = 0;
 
  for i = window:step:size(mulr,1)-step-shift
-     dat = mul(i-window+1+shift:i+shift);
+     dat = values(i-window+1+shift:i+shift);
 val = sum(abs(dat))/window;
 fb5(i-window+1+shift:i+shift) = (val-av)/s;
  end
@@ -72,7 +74,9 @@ grid on;
 % plot(fb10, 'k-');
 % hold on;
 % plot(fb20, 'g-');
-XLim([window size(mulr,1)-step]);
-[R, P] = corrcoef(fb,fb5(1:size(mulr,1)))
+%XLim([window size(mulr,1)-step]);
+%[R, P] = corrcoef(fb,fb5(1:size(mulr,1)))
+[R, P] = corrcoef(mul,mur)
+[p h] = signrank(mul,mur)
 % [R, P] = corrcoef(fb,fb10)
 % [R, P] = corrcoef(fb,fb20)

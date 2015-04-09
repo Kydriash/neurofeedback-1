@@ -12,6 +12,7 @@ classdef RealtimeProtocol < handle
         rbuff
         stop_after
         string_to_show
+        fb_type
         
     end 
    
