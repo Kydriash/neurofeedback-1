@@ -121,7 +121,7 @@ classdef EEGLSL < handle
             self.sampling_frequency = -1;
             self.channel_count = -1;
             self.streams = {};
-            self.plot_refresh_rate = 0.075;
+            self.plot_refresh_rate = 0.2;
             self.data_receive_rate = 0.01;
             self.show_fb = 1;
             
@@ -431,28 +431,15 @@ classdef EEGLSL < handle
             figure(self.fig_feedback);
             set(self.fig_feedback, 'OuterPosition', [-1280 0 1280 1024]);
             self.feedback_axis_handle = axes;
+            
             self.fb_stub = uicontrol('Parent', self.fig_feedback, 'String', 'Baseline acquisition', 'Style', 'text', 'ForegroundColor',[0 1 0],'Position', [200 500 900 250], 'FontSize', 75, 'BackgroundColor',[1 1 1], 'FontName', 'Courier New', 'Visible', 'off' );
             self.fbplot_handle = bar(self.feedback_axis_handle,[0 1 0],'FaceColor',[1 1 1]);
+            
             %             if self.current_protocol
             %                 try
             %                     self.fb_type = self.feedback_protocols{self.current_protocol}.Fb_type;
             %                 end
             %             end
-            %             if strcmp(self.fb_type,'Bar')
-            %
-            %
-            %                 % assume standardized FB signal
-            %                 self.y_limit = [-4 4];
-            %                 xlim(self.feedback_axis_handle, [1 3]);
-            %                 ylim(self.feedback_axis_handle,self.y_limit);
-            %             elseif strcmp(self.fb_type,'Color intensity')
-            %                 self.y_limit = [0 0.99];
-            %                 xlim(self.feedback_axis_handle, [1.61 2]);
-            %                 set(self.feedback_axis_handle,'visible','off');
-            %                 set(self.feedback_axis_handle,'Box','off');
-            %                 ylim(self.feedback_axis_handle,self.y_limit);
-            %             end
-            %
             
             %set average reference (composite montage)
             for ds = 1:length(self.derived_signals)
@@ -557,37 +544,23 @@ classdef EEGLSL < handle
                 first_to_show = self.derived_signals{self.signal_to_feedback}.ring_buff.lst-self.plot_size;
                 last_to_show = self.derived_signals{self.signal_to_feedback}.ring_buff.lst;
                 if last_to_show > first_to_show
-                    if ~self.ds_yscale_fixed
-                        for i = 2:length(self.derived_signals)
-                            pulled = self.derived_signals{i}.ring_buff.raw(first_to_show:last_to_show,:);
-                            pulled = pulled';
-                            
-                            set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1));
-                        end
+                    %plot filtered data
+                    for i = 2:length(self.derived_signals)
+                        pulled = self.derived_signals{i}.ring_buff.raw(first_to_show:last_to_show,:);
+                        pulled = pulled';
                         
-                        
-                    elseif ~self.raw_yscale_fixed
-                        
-                        
-                        raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
-                        raw_data = raw_data';
-                        
-                        for i = 1:size(raw_data,1)
-                            set(self.raw_plot(i),'YData', raw_data(i:i,:)*self.raw_ydata_scale+self.raw_shift*i);
-                        end
-                        
-                    else
-                        raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
-                        raw_data = raw_data';
-                        for i = 1:size(raw_data,1)
-                            set(self.raw_plot(i),'YData', raw_data(i:i,:)*self.raw_ydata_scale+self.raw_shift*i);
-                        end
-                        for i = 2:length(self.derived_signals)
-                            pulled = self.derived_signals{i}.ring_buff.raw(first_to_show:last_to_show,:);
-                            pulled = pulled';
-                            set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1));
-                        end
+                        set(self.ds_plot(i-1), 'YData',pulled(1,:)*self.ds_ydata_scale+self.ds_shift*(i-1));
                     end
+                    %plot raw data
+                    raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
+                    raw_data = raw_data';
+                    
+                    for i = 1:size(raw_data,1)
+                        set(self.raw_plot(i),'YData', raw_data(i:i,:)*self.raw_ydata_scale+self.raw_shift*i);
+                    end
+                    
+                    %set x limits of the plots
+                    
                     if self.samples_acquired < self.plot_size
                         xlim(self.ds_subplot, [0 self.plot_size]);
                         xlim(self.raw_subplot, [0 self.plot_size]);
@@ -600,6 +573,7 @@ classdef EEGLSL < handle
                         set(self.raw_subplot, 'XTickLabel', [self.samples_acquired - r_sp.XTick(end):r_sp.XTick(2):self.samples_acquired]);
                     end
                 end
+                %set recording status
                 if(self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols))
                     try
                         if verLessThan('matlab','8.4.0')
@@ -621,8 +595,7 @@ classdef EEGLSL < handle
                                 strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
                                 };
                         end
-                    catch
-                        
+                       
                     end
                 else
                     if verLessThan('matlab','8.4.0')
@@ -642,24 +615,22 @@ classdef EEGLSL < handle
                             strcat('Updating plots every ', num2str(self.plot_refresh_rate)), ' s'};
                     end
                 end
+                %feedback
                 self.fig_feedback;
+                self.feedback_axis_handle.Visible = 'off'; %axes
                 try
                     if self.current_protocol
                         try
                             self.fb_type = self.feedback_protocols{self.current_protocol}.fb_type;
                         end
                     end
-                    
-                    
-                    
                     if (self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols))
                         set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
                         
                         if isempty(get(self.fb_stub,'String')) && self.show_fb %feedback
+                            set(self.fb_stub, 'Visible', 'off'); %string
                             if strcmp(self.fb_type,'Bar')
-                                set(self.fb_stub, 'Visible', 'off');
-                                self.feedback_axis_handle.Visible = 'on';
-                                self.fbplot_handle.Visible = 'on';
+                                self.fbplot_handle.Visible = 'on'; %feedback if bar
                                 self.y_limit = [-1 7];
                                 xlim(self.feedback_axis_handle, [1 3]);
                                 ylim(self.feedback_axis_handle,self.y_limit);
@@ -668,310 +639,306 @@ classdef EEGLSL < handle
                                 if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
                                     set(self.fbplot_handle,'YData',[0 self.feedback_manager.feedback_vector(self.signal_to_feedback-1) 0]);
                                 end
-                    
+                                
                             elseif strcmp(self.fb_type,'Color intensity')
-                                set(self.fb_stub, 'Visible', 'off');
-                                self.feedback_axis_handle.Visible = 'off';
-                                self.fbplot_handle.Visible = 'off';
+                                self.fbplot_handle.Visible = 'off'; %feedback if bar
                                 if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
                                     set(self.fig_feedback,'Color',[1 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)) 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1))]);
-                                    
                                 end
                             end
+                        elseif strcmp(self.feedback_protocols{self.current_protocol}.protocol_name,'Rest')
+                            set(self.fb_stub, 'Visible', 'off'); %string
+                            self.fbplot_handle.Visible = 'off'; %feedback if bar
+                            
                         else %strings must be visible
-                            self.feedback_axis_handle.Visible = 'on';
-                            self.fbplot_handle.Visible = 'on';
-                            set(self.fb_stub,'Visible', 'on');
+                            self.fbplot_handle.Visible = 'off'; %feedback if bar
+                            set(self.fb_stub,'Visible', 'on'); %string
                             set(self.fbplot_handle,'FaceColor',[1 1 1]);
                             set(self.fbplot_handle,'EdgeColor','none');
                         end
                     elseif self.fb_statistics_set && self.show_fb %zero protocol after baseline recorded
-                         if strcmp(self.fb_type,'Bar')
-                                set(self.fb_stub, 'Visible', 'off');
-                                self.feedback_axis_handle.Visible = 'on';
-                                self.fbplot_handle.Visible = 'on';
-                                self.y_limit = [-1 7];
-                                xlim(self.feedback_axis_handle, [1 3]);
-                                ylim(self.feedback_axis_handle,self.y_limit);
-                                set(self.fbplot_handle,'FaceColor',[1 0 0]);
-                                set(self.fbplot_handle,'EdgeColor',[0 0 0]);
-                                if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
+                        set(self.fb_stub, 'Visible', 'off'); %string
+                        if strcmp(self.fb_type,'Bar')
+                            self.fbplot_handle.Visible = 'on'; %feedback if bar
+                            self.y_limit = [-1 7];
+                            xlim(self.feedback_axis_handle, [1 3]);
+                            ylim(self.feedback_axis_handle,self.y_limit);
+                            set(self.fbplot_handle,'FaceColor',[1 0 0]);
+                            set(self.fbplot_handle,'EdgeColor',[0 0 0]);
+                            if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
                                 set(self.fbplot_handle,'YData',[0 self.feedback_manager.feedback_vector(self.signal_to_feedback-1) 0]);
-                                end
-                            elseif strcmp(self.fb_type,'Color intensity')
-                                set(self.fb_stub, 'Visible', 'off');
-                                self.feedback_axis_handle.Visible = 'off';
-                                self.fbplot_handle.Visible = 'off';
-                                if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
-                                    set(self.fig_feedback,'Color',[1 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)) 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1))]);
-                                end
+                            end
+                        elseif strcmp(self.fb_type,'Color intensity')
+                            self.fbplot_handle.Visible = 'off'; %feedback if bar
+                            if ~isnan(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))
+                                set(self.fig_feedback,'Color',[1 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)) 1-(1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1))]);
+                            end
+                        else
+                            set(self.fb_stub, 'Visible', 'off'); %string
+                            self.fbplot_handle.Visible = 'off'; %fb if bar
                         end
-
-
-                        
                     else %zero protocol before baseline recorded
-                        
                         set(self.fbplot_handle,'FaceColor',[1 1 1],'EdgeColor','none');
-                        set(self.fb_stub,'Visible','off');
+                        set(self.fb_stub,'Visible','off'); %string
                     end
-
+                    
                 catch
                     %self.current_protocol
                     1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1)
-            end
-            self.SetRecordingStatus;
-        end
-    end
-    function StartRecording(self,obj,event)
-    self.InitTimer();
-    self.recording = 1;
-    self.current_protocol = self.next_protocol;
-    self.next_protocol = self.next_protocol + 1;
-    set(self.connect_button, 'String', 'Stop recording');
-    set(self.connect_button, 'Callback', @self.StopRecording);
-    end
-    function StopRecording(self, obj,event)
-    self.recording = 0;
-    
-    if self.current_protocol >= length(self.feedback_protocols)
-        if self.current_protocol == length(self.feedback_protocols) && self.feedback_protocols{self.current_protocol}.stop_after
-            %self.current_protocol = self.next_protocol;
-            %self.next_protocol = self.next_protocol + 1;
-            self.current_protocol = 0;
-            toc;
-        elseif self.current_protocol > length(self.feedback_protocols)
-            self.current_protocol = 0;
-        end
-        self.finished = 1;
-        temp_log_text = get(self.log_text,'String');
-        temp_log_text{end+1} = 'Finished';
-        set(self.log_text,'String',temp_log_text);
-        set(self.disconnect_button,'String','Disconnect and write');
-        set(self.connect_button, 'String', 'Recording finished');
-        
-        
-    end
-    if  ~self.finished
-        if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
-            self.feedback_protocols{self.current_protocol}.actual_protocol_size = 0;
-            self.next_protocol = self.current_protocol;
-        else
-            self.next_protocol = self.current_protocol + 1;
-        end
-        self.current_protocol = 0;
-        set(self.connect_button, 'String', 'Start recording');
-        set(self.connect_button, 'Callback', @self.StartRecording);
-    end
-    end
-    function Disconnect(self, obj,event)
-    self.tstop = toc
-    stop(self.timer_new_data);
-    stop(self.timer_disp);
-    set(self.fb_stub,'Visible','off');
-    set(self.status_text, 'String', 'Status: disconnected');
-    set(self.connect_button, 'String', 'Resume recording');
-    set(self.connect_button, 'Callback',{@self.Connect});
-    self.subject_record.time_stop = datestr(now,13);
-    if self.finished
-        self.WriteToFile;
-    end
-    end
-    function WriteToFile(self)
-    curr_date = datestr(date,29);
-    if ~isdir(strcat(self.path,'\',curr_date))
-        mkdir(strcat(self.path,'\',curr_date));
-    end
-    if ~isdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name))
-        mkdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name));
-    end
-    if ~isdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start))
-        mkdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start));
-    end
-    cd(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start));
-    idx = 0;
-    for i = 1:length(self.feedback_protocols)
-        
-        
-        if self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size > self.feedback_manager.feedback_records.lst
-            
-            fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx:self.feedback_manager.feedback_records.lst, :);
-            raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx:self.derived_signals{1}.collect_buff.lst,:);
-            data_matrix = zeros(size(fb_matrix,1), length(self.derived_signals)-1);
-            for j = 2:length(self.derived_signals)
-                data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx:self.derived_signals{j}.collect_buff.lst, :);
-            end
-        else
-            
-            fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx:self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size-1, :);
-            raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx:self.derived_signals{1}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size-1, :);
-            data_matrix = zeros(self.feedback_protocols{i}.actual_protocol_size, length(self.derived_signals)-1);
-            
-            for j = 2:length(self.derived_signals)
-                data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size-1, :);
+                end
+                self.SetRecordingStatus;
             end
         end
-        
-        filename = strcat(num2str(i),self.feedback_protocols{i}.protocol_name,'.bin');
-        string = '';
-        
-        for c = 1:length(self.used_ch)
-            if c == 1
-                string = self.used_ch{c,1};
+        function StartRecording(self,obj,event)
+            self.InitTimer();
+            self.recording = 1;
+            self.current_protocol = self.next_protocol;
+            self.next_protocol = self.next_protocol + 1;
+            set(self.connect_button, 'String', 'Stop recording');
+            set(self.connect_button, 'Callback', @self.StopRecording);
+        end
+        function StopRecording(self, obj,event)
+            self.recording = 0;
+            
+            if self.current_protocol >= length(self.feedback_protocols)
+                if self.current_protocol == length(self.feedback_protocols) && self.feedback_protocols{self.current_protocol}.stop_after
+                    %self.current_protocol = self.next_protocol;
+                    %self.next_protocol = self.next_protocol + 1;
+                    self.current_protocol = 0;
+                    self.tstop = toc;
+                elseif self.current_protocol > length(self.feedback_protocols)
+                    self.current_protocol = 0;
+                end
+                self.finished = 1;
+                temp_log_text = get(self.log_text,'String');
+                temp_log_text{end+1} = 'Finished';
+                set(self.log_text,'String',temp_log_text);
+                set(self.disconnect_button,'String','Disconnect and write');
+                set(self.connect_button, 'String', 'Recording finished');
+                self.connect_button.Callback = '';
+                
+                
+            end
+            if  ~self.finished
+                if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
+                    self.feedback_protocols{self.current_protocol}.actual_protocol_size = 0;
+                    self.next_protocol = self.current_protocol;
+                else
+                    self.next_protocol = self.current_protocol + 1;
+                end
+                self.current_protocol = 0;
+                set(self.connect_button, 'String', 'Start recording');
+                set(self.connect_button, 'Callback', @self.StartRecording);
+            end
+        end
+        function Disconnect(self, obj,event)
+            stop(self.timer_new_data);
+            stop(self.timer_disp);
+            set(self.fb_stub,'Visible','off');
+            set(self.status_text, 'String', 'Status: disconnected');
+            set(self.connect_button, 'String', 'Resume recording');
+            set(self.connect_button, 'Callback',{@self.Connect});
+            self.subject_record.time_stop = datestr(now,13);
+            if self.finished
+                self.WriteToFile;
+            end
+        end
+        function WriteToFile(self)
+            curr_date = datestr(date,29);
+            if ~isdir(strcat(self.path,'\',curr_date))
+                mkdir(strcat(self.path,'\',curr_date));
+            end
+            if ~isdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name))
+                mkdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name));
+            end
+            if ~isdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start))
+                mkdir(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start));
+            end
+            cd(strcat(self.path,'\',curr_date,'\',self.subject_record.subject_name,'\',self.subject_record.time_start));
+            idx = 0;
+            for i = 1:length(self.feedback_protocols)
+                
+                
+                if self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size > self.feedback_manager.feedback_records.lst
+                    
+                    fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx:self.feedback_manager.feedback_records.lst, :);
+                    raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx:self.derived_signals{1}.collect_buff.lst,:);
+                    data_matrix = zeros(size(fb_matrix,1), length(self.derived_signals)-1);
+                    for j = 2:length(self.derived_signals)
+                        data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx:self.derived_signals{j}.collect_buff.lst, :);
+                    end
+                else
+                    
+                    fb_matrix = self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx:self.feedback_manager.feedback_records.fst+idx + self.feedback_protocols{i}.actual_protocol_size-1, :);
+                    raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx:self.derived_signals{1}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size-1, :);
+                    data_matrix = zeros(self.feedback_protocols{i}.actual_protocol_size, length(self.derived_signals)-1);
+                    
+                    for j = 2:length(self.derived_signals)
+                        data_matrix(:,j-1) = self.derived_signals{j}.collect_buff.raw(self.derived_signals{j}.collect_buff.fst+idx:self.derived_signals{j}.collect_buff.fst+idx + self.feedback_protocols{i}.actual_protocol_size-1, :);
+                    end
+                end
+                
+                filename = strcat(num2str(i),self.feedback_protocols{i}.protocol_name,'.bin');
+                string = '';
+                
+                for c = 1:length(self.used_ch)
+                    if c == 1
+                        string = self.used_ch{c,1};
+                    else
+                        string = strcat(string, ',', self.used_ch{c,1});
+                    end
+                end
+                for j = 2:length(self.derived_signals)
+                    string = strcat(string,',',self.derived_signals{j}.signal_name);
+                end
+                
+                
+                string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev',',','Window size',',','Window num');
+                whole_data = [raw_data_matrix data_matrix fb_matrix];
+                idx = idx+self.feedback_protocols{i}.actual_protocol_size;
+                
+                %write data
+                f = fopen(filename,'w');
+                fwrite(f,size(whole_data),'int');
+                fwrite(f,whole_data, 'double');
+                fclose(f);
+                %write header
+                inf_file = fopen('exp_info.hdr','w');
+                fprintf(inf_file,string);
+                fclose(inf_file);
+            end
+            self.AddNotes;
+        end
+        function AddNotes(self)
+            self.add_notes_window = figure;
+            self.add_notes_field = uicontrol('Parent', self.add_notes_window, 'Style', 'edit', 'Position', [ 10 30 300 200]);
+            self.write_notes = uicontrol('Parent', self.add_notes_window, 'Style', 'pushbutton', 'Position',[ 150 10 100 20], 'Callback', 'uiresume', 'String', 'Save notes');
+            uiwait;
+            if verLessThan('matlab','8.4.0')
+                notes = get(self.add_notes_field, 'String');
             else
-                string = strcat(string, ',', self.used_ch{c,1});
+                notes = self.add_notes_field.String;
+            end
+            f = fopen('notes.txt','w');
+            fwrite(f, notes,'char');
+            fclose(f);
+            close(self.add_notes_window);
+            close(self.raw_and_ds_figure);
+        end
+        function SetRecordingStatus(self)
+            if verLessThan('matlab','8.4.0')
+                if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
+                    set(self.status_text, 'String','Status: receiving');
+                else
+                    set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
+                end
+            else
+                if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
+                    self.status_text.String = 'Status: receiving';
+                else
+                    self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));
+                end
             end
         end
-        for j = 2:length(self.derived_signals)
-            string = strcat(string,',',self.derived_signals{j}.signal_name);
+        function SetYScale(self,obj,event)
+            if strcmp(get(obj,'String'),'DS scale')
+                self.ds_ydata_scale =  2^get(obj,'Value');
+                self.SetDSYTicks;
+            elseif strcmp(get(obj,'String'),'Raw scale')
+                self.raw_ydata_scale = 2^get(obj,'Value');
+                self.SetRawYTicks;
+            end
+        end
+        function SetWorkpath(self,~,~)
+            p = uigetdir;
+            if p
+                self.path = uigetdir;
+            end
+            if verLessThan('matlab','8.4.0')
+                set(self.path_text,'String',self.path);
+            else
+                self.path_text.String = self.path;
+            end
+        end
+        function SetDesignFile(self,~,~)
+            [fname fpath fspec] = uigetfile('*.*');
+            if ~isempty(nonzeros([fname fpath fspec]))
+                self.settings_file = strcat(fpath,fname);
+                if verLessThan('matlab','8.4.0')
+                    set(self.settings_file_text, 'String',self.settings_file);
+                else
+                    self.settings_file_text.String = self.settings_file;
+                end
+            end
+        end
+        function SetMontageFile(self,~,~)
+            [fname fpath fspec] = uigetfile('*.*');
+            if ~isempty(nonzeros([fname fpath fspec]))
+                self.montage_fname = strcat(fpath,fname);
+                if verLessThan('matlab','8.4.0')
+                    set(self.montage_fname_text, 'String',fname);
+                else
+                    self.montage_fname_text.String = self.montage_fname;
+                end
+            end
+        end
+        function SelectSignalToFeedback(self,obj,event)
+            if verLessThan('matlab','8.4.0')
+                self.signal_to_feedback = get(obj,'Value')+1;
+            else
+                self.signal_to_feedback = obj.Value+1;
+            end
+        end
+        function FitFigure(self,obj, event)
+            f = gcbo;
+            fp = get(f,'Position');
+            cb = findobj('Tag','connect_button');
+            db = findobj('Tag','disconnect_button');
+            dss = findobj('Tag','ds_slider');
+            rss = findobj('Tag','raw_slider');
+            dm = findobj('Tag','sn_to_fb_dropmenu');
+            lt = findobj('Tag','log_text');
+            st = findobj('Tag','status_text');
+            cpt = findobj('Tag','curr_protocol_text');
+            rl = findobj('Tag', 'raw_line');
+            dsl = findobj('Tag','ds_line');
+            
+            set(db,'Position',[0.85*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
+            set(cb,'Position',[0.03*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
+            set(dss,'Position',[0.93*fp(3),0.12*fp(4) , 0.02*fp(3), 0.3*fp(4)]);
+            set(rss,'Position',[0.93*fp(3),0.60*fp(4) , 0.02*fp(3), 0.3*fp(4)]);
+            set(lt,'Position',[0 0.6*fp(4) 0.1*fp(3), 0.4*fp(4)]);
+            set(st,'Position', [0 0.49*fp(4), 0.3*fp(3), 0.05*fp(4)]);
+            set(cpt, 'Position',[0 0.125*fp(4), 0.12*fp(3), 0.32*fp(4)]);
+            set(dm,'Position', [0.45*fp(3), 0.015*fp(4),0.12*fp(3),0.04*fp(4)]);
+            set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
+            set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
+            
+            self.SetRawYTicks;
+            self.SetDSYTicks;
+        end
+        function SetRawYTicks(self)
+            try
+                r_sp = get(self.raw_subplot);
+                
+                r_yticks = [r_sp.YLim(1):self.raw_shift:r_sp.YLim(2)];
+                set(self.raw_subplot, 'YTick', r_yticks);
+                set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
+                set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1)/self.raw_ydata_scale));
+            end
+        end
+        function SetDSYTicks(self)
+            try
+                ds_sp = get(self.ds_subplot);
+                
+                ds_yticks = [ds_sp.YLim(1):self.ds_shift:ds_sp.YLim(2)];
+                set(self.ds_subplot, 'YTick', ds_yticks);
+                set(self.ds_subplot, 'YTickLabel', self.ds_ytick_labels);
+                set(self.ds_line,'String',num2str((ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals))/self.ds_ydata_scale));
+            end
         end
         
-        
-        string = strcat(string,',','Feedbacked signal', ',','Fb values',',','Average',',','Stddev',',','Window size',',','Window num');
-        whole_data = [raw_data_matrix data_matrix fb_matrix];
-        idx = idx+self.feedback_protocols{i}.actual_protocol_size;
-        
-        %write data
-        f = fopen(filename,'w');
-        fwrite(f,size(whole_data),'int');
-        fwrite(f,whole_data, 'double');
-        fclose(f);
-        %write header
-        inf_file = fopen('exp_info.hdr','w');
-        fprintf(inf_file,string);
-        fclose(inf_file);
     end
-    self.AddNotes;
-    end
-    function AddNotes(self)
-    self.add_notes_window = figure;
-    self.add_notes_field = uicontrol('Parent', self.add_notes_window, 'Style', 'edit', 'Position', [ 10 30 300 200]);
-    self.write_notes = uicontrol('Parent', self.add_notes_window, 'Style', 'pushbutton', 'Position',[ 150 10 100 20], 'Callback', 'uiresume', 'String', 'Save notes');
-    uiwait;
-    if verLessThan('matlab','8.4.0')
-        notes = get(self.add_notes_field, 'String');
-    else
-        notes = self.add_notes_field.String;
-    end
-    f = fopen('notes.txt','w');
-    fwrite(f, notes,'char');
-    fclose(f);
-    close(self.add_notes_window);
-    close(self.raw_and_ds_figure);
-    end
-    function SetRecordingStatus(self)
-    if verLessThan('matlab','8.4.0')
-        if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
-            set(self.status_text, 'String','Status: receiving');
-        else
-            set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
-        end
-    else
-        if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
-            self.status_text.String = 'Status: receiving';
-        else
-            self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));
-        end
-    end
-    end
-    function SetYScale(self,obj,event)
-    if strcmp(get(obj,'String'),'DS scale')
-        self.ds_ydata_scale =  2^get(obj,'Value');
-        self.SetDSYTicks;
-    elseif strcmp(get(obj,'String'),'Raw scale')
-        self.raw_ydata_scale = 2^get(obj,'Value');
-        self.SetRawYTicks;
-    end
-    end
-    function SetWorkpath(self,~,~)
-    p = uigetdir;
-    if p
-        self.path = uigetdir;
-    end
-    if verLessThan('matlab','8.4.0')
-        set(self.path_text,'String',self.path);
-    else
-        self.path_text.String = self.path;
-    end
-    end
-    function SetDesignFile(self,~,~)
-    [fname fpath fspec] = uigetfile('*.*');
-    if ~isempty(nonzeros([fname fpath fspec]))
-        self.settings_file = strcat(fpath,fname);
-        if verLessThan('matlab','8.4.0')
-            set(self.settings_file_text, 'String',self.settings_file);
-        else
-            self.settings_file_text.String = self.settings_file;
-        end
-    end
-    end
-    function SetMontageFile(self,~,~)
-    [fname fpath fspec] = uigetfile('*.*');
-    if ~isempty(nonzeros([fname fpath fspec]))
-        self.montage_fname = strcat(fpath,fname);
-        if verLessThan('matlab','8.4.0')
-            set(self.montage_fname_text, 'String',fname);
-        else
-            self.montage_fname_text.String = self.montage_fname;
-        end
-    end
-    end
-    function SelectSignalToFeedback(self,obj,event)
-    if verLessThan('matlab','8.4.0')
-        self.signal_to_feedback = get(obj,'Value')+1;
-    else
-        self.signal_to_feedback = obj.Value+1;
-    end
-    end
-    function FitFigure(self,obj, event)
-    f = gcbo;
-    fp = get(f,'Position');
-    cb = findobj('Tag','connect_button');
-    db = findobj('Tag','disconnect_button');
-    dss = findobj('Tag','ds_slider');
-    rss = findobj('Tag','raw_slider');
-    dm = findobj('Tag','sn_to_fb_dropmenu');
-    lt = findobj('Tag','log_text');
-    st = findobj('Tag','status_text');
-    cpt = findobj('Tag','curr_protocol_text');
-    rl = findobj('Tag', 'raw_line');
-    dsl = findobj('Tag','ds_line');
-    
-    set(db,'Position',[0.85*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
-    set(cb,'Position',[0.03*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
-    set(dss,'Position',[0.93*fp(3),0.12*fp(4) , 0.02*fp(3), 0.3*fp(4)]);
-    set(rss,'Position',[0.93*fp(3),0.60*fp(4) , 0.02*fp(3), 0.3*fp(4)]);
-    set(lt,'Position',[0 0.6*fp(4) 0.1*fp(3), 0.4*fp(4)]);
-    set(st,'Position', [0 0.49*fp(4), 0.3*fp(3), 0.05*fp(4)]);
-    set(cpt, 'Position',[0 0.125*fp(4), 0.12*fp(3), 0.32*fp(4)]);
-    set(dm,'Position', [0.45*fp(3), 0.015*fp(4),0.12*fp(3),0.04*fp(4)]);
-    set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
-    set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
-    
-    self.SetRawYTicks;
-    self.SetDSYTicks;
-    end
-    function SetRawYTicks(self)
-    try
-        r_sp = get(self.raw_subplot);
-        
-        r_yticks = [r_sp.YLim(1):self.raw_shift:r_sp.YLim(2)];
-        set(self.raw_subplot, 'YTick', r_yticks);
-        set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
-        set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1)/self.raw_ydata_scale));
-    end
-    end
-    function SetDSYTicks(self)
-    try
-        ds_sp = get(self.ds_subplot);
-        
-        ds_yticks = [ds_sp.YLim(1):self.ds_shift:ds_sp.YLim(2)];
-        set(self.ds_subplot, 'YTick', ds_yticks);
-        set(self.ds_subplot, 'YTickLabel', self.ds_ytick_labels);
-        set(self.ds_line,'String',num2str((ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals))/self.ds_ydata_scale));
-    end
-    end
-    
-end
 end
 
 function channels = read_montage_file(fname)

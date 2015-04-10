@@ -1,4 +1,4 @@
-mulr = ReadEEGData('D:\neurofeedback\results\2015-04-07\Alexey\12-36-51\4Right_hand.bin');
+mulr = ReadEEGData('D:\neurofeedback\results\2015-04-10\vika\10-40-21\12Both_hands_imagination.bin');
 %mulr(end-15:end,:) = [];
 signal_to_fb = mulr(1,9);
 used_ch = 5;
@@ -64,10 +64,16 @@ fb5(i-window+1+shift:i+shift) = (val-av)/s;
 % fb20(i-19:i) = (val-av)/s;
 % end
 figure;
-plot(fb);
+% plot(fb);
+% hold on;
+% plot(fb5,'r-');
+% hold on;
+plot(mul);
 hold on;
-plot(fb5,'r-');
-hold on;
+plot(mur,'r-');
+
+
+
 %plot(mulr(:,end)); %windows
 grid on;
 % hold on;
