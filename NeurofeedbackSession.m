@@ -25,8 +25,12 @@ classdef NeurofeedbackSession < handle
                          chs = fieldnames(t.channels);
                          d.channels = cell(length(chs),2);
                          for ch = 1:numel(chs);
+                             try
                              d.channels(ch,1) = {chs{ch}};
                              d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)};
+                             catch
+                                 chs{ch}
+                             end
                          end
                      else
                     try
@@ -96,6 +100,7 @@ classdef NeurofeedbackSession < handle
                         rtp.string_to_show = protocols{i}.cString;
                         try
                         rtp.fb_type = protocols{i}.sFb_type;
+                        rtp.filter_filename = protocols{i}.sFilterFilename;
                         end
                         
                         try

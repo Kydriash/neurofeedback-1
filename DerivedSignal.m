@@ -12,6 +12,7 @@ classdef DerivedSignal < handle
         signal_name
         data
         channels
+        all_channels
         collect_buff %collects all the data
         channels_indices
         filtered %temp for debugging
@@ -23,23 +24,25 @@ classdef DerivedSignal < handle
         
         function self = DerivedSignal(self,signal, sampling_frequency, data_length,channels,channel_count,plot_length)
             self.signal_name = signal.sSignalName;
-            
+            self.all_channels = channels;
             self.channels = signal.channels;
             self.channels_indices = zeros(1,length(signal.channels));
+            self.spatial_filter = zeros(1,length(self.all_channels));
             if strcmpi(self.signal_name, 'raw')         
                 self.collect_buff = circVBuf(data_length, length(signal.channels), 0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),length(signal.channels), 0); 
 % 
                    
             else
-                self.collect_buff = circVBuf(data_length*10,1,0);
+                self.collect_buff = circVBuf(data_length,1,0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
 
             end
-            for i = 1:channel_count
+            for i = 1:length(self.all_channels)
                     for j = 1:length(self.channels)
-                        if strcmp(channels{i},self.channels{j,1})
+                        if strcmp(self.all_channels{i},self.channels{j,1})
                             try
+                                
                             self.channels_indices(j) = i;
                             catch i,j
                             end
@@ -62,6 +65,30 @@ classdef DerivedSignal < handle
             self.filtered = 0;
             
         end
+        
+        
+        function UpdateSpatialFilter(self,sp_filter)
+            if iscell(sp_filter) && size(sp_filter,2) > 1%channels cell array
+                for idx = 1:length(sp_filter)
+                    for ch = 1:length(self.all_channels)
+                        if strcmp(sp_filter{idx,1},self.all_channels(ch))
+                            self.spatial_filter(ch) = sp_filter{idx,2};
+                        end
+                    end
+                end
+                   
+            elseif isnumeric(sp_filter) && min(size(sp_filter)) == 1 %vector
+                for idx = 1:length(self.channels_indices)
+                    self.spatial_filter(self.channels_indices(idx)) = sp_filter(self.channels_indices(idx));
+                end
+            end
+                
+                
+            
+            
+            
+        end
+        
         
         function Apply(self, newdata,recording)
             %do projection, i.e. apply spatial filter(s)

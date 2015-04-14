@@ -38,6 +38,16 @@
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>SSD</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<bUpdateStatistics>1</bUpdateStatistics>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<fDuration>2</fDuration>
+			<bStopAfter>1</bStopAfter>
+			<cString>Baseline acquisition</cString>
+			<sFilterFilename>xxx.xml</sFilterFilename>
+		</FeedbackProtocol>
 		<FeedbackProtocol>
 			<sProtocolName>EyeArtifacts</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
@@ -50,7 +60,7 @@
 		<FeedbackProtocol>
 			<sProtocolName>Feedback_bar</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
-			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<nMSecondsPerWindow>100</nMSecondsPerWindow>
 <sFb_type>Bar</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>180</fDuration>
@@ -60,7 +70,7 @@
 <FeedbackProtocol>
 			<sProtocolName>Feedback_color</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
-			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<nMSecondsPerWindow>100</nMSecondsPerWindow>
 <sFb_type>Color intensity</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>18</fDuration>
@@ -126,16 +136,14 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>2</fDuration>
+			<fDuration>20</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString> 	 </cString>
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
 
-<s>Baseline</s>
-<s>Feedback_color</s>
-<s>Baseline</s>
+<s>SSD</s>
 
 
 

@@ -156,7 +156,8 @@ classdef EEGLSL < handle
             self.to_proceed = [];
             self.samples_acquired = 0;
             self.count = 1;
-            self.montage_fname = 'C:\Users\user1\AppData\Local\MCS\NeoRec\nvx136.nvx136.monopolar-Pz';
+            %self.montage_fname = 'C:\Users\user1\AppData\Local\MCS\NeoRec\nvx136.nvx136.monopolar-Pz';
+            self.montage_fname = 'D:\neurofeedback\settings\nvx136.nvx136.monopolar-Pz.xml';
             self.montage_fname_text = 'nvx136.nvx136.monopolar-Pz';
             self.raw_shift = 1;
             self.ds_shift = 1;
@@ -209,30 +210,78 @@ classdef EEGLSL < handle
             end
         end
         function Update_Statistics(self)
+           
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
-                N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-                if(N>0)
-                    
-                    for s = 2:length(self.derived_signals)
-                        if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
-                            values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
-                        else
-                            values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.lst - N+1:self.derived_signals{s}.collect_buff.lst,:);
-                        end
-                        self.feedback_manager.average(s-1) = mean(values);
-                        self.feedback_manager.standard_deviation(s-1) = std(values);
+                if strcmp(self.feedback_protocols{self.current_protocol}.protocol_name,'SSD')
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
+                    i = 1;
+                    clear C SSD V Fr;
+                    for f0 = 7:0.5:25
+                        pp(1,:) = [f0-3.0,f0-2.0];
+                        pp(3,:) = [f0+2.0,f0+3.0];
+                        pp(2,:) = [f0-2.0,f0+2.0];
+                        for f = 1:3
+                            [z, p, k] =butter(5,pp(f,:)/(0.5*self.sampling_frequency));
+                            [b(f,:),a(f,:)] = zp2tf(z,p,k);
+                            x = filtfilt(b(f,:),a(f,:),x_raw)';
+                            C{f} = x*x'/size(x,2);
+                            C{f} = C{f}+ 0.05*trace(C{f})/size(C{f},1)*eye(size(C{f}));
+                        end;
                         
+                        [v e] = eig(C{2},0.5*(C{1}+C{3}));
+                        [mxv, mxi] = max(diag(e));
+                        
+                        SSD(i) = mxv;
+                        V(:,i) = v(:,mxi);
+                        Fr(i) = f0;
+                        i = i+1;
+                    end;
+                    hh = figure;
+                    plot(Fr,SSD); xlabel('frequency, Hz');
+                    [F,A] = ginput(1);
+                    %[F A] = getpts(hh);
+                    close(hh);
+                    %add several points
+                    [minv, mini] = min(abs(Fr-F));
+                    W  = V(:,mini);%save to a file with names corr. to raw_ds components
+                    %set raw_signal
+                    for ds = 1:length(self.derived_signals)
+                        self.derived_signals{ds}.UpdateSpatialFilter(W);
+                        if min(size(self.derived_signals{ds}.temporal_filter))
+                            self.derived_signals{ds}.temporal_filter{1}.range = [Fr(mini)-2.0 Fr(mini) + 2.0];
+                        end
                     end
                     
-                    self.SetRawYTicks;
-                    self.SetDSYTicks;
-                    self.yscales_fixed = 1;
-                    self.raw_yscale_fixed = 1;
-                    self.ds_yscale_fixed = 1;
-                    self.fb_statistics_set = 1;
+                    %write to file
+                    
+                    
+
+                else
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    if(N>0)
+                        
+                        for s = 2:length(self.derived_signals)
+                            if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
+                                values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
+                            else
+                                values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.lst - N+1:self.derived_signals{s}.collect_buff.lst,:);
+                            end
+                            self.feedback_manager.average(s-1) = mean(values);
+                            self.feedback_manager.standard_deviation(s-1) = std(values);
+                            
+                        end
+                        
+                        self.SetRawYTicks;
+                        self.SetDSYTicks;
+                        self.yscales_fixed = 1;
+                        self.raw_yscale_fixed = 1;
+                        self.ds_yscale_fixed = 1;
+                        self.fb_statistics_set = 1;
+                        
+                    end;
                 end;
-            end;
-            
+            end
             
         end
         function Receive(self,timer_obj, event)
@@ -396,16 +445,18 @@ classdef EEGLSL < handle
             for i = 1: length(self.signals)
                 
                 self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.channel_count,self.plot_length);
-                sp_filter = zeros(1,length(self.channel_labels));
-                for channel = 1:length(self.channel_labels)
-                    for ch = 1:length(self.signals{i}.channels)
-                        if strcmp(self.signals{i}.channels{ch,1}, self.channel_labels(channel))
-                            sp_filter(channel) = self.signals{i}.channels{ch,2};
-                        end
-                    end
-                    
-                end
-                self.derived_signals{i}.spatial_filter = sp_filter;
+                %sp_filter = zeros(1,length(self.channel_labels));
+                 self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels);
+%                 for channel = 1:length(self.channel_labels)
+%                     for ch = 1:length(self.signals{i}.channels)
+%                         if strcmp(self.signals{i}.channels{ch,1}, self.channel_labels(channel))
+%                             sp_filter(channel) = self.signals{i}.channels{ch,2};
+%                         end
+%                     end
+%                     
+%                 end
+%                 self.derived_signals{i}.spatial_filter = sp_filter;
+                %self.derived_signals{i}.UpdateSpatialFilter(sp_filter);
             end
             
             for i = 1:length(self.feedback_manager.window_size)

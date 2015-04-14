@@ -13,6 +13,7 @@ classdef RealtimeProtocol < handle
         stop_after
         string_to_show
         fb_type
+        filter_filename
         
     end 
    
