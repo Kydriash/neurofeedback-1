@@ -115,6 +115,7 @@ classdef EEGLSL < handle
         default_window_length
         buffer_length
         ssd
+        program_path
     end
     
     methods
@@ -139,8 +140,8 @@ classdef EEGLSL < handle
             self.samples_acquired = 0;
             self.y_limit = [-1 7];
             self.subject_record = SubjectRecord;
-            [p, ~, ~] = fileparts(which(mfilename));
-            self.path = strcat(p,'\results');
+            [self.program_path, ~, ~] = fileparts(which(mfilename));
+            self.path = strcat(self.program_path,'\results');
             self.signal_to_feedback = 2;
             
             self.settings_file_text = 'LeftVsRightMu.nss.xml';
@@ -255,6 +256,7 @@ classdef EEGLSL < handle
                     end;
                     hh = figure;
                     plot(Fr,SSD); xlabel('frequency, Hz');
+                    annotation('textbox', [0.2,0.8,0.1,0.1],'String', {'Select two points and press Enter.','To delete the last point, press Backspace'});
                     F = [];
                     while length(F) ~= 2
                         F = getpts(hh);
@@ -266,7 +268,7 @@ classdef EEGLSL < handle
                     ind = (find(Fr>=left_point & Fr<=right_point));
                     [~, ind_max] = max(SSD(ind));
                     middle_point = ind(ind_max);
-                    Fr(middle_point)
+                    disp(strcat(num2str(Fr(middle_point)),' Hz'));
                     
                     
                     %add several points
@@ -464,13 +466,27 @@ classdef EEGLSL < handle
             set(self.connect_button, 'Callback',@self.StartRecording);
         end
         function RunInterface(self)
-            self.fig_interface = figure('CloseRequestFcn','@self.DoNothing');
+            %read subjects file
+                if exist(strcat(self.program_path,'\subjects.txt'))
+                    subjects_file = fopen(strcat(self.program_path,'\subjects.txt'));
+                    subjects = {};
+                    
+                    subjects{end+1} = fgetl(subjects_file);
+                    while ischar(subjects{end})
+                        subjects{end+1} = fgetl(subjects_file);
+                    end
+                    subjects = subjects(1:end-1);
+                else
+                    subjects = {};
+                end
+                subjects = [{'Null','Add a new subject'} sort(subjects)];
+            self.fig_interface = figure;
+            self.fig_interface.CloseRequestFcn = @self.DoNothing;
             prr_text = uicontrol('Parent',self.fig_interface, 'Style', 'text', 'String', 'Plot refresh rate, s', 'Position',[20 250 120 30],'HorizontalAlignment','left'); %#ok<NASGU>
             prr = uicontrol('Parent', self.fig_interface, 'Style', 'edit', 'String', num2str(self.plot_refresh_rate), 'Position', [125 250 50 30]);
             drr_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Data receive rate, s', 'Position', [20 210 100 30],'HorizontalAlignment','left'); %#ok<NASGU>
             drr = uicontrol('Parent', self.fig_interface, 'Style', 'edit', 'String', num2str(self.data_receive_rate), 'Position', [125 210 50 30]);
-            sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Subject name', 'Position',[20 170 100 20],'HorizontalAlignment','left'); %#ok<NASGU>
-            sn = uicontrol('Parent', self.fig_interface, 'Style', 'edit', 'String', self.subject_record.subject_name, 'Position', [125 170 100 20]);
+            %sn = uicontrol('Parent', self.fig_interface, 'Style', 'edit', 'String', self.subject_record.subject_name, 'Position', [125 170 100 20]);
             self.path_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.path,'Position', [120 125 200 35],'HorizontalAlignment','left');
             path_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select path', 'Callback', @self.SetWorkpath, 'Position', [20 135 100 35]); %#ok<NASGU>
             self.settings_file_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.settings_file_text,'Position', [120 90 200 35],'HorizontalAlignment','left');
@@ -482,14 +498,15 @@ classdef EEGLSL < handle
             show_fb_check = uicontrol('Parent', self.fig_interface, 'Style', 'checkbox' ,'Position', [160 295 20 20],'HorizontalAlignment','left','Value',1);
             % fb_type_string = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Feedback type','Position', [200 290 100 20],'HorizontalAlignment','left');
             %fb_type_menu = uicontrol('Parent', self.fig_interface, 'Style', 'popupmenu', 'String', {'Bar','Color intensity'},'Position', [310 295 100 20],'HorizontalAlignment','left','Value',1);
-            
+            subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[125 320 100 20],'String',subjects,'Callback',@self.SetSubject);
+            sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Subject name', 'Position',[20 315 100 20],'HorizontalAlignment','left'); %#ok<NASGU>
             
             uiwait();
             if ishandle(self.fig_interface) %if the window is not closed
                 if verLessThan('matlab','8.4.0')
                     self.plot_refresh_rate = str2num(get(prr,'String'));
                     self.data_receive_rate = str2num(get(drr,'String'));
-                    self.subject_record.subject_name = get(sn,'String');
+                    %self.subject_record.subject_name = get(sn,'String');
                     set(self.fig_interface,'Visible', 'off');
                     self.show_fb = get(show_fb_check, 'Value');
                     % fb_type_num = get(fb_type_menu, 'Value');
@@ -498,11 +515,20 @@ classdef EEGLSL < handle
                 else
                     self.plot_refresh_rate = str2num(prr.String);
                     self.data_receive_rate = str2num(drr.String);
-                    self.subject_record.subject_name = sn.String;
                     self.fig_interface.Visible = 'off';
                     self.show_fb = show_fb_check.Value;
                     %                self.fb_type = fb_type_menu.String(fb_type_menu.Value);
                 end
+                subjects = [subjects {self.subject_record.subject_name}];
+                
+                subjects = sort(unique(subjects));
+                subjects_file = fopen(strcat(self.program_path,'\subjects.txt'),'wt');
+                for i=1:length(subjects)
+                    if ~(strcmp(subjects{i},'Add a new subject')|| strcmp(subjects{i},'Null'))
+                    fprintf(subjects_file,'%s\n',subjects{i});
+                    end
+                end
+                fclose(subjects_file);
                 self.timer_new_data_function = @self.Receive;
                 self.timer_new_data = timer('Name','receive_data','TimerFcn', self.timer_new_data_function,'ExecutionMode','fixedRate',...
                     'Period',self.data_receive_rate);
@@ -511,6 +537,10 @@ classdef EEGLSL < handle
                     'Period', self.plot_refresh_rate);
                 %cursed channel labels
                 self.channel_labels = read_montage_file(self.montage_fname);
+                
+                
+                
+                
                 nfs = NeurofeedbackSession;
                 nfs.LoadFromFile(self.settings_file);
                 self.feedback_protocols = nfs.feedback_protocols;
@@ -1147,9 +1177,27 @@ classdef EEGLSL < handle
                 set(self.ds_line,'String',num2str((ds_sp.YLim(2)-ds_sp.YLim(1))/(length(self.derived_signals))/self.ds_ydata_scale));
             end
         end
-        function DoNothing(self,src,info)
+        function SetSubject(self,obj,event)
+            if strcmp(obj.String{obj.Value},'Add a new subject')
+                p = get(obj,'Position');
+                p(2) = p(2)-2;
+                p(4) = p(4)+2;
+                subj_text = uicontrol('Parent',self.fig_interface,'Style','edit','String', '','Position',p);
+                subj_tip = uicontrol('Parent',self.fig_interface,'Style','text','String', 'Press Enter when finished', 'Position', [p(1) + p(3), p(2), 150, 20]);
+                waitfor(subj_text,'String');
+                self.subject_record.subject_name = strtrim(subj_text.String); %remove leading and trailing spaces
+                obj.String = [{subj_text.String} obj.String'];
+                delete(subj_text);
+                delete(subj_tip);
+                obj.Value = 1;
+            else
+                self.subject_record.subject_name = obj.String{obj.Value};
+            end
+            
+        end
+        function DoNothing(self,obj,event)
             %do nothing and destroy the window
-            delete(src);
+            delete(obj);
         end
     end
 end
