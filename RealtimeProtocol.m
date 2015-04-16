@@ -14,6 +14,7 @@ classdef RealtimeProtocol < handle
         string_to_show
         fb_type
         filter_filename
+        band %range to calculate spatial filter
         
     end 
    

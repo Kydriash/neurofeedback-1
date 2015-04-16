@@ -18,6 +18,7 @@ classdef DerivedSignal < handle
         filtered %temp for debugging
         composite_montage
         spf_times_cm
+        sampling_frequency
     end
     
     methods
@@ -26,6 +27,7 @@ classdef DerivedSignal < handle
             self.signal_name = signal.sSignalName;
             self.all_channels = channels;
             self.channels = signal.channels;
+            self.sampling_frequency = sampling_frequency;
             self.channels_indices = zeros(1,length(signal.channels));
             self.spatial_filter = zeros(1,length(self.all_channels));
             if strcmpi(self.signal_name, 'raw')         
@@ -54,7 +56,7 @@ classdef DerivedSignal < handle
                     self.temporal_filter{c}.order = signal.filters(c).order;
                     self.temporal_filter{c}.range = signal.filters(c).range;
                     self.temporal_filter{c}.mode = signal.filters(c).mode;
-                    [z p k] = butter(self.temporal_filter{c}.order,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
+                    [z p k] = cheby1(self.temporal_filter{c}.order,1,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
                     [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
@@ -69,14 +71,15 @@ classdef DerivedSignal < handle
         
         function UpdateSpatialFilter(self,sp_filter)
             if iscell(sp_filter) && size(sp_filter,2) > 1%channels cell array
+                %self.channels = sp_filter;
                 for idx = 1:length(sp_filter)
                     for ch = 1:length(self.all_channels)
-                        if strcmp(sp_filter{idx,1},self.all_channels(ch))
+                        if strcmp(sp_filter{idx,1},self.all_channels(ch)) && ~isempty(strmatch(self.all_channels{ch},self.channels(:,1)))
                             self.spatial_filter(ch) = sp_filter{idx,2};
                         end
                     end
                 end
-                   
+                
             elseif isnumeric(sp_filter) && min(size(sp_filter)) == 1 %vector
                 for idx = 1:length(self.channels_indices)
                     self.spatial_filter(self.channels_indices(idx)) = sp_filter(self.channels_indices(idx));
@@ -88,6 +91,14 @@ classdef DerivedSignal < handle
             
             
         end
+        function UpdateTemporalFilter(self,range)
+            self.temporal_filter{1}.range = range;
+            [z p k] = cheby1(self.temporal_filter{1}.order,1,self.temporal_filter{1}.range/(self.sampling_frequency/2),self.temporal_filter{1}.mode);
+            [self.temporal_filter{1}.B, self.temporal_filter{1}.A] = zp2tf(z,p,k);
+            self.temporal_filter{1}.Zf = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,1);
+            self.temporal_filter{1}.Zi = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,1);
+            
+        end
         
         
         function Apply(self, newdata,recording)
@@ -96,18 +107,13 @@ classdef DerivedSignal < handle
                 self.data = zeros(length(self.channels), size(newdata,2));
                 %select only channels we need
                 %self.spf_times_cm = self.spatial_filter* self.composite_montage;
-                 for i = 1:length(self.channels_indices)
-                     sz = newdata(self.channels_indices(i):self.channels_indices(i),:);
-                    self.data(i:i,:) = sz*self.spatial_filter(self.channels_indices(i));
-                 end
-                 
-
+                self.data = newdata(self.channels_indices,:);
                 self.ring_buff.append(self.data');
                 if recording
                     self.collect_buff.append(self.data');
                 end
-
             else
+                
 
                 %sz = self.spatial_filter*self.composite_montage * newdata;
                 sz = self.spatial_filter*newdata;

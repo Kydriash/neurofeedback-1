@@ -99,10 +99,16 @@ classdef NeurofeedbackSession < handle
                         rtp.stop_after = protocols{i}.bStopAfter;
                         rtp.string_to_show = protocols{i}.cString;
                         try
-                        rtp.fb_type = protocols{i}.sFb_type;
-                        rtp.filter_filename = protocols{i}.sFilterFilename;
-                        end
                         
+                        rtp.filter_filename = protocols{i}.sFilterFilename;
+                        
+                        end
+                        try
+                            rtp.band = protocols{i}.dBand;
+                        end
+                        try
+                            rtp.fb_type = protocols{i}.sFb_type;
+                        end
                         try
                             rtp.window_size = protocols{i}.nMSecondsPerWindow;
                         end
