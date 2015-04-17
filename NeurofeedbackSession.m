@@ -45,7 +45,7 @@ classdef NeurofeedbackSession < handle
                 if ~strcmp(d.sSignalName, 'Raw')
                     d.filters(1,1) = struct();
                     d.filters(1).range = [d.fBandpassLowHz d.fBandpassHighHz];
-                    d.filters(1).order = 5;
+                    d.filters(1).order = 3;
                     d.filters(1).mode = 'bandpass';
                 else
                     d.filters = cell(1,0);

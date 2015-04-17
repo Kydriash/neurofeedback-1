@@ -74,7 +74,7 @@
 			<nMSecondsPerWindow>100</nMSecondsPerWindow>
 <sFb_type>Color intensity</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>30</fDuration>
+			<fDuration>3</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString></cString>
 		</FeedbackProtocol>
