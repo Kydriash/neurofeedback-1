@@ -13,6 +13,11 @@ classdef FeedbackManager < handle
         feedback_vector
         neurofeedback_session
         feedback_records %number of the derived_signal
+        
+        
+        discrete_fb_records 
+        discrete_fb_threshold
+        discrete_fb_delta_t %if delta t passes without successful records (>= threshold), the threshold is lowered
     end
     
     methods

@@ -117,6 +117,8 @@ classdef EEGLSL < handle
         ssd
         program_path
         subjects_dropmenu
+        edit_protocols_button
+        protocol_duration_text
     end
     
     methods
@@ -175,6 +177,7 @@ classdef EEGLSL < handle
             %self.fb_type= 'Color intensity';
             self.ssd = 0;
             
+            
         end
         function UpdateFeedbackSignal(self)
             
@@ -214,6 +217,7 @@ classdef EEGLSL < handle
             
             if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                 if strcmp(self.feedback_protocols{self.current_protocol}.protocol_name,'SSD')
+                    try
                     %find the peak
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                     x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
@@ -248,6 +252,9 @@ classdef EEGLSL < handle
                         Rng(i,:) = pp(2,:); % band 
                         i = i+1;
                     end;
+                    catch
+                        15
+                    end
                     hh = figure;
                     plot(Fr,SSD); xlabel('frequency, Hz');
                     annotation('textbox', [0.2,0.8,0.1,0.1],'String', {'Select two points and press Enter.','To delete the last point, press Backspace'});
@@ -321,6 +328,7 @@ classdef EEGLSL < handle
                         NewDS.UpdateTemporalFilter(Rng(middle_point,:));
                         self.derived_signals{end+1} = NewDS;
                     end
+                    
                 else
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                     if(N>0)
@@ -558,7 +566,7 @@ classdef EEGLSL < handle
                 self.feedback_manager.average = zeros(1,length(self.signals)-1);
                 self.feedback_manager.standard_deviation = ones(1,length(self.signals)-1);
                 self.feedback_manager.feedback_vector = zeros(1,length(self.signals)-1);
-                self.feedback_manager.feedback_records = circVBuf(self.exp_data_length*10, 6,0);
+                self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                 figure(self.fig_feedback);
                 set(self.fig_feedback, 'OuterPosition', [-1280 0 1280 1024]);
                 self.feedback_axis_handle = axes;
@@ -636,6 +644,8 @@ classdef EEGLSL < handle
                 self.log_text = uicontrol('Parent', self.raw_and_ds_figure  ,'Style', 'Text','String', {'Log'}, 'Position', [0 300 50 100],'Tag','log_text');
                 self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ', 'Position', [0 210 200 20],'HorizontalAlignment','left','Tag','status_text');
                 self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
+                self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Position',[70 400 80 15],'Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
+                
                 
                 self.raw_subplot = subplot(2,1,1);
                 set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
@@ -1062,6 +1072,8 @@ classdef EEGLSL < handle
             cpt = findobj('Tag','curr_protocol_text');
             rl = findobj('Tag', 'raw_line');
             dsl = findobj('Tag','ds_line');
+            epb = findobj('Tag','edit_protocols_button');
+            
             
             set(db,'Position',[0.85*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
             set(cb,'Position',[0.03*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
@@ -1073,7 +1085,7 @@ classdef EEGLSL < handle
             set(dm,'Position', [0.45*fp(3), 0.015*fp(4),0.12*fp(3),0.04*fp(4)]);
             set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
             set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
-            
+            set(epb,'Position', [0.13*fp(3), 0.95*fp(4), 0.12*fp(3), 0.04*fp(4)]);
             self.SetRawYTicks;
             self.SetDSYTicks;
         end
@@ -1121,9 +1133,59 @@ classdef EEGLSL < handle
             end
             
         end
+        function EditProtocols(self,obj,event)
+            protocol_figure = figure;
+            delta_y = protocol_figure.Position(4)/(length(self.feedback_protocols)+3);
+            max_height = protocol_figure.Position(4) - delta_y;
+            
+            for p = 1:length(self.feedback_protocols)
+                protocol_name{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [0,max_height-delta_y*p, protocol_figure.Position(4)*0.25, delta_y],'String', self.feedback_protocols{p}.protocol_name);
+                
+                if p < self.next_protocol %already recorded; duration cannot be changed
+                    self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.35, max_height-delta_y*p, protocol_figure.Position(4)*0.25, delta_y],'String', num2str(self.feedback_protocols{p}.protocol_duration));
+                else
+                    self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','edit','Position', [protocol_figure.Position(3)*0.35, max_height-delta_y*p, protocol_figure.Position(4)*0.25, delta_y],'String', num2str(self.feedback_protocols{p}.protocol_duration));
+                
+                end
+                ms{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.6,max_height-delta_y*p,protocol_figure.Position(3)*0.1 , delta_y],'String', 's');
+            end
+            okay_button = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.75,delta_y/2, protocol_figure.Position(3)*0.09,protocol_figure.Position(4)*0.12],'String', 'Apply','Tag','okay_button','Callback',@self.GetProtocolDuration);
+            cancel_button = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.85,delta_y/2, protocol_figure.Position(3)*0.09, protocol_figure.Position(4)*0.12],'String', 'Cancel','Tag','cancel_button','Callback',@self.DoNothing);
+            
+            
+        end
+        function GetProtocolDuration(self,obj,event)
+            %set new protocol duration and size (s and samples acc.)
+            for p = self.next_protocol:length(self.feedback_protocols)
+                self.feedback_protocols{p}.protocol_duration = str2double(self.protocol_duration_text{p}.String);
+                self.feedback_protocols{p}.protocol_size = self.feedback_protocols{p}.protocol_duration * self.sampling_frequency;
+            end
+            
+            %check if we reserved enough space
+            data_length = 0;
+            for p = 1:length(self.feedback_protocols)
+                data_length = data_length + self.feedback_protocols{p}.protocol_size;
+            end
+            if data_length > self.exp_data_length
+                for ds = 1:length(self.derived_signals)
+                    new_circbuff = circVBuf(fix(data_length*1.1), size(self.derived_signals{ds}.collect_buff.raw,2),0);
+                    new_circbuff.append(self.derived_signals{ds}.collect_buff.raw(self.derived_signals{ds}.collect_buff.fst:self.derived_signals{ds}.collect_buff.lst,:));
+                    self.derived_signals{ds}.collect_buff = new_circbuff;
+                end
+                self.exp_data_length = fix(data_length*1.1);
+            end
+            %delete the figure
+            delete(obj.Parent);
+        end
+        
         function DoNothing(self,obj,event)
+            
             %do nothing and destroy the window
+            if strcmp(obj.Tag,'cancel_button')
+                delete(obj.Parent);
+            else
             delete(obj);
+            end
         end
     end
 end

@@ -4,8 +4,9 @@ classdef RealtimeProtocol < handle
         window_duration %in sec
         window_size % in samples
         to_update_statistics % (boolean) whether or not to update both global and local to protocol values of avg and tsd
-        protocol_duration
-        protocol_size
+        finished %bool
+        protocol_duration %sec
+        protocol_size %samples
         actual_protocol_size
         ds_names
         ds_index
@@ -15,6 +16,7 @@ classdef RealtimeProtocol < handle
         fb_type
         filter_filename
         band %range to calculate spatial filter
+        
         
     end 
    
