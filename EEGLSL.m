@@ -116,6 +116,7 @@ classdef EEGLSL < handle
         buffer_length
         ssd
         program_path
+        subjects_dropmenu
     end
     
     methods
@@ -452,8 +453,9 @@ classdef EEGLSL < handle
             show_fb_check = uicontrol('Parent', self.fig_interface, 'Style', 'checkbox' ,'Position', [160 295 20 20],'HorizontalAlignment','left','Value',1);
             % fb_type_string = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Feedback type','Position', [200 290 100 20],'HorizontalAlignment','left');
             %fb_type_menu = uicontrol('Parent', self.fig_interface, 'Style', 'popupmenu', 'String', {'Bar','Color intensity'},'Position', [310 295 100 20],'HorizontalAlignment','left','Value',1);
-            subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[125 320 100 20],'String',subjects,'Callback',@self.SetSubject);
-            sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Subject name', 'Position',[20 315 100 20],'HorizontalAlignment','left'); %#ok<NASGU>
+            self.subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[170 320 100 20],'String',subjects,'Callback',@self.SetSubject);
+            sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Choose/Enter subject name', 'Position',[20 315 140 20],'HorizontalAlignment','left'); %#ok<NASGU>
+            subj_folder_button = uicontrol('Parent', self.fig_interface,'Style','pushbutton','Position',[285 320 150 20],'String','Or select subject folder','Callback',@self.SetSubjectFolder);
             
             uiwait();
             if ishandle(self.fig_interface) %if the window is not closed
@@ -1099,6 +1101,15 @@ classdef EEGLSL < handle
             else
                 self.subject_record.subject_name = obj.String{obj.Value};
             end
+        end
+        function SetSubjectFolder(self,obj,event)
+            [a b c ] = fileparts(uigetdir);
+            if b
+                self.subject_record.subject_name = b;
+                self.subjects_dropmenu.String = [{b} self.subjects_dropmenu.String'];
+                self.subjects_dropmenu.Value = 1;
+            end
+            
         end
         function DoNothing(self,obj,event)
             %do nothing and destroy the window
