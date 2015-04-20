@@ -289,13 +289,23 @@ classdef EEGLSL < handle
                     x = struct2xml(chan_structure);
                     full_name = [pth '\SSD.xml'];
                     if exist(full_name)
-                        choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No','No');
+                        choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No, use the old one','No, use the old one');
                         switch choice
                             case 'Yes'
                                 f = fopen(full_name,'w');
                                 fwrite(f,x);
                                 fclose(f);
-                            case 'No'   
+                                spatial_filter = chan_structure;
+                            case 'No, use the old one'  
+                                
+                                s = xml2struct(full_name);
+                                channels_coeff = cell(length(s.channels.channel),2);
+                                for i = 1:length(s.channels.channel)
+                                    channels_coeff{i,1} = strtrim(s.channels.channel{i}.channel_name.Text);
+                                    channels_coeff{i,2} = str2double(strtrim(s.channels.channel{i}.coefficient.Text));
+                                end
+                                    spatial_filter = channels_coeff;
+                                    
                         end
                     else
                         f = fopen(full_name,'w');
@@ -307,7 +317,7 @@ classdef EEGLSL < handle
                     end
                     for i = 2:length(self.signals)
                         NewDS= DerivedSignal(1,self.signals{i}, self.sampling_frequency, self.exp_data_length ,self.channel_labels,length(self.channel_labels),self.plot_length);
-                        NewDS.UpdateSpatialFilter(w_ssd);
+                        NewDS.UpdateSpatialFilter(spatial_filter);
                         NewDS.UpdateTemporalFilter(Rng(middle_point,:));
                         self.derived_signals{end+1} = NewDS;
                     end
