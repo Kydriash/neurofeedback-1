@@ -21,7 +21,7 @@ classdef RealtimeProtocol < handle
     end 
    
     methods
-        function self = RealtimeProtocol(self)
+        function self = RealtimeProtocol(self) %#ok<INUSD>
            self.protocol_name           = '';
            self.to_update_statistics    = false;
            self.window_size             = 0;

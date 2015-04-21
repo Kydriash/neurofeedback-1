@@ -21,7 +21,7 @@ classdef FeedbackManager < handle
     end
     
     methods
-        function self = FeedbackManager(self)
+        function self = FeedbackManager(self) %#ok<INUSD>
             self.window_size            = 30;
             self.current_protocol       = 0;
             self.neurofeedback_session  = [];

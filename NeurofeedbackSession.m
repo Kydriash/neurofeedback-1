@@ -3,17 +3,21 @@ classdef NeurofeedbackSession < handle
         derived_signals
         feedback_protocols
         protocol_sequence
+        protocol_types
     end
     
     methods
-        function self = NeurofeedbackSession(self)
+        function self = NeurofeedbackSession(self) %#ok<INUSD>
             self.derived_signals    = [];
             self.feedback_protocols          = {};
             self.protocol_sequence  = {};
+            self.protocol_types = {};
         end
         function self = LoadFromFile(self,fname)
             
             nfs = xml2struct(fname);
+            
+            %derived signals
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
                        
             for i = 1:length(ds)
@@ -26,10 +30,10 @@ classdef NeurofeedbackSession < handle
                          d.channels = cell(length(chs),2);
                          for ch = 1:numel(chs);
                              try
-                             d.channels(ch,1) = {chs{ch}};
+                             d.channels(ch,1) = chs(ch);
                              d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)};
                              catch
-                                 chs{ch}
+                                 chs{ch} %#ok<NOPRT>
                              end
                          end
                      else
@@ -54,16 +58,16 @@ classdef NeurofeedbackSession < handle
                 
                 self.derived_signals{end+1} = d;
             end
-           
-            protocols = nfs.NeurofeedbackSignalSpecs.vProtocols.FeedbackProtocol;
-            for i = 1:length(protocols)
-                fields = fieldnames(protocols{i});
-                pr = protocols{i};
+           %protocols
+            self.protocol_types = nfs.NeurofeedbackSignalSpecs.vProtocols.FeedbackProtocol;
+            for i = 1:length(self.protocol_types)
+                fields = fieldnames(self.protocol_types{i});
+                pr = self.protocol_types{i};
                 for j = 1: numel(fields)
                     
                     try
-                        if str2num(pr.(fields{j}).Text) || str2num(pr.(fields{j}).Text) ==0
-                            pr.(fields{j}) = str2num(pr.(fields{j}).Text);
+                        if str2num(pr.(fields{j}).Text) || str2num(pr.(fields{j}).Text) ==0 %#ok<ST2NM>
+                            pr.(fields{j}) = str2num(pr.(fields{j}).Text); %#ok<ST2NM>
                         end
                         
                     catch  err
@@ -78,8 +82,9 @@ classdef NeurofeedbackSession < handle
                     
                     
                 end
-                protocols{i} = pr;
+                self.protocol_types{i} = pr;
             end
+            %protocol_sequence
             ps = nfs.NeurofeedbackSignalSpecs.vPSequence.s;
             if length(ps) == 1
                 self.protocol_sequence{end+1} = ps.Text;
@@ -90,27 +95,27 @@ classdef NeurofeedbackSession < handle
             end
             
             for j = 1: length(self.protocol_sequence)
-                for i = 1:length(protocols)
-                    if strcmp(self.protocol_sequence{j},protocols{i}.sProtocolName)
+                for i = 1:length(self.protocol_types)
+                    if strcmp(self.protocol_sequence{j},self.protocol_types{i}.sProtocolName)
                         rtp = RealtimeProtocol;
-                        rtp.protocol_name = protocols{i}.sProtocolName;
-                        rtp.to_update_statistics = protocols{i}.bUpdateStatistics;
-                        rtp.protocol_duration = protocols{i}.fDuration;
-                        rtp.stop_after = protocols{i}.bStopAfter;
-                        rtp.string_to_show = protocols{i}.cString;
-                        try
+                        rtp.protocol_name = self.protocol_types{i}.sProtocolName;
+                        rtp.to_update_statistics = self.protocol_types{i}.bUpdateStatistics;
+                        rtp.protocol_duration = self.protocol_types{i}.fDuration;
+                        rtp.stop_after = self.protocol_types{i}.bStopAfter;
+                        rtp.string_to_show = self.protocol_types{i}.cString;
+                        try %#ok<TRYNC>
                         
-                        rtp.filter_filename = protocols{i}.sFilterFilename;
+                        rtp.filter_filename = self.protocol_types{i}.sFilterFilename;
                         
                         end
-                        try
-                            rtp.band = protocols{i}.dBand;
+                        try %#ok<TRYNC>
+                            rtp.band = self.protocol_types{i}.dBand;
                         end
-                        try
-                            rtp.fb_type = protocols{i}.sFb_type;
+                        try %#ok<TRYNC>
+                            rtp.fb_type = self.protocol_types{i}.sFb_type;
                         end
-                        try
-                            rtp.window_size = protocols{i}.nMSecondsPerWindow;
+                        try %#ok<TRYNC>
+                            rtp.window_size = self.protocol_types{i}.nMSecondsPerWindow;
                         end
 
                         self.feedback_protocols{end+1} = rtp;

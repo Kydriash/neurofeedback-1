@@ -41,22 +41,22 @@ classdef DerivedSignal < handle
 
             end
             for i = 1:length(self.all_channels)
-                    for j = 1:length(self.channels)
-                        if strcmp(self.all_channels{i},self.channels{j,1})
-                            try
-                                
+                for j = 1:length(self.channels)
+                    if strcmp(self.all_channels{i},self.channels{j,1})
+                        try
+                            
                             self.channels_indices(j) = i;
-                            catch i,j
-                            end
+                        catch i,j %#ok<NASGU,NOPRT>
                         end
                     end
-                end  
+                end
+            end
             self.temporal_filter = cell(1,length(signal.filters));
             for c = 1:length(self.temporal_filter)
                     self.temporal_filter{c}.order = signal.filters(c).order;
                     self.temporal_filter{c}.range = signal.filters(c).range;
                     self.temporal_filter{c}.mode = signal.filters(c).mode;
-                    [z p k] = cheby1(self.temporal_filter{c}.order,1,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
+                    [z, p, k] = cheby1(self.temporal_filter{c}.order,1,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
                     [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
@@ -74,7 +74,7 @@ classdef DerivedSignal < handle
                 %self.channels = sp_filter;
                 for idx = 1:length(sp_filter)
                     for ch = 1:length(self.all_channels)
-                        if strcmp(sp_filter{idx,1},self.all_channels(ch)) && ~isempty(strmatch(self.all_channels{ch},self.channels(:,1)))
+                        if strcmp(sp_filter{idx,1},self.all_channels(ch)) && ~isempty(nonzeros(strncmpi(self.all_channels{ch},self.channels(:,1),5)))
                             self.spatial_filter(ch) = sp_filter{idx,2};
                         end
                     end
@@ -91,9 +91,16 @@ classdef DerivedSignal < handle
             
             
         end
-        function UpdateTemporalFilter(self,range)
+        function UpdateTemporalFilter(self,range,order,mode)
+            if(nargin<4)
+                mode = 'bandpass';
+            end;
+            if(nargin<3)
+                order = 3;
+            end;
+                            
             self.temporal_filter{1}.range = range;
-            [z p k] = cheby1(self.temporal_filter{1}.order,1,self.temporal_filter{1}.range/(self.sampling_frequency/2),self.temporal_filter{1}.mode);
+            [z, p, k] = cheby1(order,1,self.temporal_filter{1}.range/(self.sampling_frequency/2),mode);
             [self.temporal_filter{1}.B, self.temporal_filter{1}.A] = zp2tf(z,p,k);
             self.temporal_filter{1}.Zf = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,1);
             self.temporal_filter{1}.Zi = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,1);
@@ -133,7 +140,7 @@ classdef DerivedSignal < handle
                             self.collect_buff.append(sz');
                         end
                     catch
-                        1
+                        1 %#ok<NOPRT>
                     end
                 end
             end
