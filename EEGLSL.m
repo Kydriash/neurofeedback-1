@@ -541,7 +541,7 @@ classdef EEGLSL < handle
                 if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
                     self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + window_size;
                     
-                    if self.feedback_protocols{self.current_protocol}.actual_protocol_size >= self.feedback_protocols{self.current_protocol}.protocol_size
+                    if self.feedback_protocols{self.current_protocol}.actual_protocol_size + window_size >= self.feedback_protocols{self.current_protocol}.protocol_size
                         self.protocol_indices(self.current_protocol+1,:) = self.derived_signals{1}.collect_buff.lst -self.derived_signals{1}.collect_buff.fst +1;
                         try
                             if self.feedback_protocols{self.current_protocol}.to_update_statistics
@@ -806,7 +806,7 @@ classdef EEGLSL < handle
                     dummy_signal.channels = channels;
                     dummy_signal.filters = [];
                     self.derived_signals{1} = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-                    
+                    self.derived_signals{1}.UpdateSpatialFilter(ones(length(self.channel_labels)));
                 else
                     for i = 1: length(self.derived_signals)
                         self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
@@ -949,9 +949,11 @@ classdef EEGLSL < handle
                         if ~self.ds_ylabels_fixed && length(self.derived_signals)>1
                             
                             ds_temp = zeros(length(self.derived_signals)-1,fix(self.plot_size));
+                            fig = get(self.raw_and_ds_figure);
+                            fp = fig.Position;
                             self.ds_plot = plot(ds_temp', 'Parent', self.ds_subplot);
-                            self.ds_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 120 100 25],'Tag','ds_line');
-                            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
+                            self.ds_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)],'Tag','ds_line');
+                            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [0.93*fp(3),0.12*fp(4) , 0.02*fp(3), 0.3*fp(4)], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
                             
                             self.ds_ytick_labels = {' '};
                             for i = 2:length(self.derived_signals)
@@ -1204,7 +1206,7 @@ classdef EEGLSL < handle
             set(self.connect_button, 'String', 'Resume recording');
             set(self.connect_button, 'Callback',{@self.Connect});
             self.subject_record.time_stop = datestr(now,13);
-            if self.finished && ~strcmp(self.streams{1}.name,'File')
+            if self.finished 
                 self.WriteToFile;
             end
         end

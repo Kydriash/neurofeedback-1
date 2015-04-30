@@ -1,10 +1,12 @@
+
 function RecordedStudyToLSL()
+global pushed;
 %read the files
 [fnames, pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
 %check if fnames ets exist
 if ~isempty(nonzeros([pathname filterindex]))
     
-    [protocols, durations, channels]  = GetDataProperties(pathname,fnames);
+    [protocols, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
     
     %create lsl
     sampling_frequency = 500;
@@ -24,7 +26,7 @@ if ~isempty(nonzeros([pathname filterindex]))
         filenames{end+1} = strcat(pathname,fnames);
     else
     for f = fnames
-        filenames{end+1} = strcat(pathname,f{1});
+        filenames{end+1} = strcat(pathname,f{1}); 
     end
     end
     data = [];
@@ -35,13 +37,13 @@ if ~isempty(nonzeros([pathname filterindex]))
     end
     
     
+    pushed = 1;
     while ~outlet.have_consumers()
         pause(0.01);
     end
-    pushed = 1;
-    
     timer_push_data = timer('Name','push_data','TimerFcn', {@PushDataToLSL,outlet,data},'ExecutionMode','fixedRate','Period',1/sampling_frequency);
 start(timer_push_data);
+
 %     for fn = filenames
 %         protocol_data = ReadEEGData(fn{1});
 %         protocol_data = protocol_data(:,1:length(channels))';
@@ -68,9 +70,9 @@ end
 
 
 
-function PushDataToLSL(timer_obj,event,outlet, data)
+function PushDataToLSL(timer_obj,event,outlet, data) %#ok<INUSL>
 global pushed
-if outlet.have_consumers() && size(data,2)
+if outlet.have_consumers() && pushed <= size(data,2)
     outlet.push_chunk(data(:,pushed));
     pushed = pushed + 1;
 
