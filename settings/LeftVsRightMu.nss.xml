@@ -33,7 +33,7 @@
 			<sProtocolName>Baseline</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
-			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<nMSecondsPerWindow>50</nMSecondsPerWindow>
 			<fDuration>2</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
@@ -47,14 +47,14 @@
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
 			<sFilterFilename>xxx.xml</sFilterFilename>
-<dBand>2</dBand>
+<dBand>1</dBand>
 		</FeedbackProtocol>
 		<FeedbackProtocol>
 			<sProtocolName>EyeArtifacts</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>1</bUpdateStatistics>
-			<fDuration>10</fDuration>
+			<fDuration>2</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString>EyeArtifacts acquisition</cString>
 		</FeedbackProtocol>
@@ -75,7 +75,7 @@
 <sFb_type>Color intensity</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>3</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<bStopAfter>0</bStopAfter>
 			<cString></cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -141,37 +141,21 @@
 			<bStopAfter>0</bStopAfter>
 			<cString> 	 </cString>
 		</FeedbackProtocol>
+<FeedbackProtocol>
+			<sProtocolName>Mock_feedback</sProtocolName>
+			<sSignalComposition>Simple</sSignalComposition>
+			<nMSecondsPerWindow>20</nMSecondsPerWindow>
+			<bUpdateStatistics>0</bUpdateStatistics>
+<sFb_type>Mock</sFb_type>
+			<fDuration>180</fDuration>
+			<bStopAfter>0</bStopAfter>
+			<cString></cString>
+		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
 
 <s>SSD</s>
-<s>Baseline</s>
 <s>Feedback_color</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-<s>Baseline</s>
-
 
 	</vPSequence>
 </NeurofeedbackSignalSpecs>

@@ -4,8 +4,7 @@ classdef FeedbackManager < handle
         average
         sum_of_squares
         sum_of_values
-        window_length %samples
-        window_size %ms
+        window_size % samples
         current_protocol
 
         %samples_acquired
@@ -22,7 +21,7 @@ classdef FeedbackManager < handle
     
     methods
         function self = FeedbackManager(self) %#ok<INUSD>
-            self.window_size            = 30;
+            self.window_size            = 20;
             self.current_protocol       = 0;
             self.neurofeedback_session  = [];
              self.feedback_vector        = zeros(1,1);

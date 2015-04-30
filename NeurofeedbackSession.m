@@ -16,37 +16,49 @@ classdef NeurofeedbackSession < handle
         function self = LoadFromFile(self,fname)
             
             nfs = xml2struct(fname);
-            
+            [folder fn ext] = fileparts(fname);
             %derived signals
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
-                       
+            
             for i = 1:length(ds)
-                fields = fieldnames(ds{i});
-                d = ds{i};
-                for j = 1: numel(fields)
-                     if strcmp(fields{j},'SpatialFilterMatrix')
-                         t = xml2struct(d.SpatialFilterMatrix.Text);
-                         chs = fieldnames(t.channels);
-                         d.channels = cell(length(chs),2);
-                         for ch = 1:numel(chs);
-                             try
-                             d.channels(ch,1) = chs(ch);
-                             d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)};
-                             catch
-                                 chs{ch} %#ok<NOPRT>
-                             end
-                         end
-                     else
-                    try
-                        if str2num(d.(fields{j}).Text) || str2num(d.(fields{j}).Text) ==0
-                            d.(fields{j}) = str2num(d.(fields{j}).Text);
-                        end
-                    catch
-                        d.(fields{j}) = d.(fields{j}).Text;
-                    end
-                     end
+                if isstruct(ds)
+                    fields = fieldnames(ds(i));
+                    d = ds(i);
+                elseif iscell(ds)
+                    fields = fieldnames(ds{i});
+                    d = ds{i};
                 end
-                if ~strcmp(d.sSignalName, 'Raw')
+                
+                
+                for j = 1: numel(fields)
+                    if strcmp(fields{j},'SpatialFilterMatrix')
+                        [directory filename extension] = fileparts(d.SpatialFilterMatrix.Text);
+                        if isempty(directory)
+                            t = xml2struct(strcat(folder,'\',d.SpatialFilterMatrix.Text));
+                        else
+                            t = xml2struct(d.SpatialFilterMatrix.Text);
+                        end
+                        chs = fieldnames(t.channels);
+                        d.channels = cell(length(chs),2);
+                        for ch = 1:numel(chs);
+                            try
+                                d.channels(ch,1) = chs(ch);
+                                d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)};
+                            catch
+                                chs{ch} %#ok<NOPRT>
+                            end
+                        end
+                    else
+                        try
+                            if str2num(d.(fields{j}).Text) || str2num(d.(fields{j}).Text) ==0
+                                d.(fields{j}) = str2num(d.(fields{j}).Text);
+                            end
+                        catch
+                            d.(fields{j}) = d.(fields{j}).Text;
+                        end
+                    end
+                end
+                if ~strcmpi(d.sSignalName, 'Raw')
                     d.filters(1,1) = struct();
                     d.filters(1).range = [d.fBandpassLowHz d.fBandpassHighHz];
                     d.filters(1).order = 3;
@@ -58,7 +70,7 @@ classdef NeurofeedbackSession < handle
                 
                 self.derived_signals{end+1} = d;
             end
-           %protocols
+            %protocols
             self.protocol_types = nfs.NeurofeedbackSignalSpecs.vProtocols.FeedbackProtocol;
             for i = 1:length(self.protocol_types)
                 fields = fieldnames(self.protocol_types{i});
@@ -104,9 +116,9 @@ classdef NeurofeedbackSession < handle
                         rtp.stop_after = self.protocol_types{i}.bStopAfter;
                         rtp.string_to_show = self.protocol_types{i}.cString;
                         try %#ok<TRYNC>
-                        
-                        rtp.filter_filename = self.protocol_types{i}.sFilterFilename;
-                        
+                            
+                            rtp.filter_filename = self.protocol_types{i}.sFilterFilename;
+                            
                         end
                         try %#ok<TRYNC>
                             rtp.band = self.protocol_types{i}.dBand;
@@ -115,9 +127,9 @@ classdef NeurofeedbackSession < handle
                             rtp.fb_type = self.protocol_types{i}.sFb_type;
                         end
                         try %#ok<TRYNC>
-                            rtp.window_size = self.protocol_types{i}.nMSecondsPerWindow;
+                            rtp.window_duration = self.protocol_types{i}.nMSecondsPerWindow;
                         end
-
+                        
                         self.feedback_protocols{end+1} = rtp;
                         rtp.set_ds_index(self.protocol_sequence);
                     end

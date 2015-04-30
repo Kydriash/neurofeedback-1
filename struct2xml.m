@@ -8,7 +8,7 @@ function xml = struct2xml(v)
 xml = [];
 
 % New line character:
-nl = char(13);
+nl = '';%char(13);
 % Use nl = '' to remove new line characters.
 
 names = fieldnames(v);
