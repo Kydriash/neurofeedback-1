@@ -127,7 +127,11 @@ classdef EEGLSL < handle
         fb_manager_set
         protocol_indices
         fb_sigmas
-        
+        from_file
+        fnames
+        files_pathname
+        looped
+        run_protocols
     end
     
     methods
@@ -190,6 +194,8 @@ classdef EEGLSL < handle
             self.fb_manager_set = 0;
             self.protocol_indices = 0;
             self.fb_sigmas = 16;
+            self.from_file = 0;
+            
             
             
         end
@@ -205,8 +211,8 @@ classdef EEGLSL < handle
                 
                 if self.current_protocol >0 && self.current_protocol <= length(self.feedback_protocols)
                     if self.current_protocol <= length(self.feedback_manager.window_size)
-                    n = self.feedback_manager.window_size(self.current_protocol);
-                    else 
+                        n = self.feedback_manager.window_size(self.current_protocol);
+                    else
                         n = self.default_window_size;
                     end
                 elseif self.default_window_size == 0 %zero protocol at the beginning
@@ -237,7 +243,7 @@ classdef EEGLSL < handle
                             fb(:,5) = self.default_window_size;
                         end
                     catch
-                        self.current_protocol
+                        'An error occured while accessing self.feedback_manager.window_size, function UpdateFeedbackSignal' %#ok<NOPRT>
                     end
                     fb(:,6) = self.window;
                     
@@ -343,7 +349,7 @@ classdef EEGLSL < handle
                     disp(strcat(num2str(Fr(middle_point)),' Hz'));
                     channel_mapping(ds) = figure;
                     stem(G(:,middle_point));
-                    set(get(channel_mapping,'Children'),'XTick',[1:1:length(self.used_ch)]);
+                    set(get(channel_mapping,'Children'),'XTick',(1:1:length(self.used_ch)));
                     set(get(channel_mapping,'Children'),'XTickLabel',self.used_ch(:,1));
                     %find the largest SSD for the middle point
                     w_ssd  = V(:,middle_point);
@@ -422,7 +428,7 @@ classdef EEGLSL < handle
                         NewDS.channels_file = full_name;
                         self.derived_signals{end+1} = NewDS;
                     catch
-                        11 %#ok<NOPRT>
+                        'Error while creating a new derived signal, function UpdateStatistics' %#ok<NOPRT>
                     end
                     % end
                     % end
@@ -430,8 +436,8 @@ classdef EEGLSL < handle
                         close(channel_mapping);
                     end
                     
-                %calculate feedback avg, std
-                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    %calculate feedback avg, std
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                     if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
                         self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
@@ -451,48 +457,48 @@ classdef EEGLSL < handle
                     dummy_signal.channels = channels;
                     
                     
-                        
+                    
                     temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
                     temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
-                        temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
-                        
-                        temp_derived_signal.spatial_filter = w_ssd(self.derived_signals{1}.channels_indices)';
-                        temp_derived_signal.UpdateTemporalFilter(Rng(middle_point,:));
+                    temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
+                    
+                    temp_derived_signal.spatial_filter = w_ssd(self.derived_signals{1}.channels_indices)';
+                    temp_derived_signal.UpdateTemporalFilter(Rng(middle_point,:));
                     
                     temp_derived_signal.Apply(x_raw',1);
                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
                     self.feedback_manager.average(1) = mean(values);
                     self.feedback_manager.standard_deviation(1) = std(values);
                     self.SetRawYTicks;
-                self.SetDSYTicks;
-                self.yscales_fixed = 1;
-                self.raw_yscale_fixed = 1;
-                self.ds_yscale_fixed = 1;
-                self.fb_statistics_set = 1;
-                self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+                    self.SetDSYTicks;
+                    self.yscales_fixed = 1;
+                    self.raw_yscale_fixed = 1;
+                    self.ds_yscale_fixed = 1;
+                    self.fb_statistics_set = 1;
+                    self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
                     self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                     self.fb_manager_set = 1;
                     
-            else
-                N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-                if(N>0)
-                    for s = 2:length(self.derived_signals)
-                        if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
-                            values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
-                        else
-                            values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.lst - N+1:self.derived_signals{s}.collect_buff.lst,:);
+                else
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    if(N>0)
+                        for s = 2:length(self.derived_signals)
+                            if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
+                                values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
+                            else
+                                values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.lst - N+1:self.derived_signals{s}.collect_buff.lst,:);
+                            end
+                            self.feedback_manager.average(s-1) = mean(values);
+                            self.feedback_manager.standard_deviation(s-1) = std(values);
                         end
-                        self.feedback_manager.average(s-1) = mean(values);
-                        self.feedback_manager.standard_deviation(s-1) = std(values);
-                    end
-                end;
-                
-                self.SetRawYTicks;
-                self.SetDSYTicks;
-                self.yscales_fixed = 1;
-                self.raw_yscale_fixed = 1;
-                self.ds_yscale_fixed = 1;
-                self.fb_statistics_set = 1;
+                    end;
+                    
+                    self.SetRawYTicks;
+                    self.SetDSYTicks;
+                    self.yscales_fixed = 1;
+                    self.raw_yscale_fixed = 1;
+                    self.ds_yscale_fixed = 1;
+                    self.fb_statistics_set = 1;
                 end
             end
             
@@ -502,19 +508,10 @@ classdef EEGLSL < handle
             [sample, timestamp] = self.inlet.pull_chunk(); %#ok<ASGLU>
             self.nd = [self.nd sample];
             sz = size(self.nd,2);
-            %self.windows = zeros(length(self.feedback_protocols)+1,1);
-            %             for i = 1: length(self.feedback_protocols)+1
-            %                 if ~(i-1)
-            %                     self.windows(i) = self.feedback_manager.window_length(1);
-            %                 else
-            %                     self.windows(i) = self.feedback_manager.window_length(i+1);
-            %                 end
-            %             end
-             
             if self.current_protocol > 0 && self.current_protocol <= length(self.feedback_protocols)
                 if self.current_protocol <= length(self.feedback_manager.window_size)
-                window_size = self.feedback_manager.window_size(self.current_protocol);
-                self.default_window_size = window_size;
+                    window_size = self.feedback_manager.window_size(self.current_protocol);
+                    self.default_window_size = window_size;
                 else
                     window_size = self.default_window_size;
                 end
@@ -523,8 +520,6 @@ classdef EEGLSL < handle
             else  %zero protocol after some data was recorded
                 window_size = self.default_window_size;
             end
-            
-            %window_length = self.windows(self.current_protocol+1);
             if (sz >= window_size)
                 for ds = 1:length(self.derived_signals)
                     self.derived_signals{ds}.Apply(self.nd(:,1:window_size),self.recording);
@@ -552,7 +547,7 @@ classdef EEGLSL < handle
                             set(self.log_text,'String', temp_log_str);
                             
                         catch
-                            15 %#ok<NOPRT>
+                            'Error while updating statistics or setting log_string, function Receive' %#ok<NOPRT>
                         end
                         
                         try
@@ -566,11 +561,19 @@ classdef EEGLSL < handle
                                 self.current_protocol = self.next_protocol;
                                 self.next_protocol = self.next_protocol + 1;
                                 if self.current_protocol > length(self.feedback_protocols)
+                                    if self.looped
+                                        self.current_protocol = 1;
+                                        self.next_protocol = 2;
+                                        for pr = 1:length(self.feedback_protocols)
+                                            self.feedback_protocols{pr}.actual_protocol_size = 0;
+                                        end
+                                    else
                                     self.StopRecording();
+                                    end
                                 end
                             end
                         catch
-                            18 %#ok<NOPRT>
+                            'Error while StopRecording, function Receive' %#ok<NOPRT>
                         end
                         if strcmp(self.timer_new_data.Running,'off')
                             self.inlet = lsl_inlet(self.streams{1});
@@ -583,9 +586,9 @@ classdef EEGLSL < handle
         end
         
         function Connect(self,predicate, value)
-            
+            RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
             lsllib = lsl_loadlib();
-            self.channel_labels = [];
+            %self.channel_labels = [];
             while isempty(self.streams)
                 self.streams = lsl_resolve_byprop(lsllib,predicate, value);
             end
@@ -599,8 +602,71 @@ classdef EEGLSL < handle
             self.inlet = lsl_inlet(self.streams{1});
             
             self.plot_size = self.plot_length * self.sampling_frequency;
-            self.RunInterface;
-            if strcmp(self.streams{1}.name,'File')
+            
+            %set durations and window size based on sampling frequency
+            for pr = 1:length(self.feedback_protocols)
+                self.feedback_protocols{pr}.protocol_size = self.feedback_protocols{pr}.protocol_duration * self.sampling_frequency;
+            end
+            if ~self.from_file
+                for i = 1:length(self.feedback_protocols)
+                    if strcmp(self.feedback_protocols{i}.protocol_name,'SSD')
+                        self.ssd = 1;
+                    end
+                    self.feedback_protocols{i}.protocol_size = self.feedback_protocols{i}.protocol_duration * self.sampling_frequency;
+                    try %#ok<TRYNC>
+                        self.feedback_protocols{i}.window_size = self.feedback_protocols{i}.window_duration * self.sampling_frequency/1000;
+                    end
+                    try %#ok<TRYNC>
+                        if self.feedback_protocols{i}.window_size
+                            self.feedback_manager.window_size(i) = self.feedback_protocols{i}.window_size;
+                        end
+                    end
+                end
+            end
+            for j = 1:length(self.feedback_protocols)
+                self.exp_data_length = self.exp_data_length + self.feedback_protocols{j}.protocol_size;
+            end
+            self.exp_data_length = fix(self.exp_data_length * 1.1); %just in case
+            for i = 1:length(self.feedback_manager.window_size)
+                if self.feedback_manager.window_size(i) <=5
+                    warning('Given that the sampling frequency is %d ,the window length of protocol %s is less than 6 samples. Set the window size at least %d ms', self.sampling_frequency,self.feedback_protocols{i}.protocol_name, (5000/self.sampling_frequency+1))
+                end
+                if self.feedback_manager.window_size(i)/self.sampling_frequency <= self.data_receive_rate
+                    warning('The window size of protocol %s is too small. Increase the window size or decrease data receive rate', self.feedback_protocols{i}.protocol_name)
+                end
+            end
+            %set ds
+            if self.from_file
+                dummy_signal = struct();
+                dummy_signal.sSignalName = 'Raw';
+                channels = cell(size(self.channel_labels,2));
+                for ch = 1:length(channels)
+                    channels{ch,1} = self.channel_labels{ch};
+                    channels{ch,2} = 1;
+                end
+                dummy_signal.channels = channels;
+                dummy_signal.filters = [];
+                self.derived_signals{1} = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+                self.derived_signals{1}.UpdateSpatialFilter(ones(length(self.channel_labels)));
+            else
+                if self.ssd
+                    self.derived_signals = cell(1,1);
+                else
+                    self.derived_signals = cell(1,length(self.signals));
+                end
+                for i = 1: length(self.derived_signals)
+                    self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+                    self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels);
+                end
+            end
+            for ds = 1:length(self.derived_signals)
+                if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
+                    raw = self.derived_signals{ds};
+                    self.used_ch = raw.channels;
+                end
+            end
+            %self.RunInterface;
+            if self.from_file
                 self.StartRecording();
             end
             if ishandle(self.fig_interface)
@@ -622,7 +688,7 @@ classdef EEGLSL < handle
             set(self.connect_button, 'String', 'Start recording');
             set(self.connect_button, 'Callback',@self.StartRecording);
         end
-        function RunInterface(self)
+        function RunInterface(self,predicate,value)
             %read subjects file
             if exist(strcat(self.program_path,'\subjects.txt'),'file')
                 subjects_file = fopen(strcat(self.program_path,'\subjects.txt'));
@@ -643,6 +709,7 @@ classdef EEGLSL < handle
                 self.fig_interface = figure;
                 self.fig_interface.CloseRequestFcn = @self.DoNothing;
             end
+            
             prr_text = uicontrol('Parent',self.fig_interface, 'Style', 'text', 'String', 'Plot refresh rate, s', 'Position',[20 250 120 30],'HorizontalAlignment','left'); %#ok<NASGU>
             prr = uicontrol('Parent', self.fig_interface, 'Style', 'edit', 'String', num2str(self.plot_refresh_rate), 'Position', [125 260 50 20]);
             drr_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Data receive rate, s', 'Position', [20 210 100 30],'HorizontalAlignment','left'); %#ok<NASGU>
@@ -663,7 +730,12 @@ classdef EEGLSL < handle
             self.subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[170 320 100 20],'String',subjects,'Callback',@self.SetSubject);
             sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Choose/Enter subject name', 'Position',[20 315 140 20],'HorizontalAlignment','left'); %#ok<NASGU>
             subj_folder_button = uicontrol('Parent', self.fig_interface,'Style','pushbutton','Position',[285 320 150 20],'String','Or select subject folder','Callback',@self.SetSubjectFolder); %#ok<NASGU>
-            
+            from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 20 20]);
+            from_file_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[285 270 50 20],'String','From file'); %#ok<NASGU>
+            loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 20 20]);
+            loop_replay_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[220 250 120 20],'String','Loop the recording?'); %#ok<NASGU>
+            use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 20 20],'Value',1);
+            use_protocols_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[200 230 140 20],'String','Use protocols from files?'); %#ok<NASGU>
             uiwait();
             if ishandle(self.fig_interface) %if the window is not closed
                 if verLessThan('matlab','8.4.0')
@@ -673,6 +745,12 @@ classdef EEGLSL < handle
                     
                     set(self.fig_interface,'Visible', 'off');
                     self.show_fb = get(show_fb_check, 'Value');
+                    self.from_file = get(from_file_chb,'Value');
+                    if self.from_file
+                        
+                    self.looped = get(loop_replay_chb,'Value');
+                    self.run_protocols = get(use_protocols_chb,'Value');
+                    end
                     
                 else
                     self.plot_refresh_rate = str2double(prr.String);
@@ -680,15 +758,18 @@ classdef EEGLSL < handle
                     self.fb_refresh_rate = str2double(frr.String);
                     self.fig_interface.Visible = 'off';
                     self.show_fb = show_fb_check.Value;
-                    
+                    self.from_file = from_file_chb.Value;
+                    if self.from_file
+                    self.looped = loop_replay_chb.Value;
+                    self.run_protocols = use_protocols_chb.Value;
+                    end
                 end
                 subjects = [subjects {self.subject_record.subject_name}];
-                
                 subjects = sort(unique(subjects));
                 subjects_file = fopen(strcat(self.program_path,'\subjects.txt'),'wt');
-                for i=1:length(subjects)
-                    if ~(strcmp(subjects{i},'Add a new subject')|| strcmp(subjects{i},'Null'))
-                        fprintf(subjects_file,'%s\n',subjects{i});
+                for s = 1:length(subjects)
+                    if ~(strcmp(subjects{s},'Add a new subject')|| strcmp(subjects{s},'Null'))
+                        fprintf(subjects_file,'%s\n',subjects{s});
                     end
                 end
                 fclose(subjects_file);
@@ -701,24 +782,21 @@ classdef EEGLSL < handle
                 self.timer_fb_function = @self.RefreshFB;
                 self.timer_fb = timer('Name','refresh_feedback','TimerFcn',self.timer_fb_function,'ExecutionMode','fixedRate',...
                     'Period',self.fb_refresh_rate);
-                
                 self.feedback_manager = FeedbackManager;
-                
-                %cursed channel labels
-                
-                
-                if strcmp(self.streams{1}.name,'File')
+                if self.from_file
                     %self.channel_labels = get_channel_labels(self.inlet);
-                    subject_folder = self.streams{1}.source_id;
-                    [filenames, protocols, durations, header, channels] = GetDataLength(subject_folder); %#ok<ASGLU>
+                    [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
+                    %subject_folder = self.streams{1}.source_id;
+                    [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
                     self.channel_labels = channels;
+                    if self.run_protocols
                     self.protocol_sequence = protocols;
                     for pr = 1:length(protocols)
                         
                         self.feedback_protocols{pr} = RealtimeProtocol;
                         self.feedback_protocols{pr}.protocol_name = protocols{pr};
                         self.feedback_protocols{pr}.protocol_duration = durations(pr);
-                        self.feedback_protocols{pr}.protocol_size = self.feedback_protocols{pr}.protocol_duration * self.sampling_frequency;
+                        
                         if strcmpi(protocols{pr},'ssd')
                             self.ssd = 1;
                             self.feedback_protocols{pr}.to_update_statistics = 1;
@@ -729,16 +807,8 @@ classdef EEGLSL < handle
                             self.feedback_protocols{pr}.fb_type = protocols{pr};
                         end
                     end
-                    
-                    if self.ssd
-                        self.derived_signals = cell(1,1);
-                        
-                        
-                    else
-                        self.derived_signals = cell(1,length(self.signals));
-                        
-                        
                     end
+                    
                     
                 else
                     self.channel_labels = read_montage_file(self.montage_fname);
@@ -749,83 +819,8 @@ classdef EEGLSL < handle
                     self.signals = nfs.derived_signals;
                     self.protocol_sequence = nfs.protocol_sequence;
                     self.feedback_manager.window_size = zeros(length(self.feedback_protocols),1);
-                    for i = 1:length(self.feedback_protocols)
-                        if strcmp(self.feedback_protocols{i}.protocol_name,'SSD')
-                            self.ssd = 1;
-                        end
-                       
-                        self.feedback_protocols{i}.protocol_size = self.feedback_protocols{i}.protocol_duration * self.sampling_frequency;
-                         try
-                        self.feedback_protocols{i}.window_size = self.feedback_protocols{i}.window_duration * self.sampling_frequency/1000;
-                        end
-                        try %#ok<TRYNC>
-                            if self.feedback_protocols{i}.window_size
-                                self.feedback_manager.window_size(i) = self.feedback_protocols{i}.window_size;
-                            end
-                        end
-                    end
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                end
-                
-                
-                for j = 1:length(self.feedback_protocols)
-                    self.exp_data_length = self.exp_data_length + self.feedback_protocols{j}.protocol_size;
                 end
                 self.protocol_indices = zeros(length(self.feedback_protocols)+1,2); %catch actual data length since 'act_protocol_size' can lie
-                self.exp_data_length = fix(self.exp_data_length * 1.1); %just in case
-                if self.ssd
-                    self.derived_signals = cell(1,1);
-                    
-                    
-                    
-                    
-                    
-                else
-                    self.derived_signals = cell(1,length(self.signals));
-                    
-                    
-                end
-                
-                if strcmp(self.streams{1}.name,'File')
-                    dummy_signal = struct();
-                    dummy_signal.sSignalName = 'Raw';
-                    channels = cell(size(self.channel_labels,2));
-                    for i = 1:length(channels)
-                        channels{i,1} = self.channel_labels{i};
-                        channels{i,2} = 1;
-                    end
-                    dummy_signal.channels = channels;
-                    dummy_signal.filters = [];
-                    self.derived_signals{1} = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-                    self.derived_signals{1}.UpdateSpatialFilter(ones(length(self.channel_labels)));
-                else
-                    for i = 1: length(self.derived_signals)
-                        self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-                        self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels);
-                    end
-                end
-
-                for i = 1:length(self.feedback_manager.window_size)
-                    if self.feedback_manager.window_size(i) <=5
-                        
-                        warning('Given that the sampling frequency is %d ,the window length of protocol %s is less than 6 samples. Set the window size at least %d ms', self.sampling_frequency,self.feedback_protocols{i}.protocol_name, (5000/self.sampling_frequency+1))
-                    end
-                    if self.feedback_manager.window_size(i)/self.sampling_frequency <= self.data_receive_rate
-                        warning('The window size of protocol %s is too small. Increase the window size or decrease data receive rate', self.feedback_protocols{i}.protocol_name)
-                    end
-                    
-                end
-                
-                
                 
                 figure(self.fig_feedback);
                 set(self.fig_feedback, 'OuterPosition', [-1280 0 1280 1024]);
@@ -833,65 +828,10 @@ classdef EEGLSL < handle
                 self.fb_stub = uicontrol('Parent', self.fig_feedback, 'String', 'Baseline acquisition', 'Style', 'text', 'ForegroundColor',[0 1 0],'Position', [200 500 900 250], 'FontSize', 75, 'BackgroundColor',[1 1 1], 'FontName', 'Courier New', 'Visible', 'off' );
                 self.fbplot_handle = bar(self.feedback_axis_handle,[0 1 0],'FaceColor',[1 1 1]);
                 
-                %set average reference (composite montage)
-                
-                for ds = 1:length(self.derived_signals)
-                    if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
-                        raw = self.derived_signals{ds};
-                        self.used_ch = raw.channels;
-                    end
-                end
-                %                 all_ch = self.channel_labels;
-                %
-                %
-                %                 %             self.allxall = zeros(length(all_ch),
-                %                 length(all_ch)); %136x136 for ds
-                %
-                %                 used_ch_labels = self.used_ch(:,1); used_ch_indices =
-                %                 zeros(length(self.used_ch),1);
-                
-                
-                %add composite montage
-                
-                %             for i = 1:length(used_ch_labels)
-                %                 for j = 1:length(all_ch)
-                %                     if
-                %                     strcmp(self.used_ch{i,1},all_ch{j})
-                %                         used_ch_indices(i) = j;
-                %                         self.allxall(:,j) =
-                %                         1/length(self.used_ch);
-                %                         self.allxall(j,j) =
-                %                         1-1/length(self.used_ch);
-                %
-                %                     end
-                %                 end
-                %             end for j = 1:length(all_ch)
-                %                 if  ~ismember(j,used_ch_indices)
-                %                     self.allxall(j,:) = 0;
-                %                 end
-                %             end
-                %
-                
-                %             for ds = 1:length(self.derived_signals)
-                %                 self.derived_signals{ds}.composite_montage
-                %                 = self.allxall; for i =
-                %                 1:length(self.derived_signals{ds}.spatial_filter)
-                %                     if
-                %                     ~self.derived_signals{ds}.spatial_filter(i)
-                %                         self.derived_signals{ds}.composite_montage(:,i)
-                %                         = 0;
-                %                         self.derived_signals{ds}.composite_montage(i,:)
-                %                         = 0;
-                %
-                %                     end
-                %
-                %                 end
-                %             end
-                %connect
-                
-                
+                self.Connect(predicate,value);
             end
         end
+        
         function PlotEEGData(self,timer_obj, event) %#ok<INUSD>
             
             if ~self.connected
@@ -923,20 +863,12 @@ classdef EEGLSL < handle
                     for i = 1:length(self.used_ch)
                         set(self.raw_plot(i),'DisplayName', self.used_ch{i,1});
                     end
-                    
-                    
                     self.raw_ylabels_fixed = 1;
                 end
-                
-                
-                
+
                 self.ds_subplot = subplot(2,1,2);
                 set(self.ds_subplot,'YLim', [0 self.raw_shift*length(self.derived_signals)]);
-                
-                
-                
                 self.connected = 1;
-                
             elseif self.connected
                 set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
                 set(self.ds_subplot,'YLim', [0 self.raw_shift*(length(self.derived_signals))]);
@@ -1020,7 +952,25 @@ classdef EEGLSL < handle
             end
             %set recording status
             try
-                if(self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols)) %non-zero protocol
+                if self.from_file
+                    if verLessThan('matlab','8.4.0')
+                        set(self.curr_protocol_text, 'String', {strcat('Samples acquired', num2str(self.samples_acquired)),...% num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
+                            strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
+                            strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
+                            strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
+                            strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
+                            strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
+                            });
+                    else
+                        self.curr_protocol_text.String = {strcat('Samples acquired', num2str(self.samples_acquired)),...%num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
+                            strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
+                            strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
+                            strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
+                            strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
+                            strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
+                            };
+                    end
+                elseif(self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols)) %non-zero protocol
                     if verLessThan('matlab','8.4.0')
                         set(self.curr_protocol_text, 'String', {strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.protocol_name),...
                             strcat('Samples acquired', num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
@@ -1162,8 +1112,11 @@ classdef EEGLSL < handle
             end
         end
         function StartRecording(self,obj,event) %#ok<INUSD>
+            if self.from_file && ~self.run_protocols
+            else
             self.current_protocol = self.next_protocol;
             self.next_protocol = self.next_protocol + 1;
+            end
             self.recording = 1;
             self.InitTimer();
             set(self.connect_button, 'String', 'Stop recording');
@@ -1206,7 +1159,7 @@ classdef EEGLSL < handle
             set(self.connect_button, 'String', 'Resume recording');
             set(self.connect_button, 'Callback',{@self.Connect});
             self.subject_record.time_stop = datestr(now,13);
-            if self.finished 
+            if self.finished
                 self.WriteToFile;
             end
         end
@@ -1335,13 +1288,18 @@ classdef EEGLSL < handle
         end
         function SetRecordingStatus(self)
             if verLessThan('matlab','8.4.0')
-                if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
+                if self.from_file && isempty(self.feedback_protocols)
+                    set(self.status_text,'String', 'Playing from file');
+                elseif self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
                     set(self.status_text, 'String','Status: receiving');
                 else
                     set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
                 end
             else
-                if self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
+
+                if self.from_file && isempty(self.feedback_protocols)
+                    self.status_text.String = 'Playing from file';
+                elseif self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
                     self.status_text.String = 'Status: receiving';
                 else
                     self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));
@@ -1921,4 +1879,3 @@ end
 %             end
 %
 %         end
-    

@@ -16,7 +16,7 @@ classdef NeurofeedbackSession < handle
         function self = LoadFromFile(self,fname)
             
             nfs = xml2struct(fname);
-            [folder fn ext] = fileparts(fname);
+            [folder, fn, ext] = fileparts(fname); %#ok<ASGLU>
             %derived signals
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
             
@@ -32,7 +32,7 @@ classdef NeurofeedbackSession < handle
                 
                 for j = 1: numel(fields)
                     if strcmp(fields{j},'SpatialFilterMatrix')
-                        [directory filename extension] = fileparts(d.SpatialFilterMatrix.Text);
+                        [directory, filename, extension] = fileparts(d.SpatialFilterMatrix.Text); %#ok<ASGLU>
                         if isempty(directory)
                             t = xml2struct(strcat(folder,'\',d.SpatialFilterMatrix.Text));
                         else
@@ -43,15 +43,15 @@ classdef NeurofeedbackSession < handle
                         for ch = 1:numel(chs);
                             try
                                 d.channels(ch,1) = chs(ch);
-                                d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)};
+                                d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)}; %#ok<ST2NM>
                             catch
                                 chs{ch} %#ok<NOPRT>
                             end
                         end
                     else
                         try
-                            if str2num(d.(fields{j}).Text) || str2num(d.(fields{j}).Text) ==0
-                                d.(fields{j}) = str2num(d.(fields{j}).Text);
+                            if str2num(d.(fields{j}).Text) || str2num(d.(fields{j}).Text) ==0 %#ok<ST2NM>
+                                d.(fields{j}) = str2num(d.(fields{j}).Text); %#ok<ST2NM>
                             end
                         catch
                             d.(fields{j}) = d.(fields{j}).Text;

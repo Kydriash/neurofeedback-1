@@ -11,7 +11,7 @@ classdef SubjectRecord < handle
     end 
    
     methods
-        function self = SubjectRecord(self)
+        function self = SubjectRecord(self) %#ok<INUSD>
             self.subject_name       = 'Null';
             self.acq_date           = date;
             self.time_start         = datestr(now,'HH-MM-SS');

@@ -1,10 +1,10 @@
 
-function RecordedStudyToLSL()
+function RecordedStudyToLSL(fnames,pathname,looped)
 global pushed;
 %read the files
-[fnames, pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
+
 %check if fnames ets exist
-if ~isempty(nonzeros([pathname filterindex]))
+if ~isempty(pathname)
     
     [protocols, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
     
@@ -38,11 +38,12 @@ if ~isempty(nonzeros([pathname filterindex]))
     
     
     pushed = 1;
-    while ~outlet.have_consumers()
-        pause(0.01);
-    end
-    timer_push_data = timer('Name','push_data','TimerFcn', {@PushDataToLSL,outlet,data},'ExecutionMode','fixedRate','Period',1/sampling_frequency);
-start(timer_push_data);
+%     while ~outlet.have_consumers()
+%         pause(0.01);
+%     end
+    timer_push_data = timer('Name','push_data','TimerFcn', {@PushDataToLSL,outlet,data,looped},'ExecutionMode','fixedRate','Period',1/sampling_frequency);
+
+    start(timer_push_data);
 
 %     for fn = filenames
 %         protocol_data = ReadEEGData(fn{1});
@@ -70,14 +71,25 @@ end
 
 
 
-function PushDataToLSL(timer_obj,event,outlet, data) %#ok<INUSL>
+function PushDataToLSL(timer_obj,event,outlet, data,looped) %#ok<INUSL>
 global pushed
-if outlet.have_consumers() && pushed <= size(data,2)
-    outlet.push_chunk(data(:,pushed));
-    pushed = pushed + 1;
-
+if looped
+    if outlet.have_consumers()
+        try %#ok<TRYNC>
+        outlet.push_chunk(data(:,mod(pushed,size(data,2))))
+%         catch 
+%             mod(pushed,size(data,2))
+        end
+        pushed = pushed + 1;
+       
+    end
+else
+    if outlet.have_consumers() && pushed <= size(data,2)
+        outlet.push_chunk(data(:,pushed));
+        pushed = pushed + 1;
+        
+    end
 end
-
 end
 
 
