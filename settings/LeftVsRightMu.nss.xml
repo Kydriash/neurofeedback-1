@@ -34,7 +34,7 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
 			<nMSecondsPerWindow>50</nMSecondsPerWindow>
-			<fDuration>2</fDuration>
+			<fDuration>60</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
@@ -155,14 +155,8 @@
 	<vPSequence>
 
 <s>Baseline</s>
-<s>Feedback_color</s>
 <s>Baseline</s>
-<s>Left_hand_movement</s>
-<s>Baseline</s>
-<s>Right_hand_movement</s>
-<s>Baseline</s>
-<s>Feedback_color</s>
-<s>Baseline</s>
+
 
 	</vPSequence>
 </NeurofeedbackSignalSpecs>

@@ -135,6 +135,7 @@ classdef EEGLSL < handle
         settings
         bad_channels
         raw_data_indices
+        paused
     end
     
     methods
@@ -205,6 +206,7 @@ classdef EEGLSL < handle
             self.settings.settings_file =  'settings\LeftVsRightMu.nss.xml';
             self.bad_channels = {};
             self.raw_data_indices = [];
+            self.paused = 0;
             
             
         end
@@ -1141,6 +1143,7 @@ classdef EEGLSL < handle
                 self.current_protocol = self.next_protocol;
                 self.next_protocol = self.next_protocol + 1;
             end
+            self.paused = 0;
             self.recording = 1;
             self.InitTimer();
             set(self.connect_button, 'String', 'Stop recording');
@@ -1166,13 +1169,16 @@ classdef EEGLSL < handle
             end
             if  ~self.finished
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
-                    self.feedback_protocols{self.current_protocol}.actual_protocol_size = 0;
+                    %self.feedback_protocols{self.current_protocol}.actual_protocol_size = 0;
                     self.next_protocol = self.current_protocol;
+                    set(self.connect_button, 'String', 'Continue recording');
+                    self.paused = 1;
                 else
                     self.next_protocol = self.current_protocol + 1;
+                    set(self.connect_button, 'String', 'Start recording');
                 end
                 self.current_protocol = 0;
-                set(self.connect_button, 'String', 'Start recording');
+                
                 set(self.connect_button, 'Callback', @self.StartRecording);
             end
         end
@@ -1214,8 +1220,8 @@ classdef EEGLSL < handle
                 end
             end
             names = ['' names' ''];
-            f = figure;
-            e = errorbar(averages, deviations);
+            f = figure; %#ok<NASGU>
+            e = errorbar(averages, deviations); %#ok<NASGU>
             set(gca,'XTickLabel',names);
             xlabel('Protocols');
             ylabel('Mean values of feedback +/- standard_deviation');
@@ -1324,12 +1330,18 @@ classdef EEGLSL < handle
         end
         function SetRecordingStatus(self)
             if verLessThan('matlab','8.4.0')
+                
                 if self.from_file && isempty(self.feedback_protocols)
                     set(self.status_text,'String', 'Playing from file');
                 elseif self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
                     set(self.status_text, 'String','Status: receiving');
                 else
                     set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
+                end
+                if self.paused
+                    set(self.status_text,'String', ['Protocol ' self.feedback_protocols{self.next_protocol}.protocol_name ' paused.'...
+                        num2str(round(self.feedback_protocols{self.next_protocol}.actual_protocol_size/self.sampling_frequency)) '/'...
+                        num2str(self.feedback_protocols{self.next_protocol}.protocol_duration)]);
                 end
             else
                 
@@ -1339,6 +1351,11 @@ classdef EEGLSL < handle
                     self.status_text.String = 'Status: receiving';
                 else
                     self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));
+                end
+                if self.paused
+                    set(self.status_text,'String',['Protocol ' self.feedback_protocols{self.next_protocol}.protocol_name ' paused.'...
+                        num2str(round(self.feedback_protocols{self.next_protocol}.actual_protocol_size/self.sampling_frequency)) '/'...
+                        num2str(self.feedback_protocols{self.next_protocol}.protocol_duration)]);
                 end
             end
         end
