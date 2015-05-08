@@ -875,7 +875,7 @@ classdef EEGLSL < handle
                 self.log_text = uicontrol('Parent', self.raw_and_ds_figure  ,'Style', 'Text','String', {'Log'}, 'Position', [0 300 50 100],'Tag','log_text');
                 self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ', 'Position', [0 210 200 20],'HorizontalAlignment','left','Tag','status_text');
                 self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
-                %self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Position',[70 400 80 15],'Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
+                self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
                 select_bad_channels_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
                     'String', 'Select bad channels', 'Callback', @self.SelectBadChannels,'Tag','select_bad_channels_button'); %#ok<NASGU>
 %                 bad_channels_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', '',...
@@ -1403,7 +1403,7 @@ classdef EEGLSL < handle
             dsl = findobj('Tag','ds_line');
             sb = findobj('Tag','settings_button');
             sbch = findobj('Tag','select_bad_channels_button');
-            %  epb = findobj('Tag','edit_protocols_button');
+            epb = findobj('Tag','edit_protocols_button');
             try %#ok<TRYNC>
                 ok = findobj('Tag', 'add_bad_channel_button');
                 fin = findobj('Tag','finish adding bad channels button');
@@ -1421,13 +1421,13 @@ classdef EEGLSL < handle
             set(dm,'Position', [0.45*fp(3), 0.015*fp(4),0.12*fp(3),0.04*fp(4)]);
             set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
             set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
-            %  set(epb,'Position', [0.13*fp(3), 0.95*fp(4), 0.12*fp(3), 0.04*fp(4)]);
+            set(epb,'Position', [0.7*fp(3), 0.945*fp(4), 0.2*fp(3), 0.05*fp(4)]);
             set(sb,'Position', [0.1*fp(3), 0.94*fp(4),0.1*fp(3), 0.05*fp(4)]);
             set(ok,'Position', [0.65*fp(3), 0.94*fp(4), 0.1*fp(3),0.05*fp(4)]);
             set(fin,'Position', [0.75*fp(3), 0.94*fp(4), 0.1*fp(3),0.05*fp(4)]);
-            set(bcht, 'Position',[fp(3)*0.2,fp(4)*0.75,fp(3)*0.05,fp(4)*0.20]);
-            set(cht,'Position', [fp(3)*0.35,fp(4)*0.92,fp(3)*0.3,fp(4)*0.07]);
-            set(sbch,'Position', [fp(3)*0.14,fp(4)*0.945,fp(3)*0.2,fp(4)*0.05]);
+            set(bcht, 'Position',[fp(3)*0.2,fp(4)*0.7,fp(3)*0.05,fp(4)*0.2]);
+            set(cht,'Position', [fp(3)*0.35, fp(4)*0.94, fp(3)*0.3, fp(4)*0.05]);
+            set(sbch,'Position',[fp(3)*0.14, fp(4)*0.945, fp(3)*0.2, fp(4)*0.05]);
             self.SetRawYTicks;
             self.SetDSYTicks;
         end
@@ -1774,6 +1774,8 @@ classdef EEGLSL < handle
             global finished;
             global ok;
             f = findobj('Tag','raw_and_ds_figure');
+            epb = findobj('Tag','edit_protocols_button');
+            set(epb,'Visible','off');
             bad_channels_text =  uicontrol('Parent',f,'Style','text','String', self.bad_channels,'HorizontalAlignment','right','Tag','bad_channels_text'); 
             ok_button = uicontrol('Parent',f,'style','pushbutton', 'String', 'Add','Tag','add_bad_channel_button','Callback','global ok; ok = 1;');
             finished_button= uicontrol('Parent',f,'style','pushbutton', 'String', 'Finish','Tag','finish adding bad channels button','Callback','global ok; global finished; ok = 1;finished = 1;');
@@ -1790,6 +1792,9 @@ classdef EEGLSL < handle
                 while ~(~isempty(getCursorInfo(dcm_obj)) && ok)
                     datacursormode('on');
                     pause(1);
+                    if ok && isempty(getCursorInfo(dcm_obj))
+                        ok = 0;
+                    end
                     if finished
                         break; %#ok<UNRCH>
                     end
@@ -1853,6 +1858,7 @@ classdef EEGLSL < handle
         %
         %         end
         %         function ObtainSettings(self,obj,event)
+        
         %         end
     end
 end
