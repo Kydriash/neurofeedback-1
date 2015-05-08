@@ -637,17 +637,15 @@ classdef EEGLSL < handle
             
             %set durations and window size based on sampling frequency
             for pr = 1:length(self.feedback_protocols)
-                self.feedback_protocols{pr}.protocol_size = self.feedback_protocols{pr}.protocol_duration * self.sampling_frequency;
+                self.feedback_protocols{pr}.Recalculate(self.sampling_frequency);
             end
             if ~self.from_file
                 for i = 1:length(self.feedback_protocols)
                     if strcmp(self.feedback_protocols{i}.protocol_name,'SSD')
                         self.ssd = 1;
                     end
-                    self.feedback_protocols{i}.protocol_size = self.feedback_protocols{i}.protocol_duration * self.sampling_frequency;
-                    try %#ok<TRYNC>
-                        self.feedback_protocols{i}.window_size = self.feedback_protocols{i}.window_duration * self.sampling_frequency/1000;
-                    end
+                    
+                   
                     try %#ok<TRYNC>
                         if self.feedback_protocols{i}.window_size
                             self.feedback_manager.window_size(i) = self.feedback_protocols{i}.window_size;
@@ -875,7 +873,7 @@ classdef EEGLSL < handle
                 self.log_text = uicontrol('Parent', self.raw_and_ds_figure  ,'Style', 'Text','String', {'Log'}, 'Position', [0 300 50 100],'Tag','log_text');
                 self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ', 'Position', [0 210 200 20],'HorizontalAlignment','left','Tag','status_text');
                 self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
-                self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
+                %self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
                 select_bad_channels_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
                     'String', 'Select bad channels', 'Callback', @self.SelectBadChannels,'Tag','select_bad_channels_button'); %#ok<NASGU>
 %                 bad_channels_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', '',...
@@ -1164,6 +1162,7 @@ classdef EEGLSL < handle
                 set(self.disconnect_button,'String','Disconnect and write');
                 set(self.connect_button, 'String', 'Recording finished');
                 set(self.connect_button,'Callback','');
+                self.PlotErrorBar;
             end
             if  ~self.finished
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
@@ -1214,8 +1213,12 @@ classdef EEGLSL < handle
                     deviations(i-pr_shift) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21:self.feedback_manager.feedback_records.fst+idx22-1,2));
                 end
             end
+            names = ['' names' ''];
             f = figure;
             e = errorbar(averages, deviations);
+            set(gca,'XTickLabel',names);
+            xlabel('Protocols');
+            ylabel('Mean values of feedback +/- standard_deviation');
             
         end
         function WriteToFile(self)
@@ -1547,7 +1550,7 @@ classdef EEGLSL < handle
             %add the protocol
             for p = 1:length(self.protocol_types)
                 if strcmp(protocol_to_add, self.protocol_types{p}.sProtocolName)
-                    protocol = GetProtocolFields(self.protocol_types{p});
+                    new_protocol = RealtimeProtocol(1,self.protocol_types{p},self.sampling_frequency);
                     break;
                 end
             end
@@ -1565,9 +1568,11 @@ classdef EEGLSL < handle
             for pd = length(protocols_durations_obj):-1:1
                 protocols_durations = [protocols_durations {protocols_durations_obj(pd).String}];
             end
-            
-            protocols_names = [protocols_names(1:insert_obj.Value) protocol.protocol_name protocols_names(insert_obj.Value+1:end)];
-            protocols_durations = [protocols_durations(1:insert_obj.Value) num2str(protocol.protocol_duration) protocols_durations(insert_obj.Value+1:end)];
+            %!!!!
+            pr_idx = strsplit(insert_obj.String{insert_obj.Value});
+            idx = str2num(pr_idx{1}); %#ok<ST2NM>
+            protocols_names = [protocols_names(1:idx) new_protocol.protocol_name protocols_names(idx+1:end)];
+            protocols_durations = [protocols_durations(1:idx) num2str(new_protocol.protocol_duration) protocols_durations(idx+1:end)];
             self.UpdateEditProtocolsFigure(protocols_names,protocols_durations);
         end
         function DeleteProtocol(self,obj,event) %#ok<INUSD>
@@ -1626,7 +1631,11 @@ classdef EEGLSL < handle
                 pn = protocols_names(i);
                 new_protocols_names(i) = {[num2str(i) ' ' pn{1}]};
             end
+            if self.next_protocol == 1
             insert_protocol_dropmenu.String = [{'0'} new_protocols_names];
+            else
+                insert_protocol_dropmenu.String = new_protocols_names;
+            end
             delete_protocol_dropmenu.String = new_protocols_names;
             
             
@@ -1640,41 +1649,14 @@ classdef EEGLSL < handle
             for j = length(protocols_names_obj):-1:self.next_protocol
                 for i = 1:length(self.protocol_types)
                     if strcmp(protocols_names_obj(j).String,self.protocol_types{i}.sProtocolName)
-                        rtp = RealtimeProtocol;
-                        rtp.protocol_name = self.protocol_types{i}.sProtocolName;
-                        rtp.to_update_statistics = self.protocol_types{i}.bUpdateStatistics;
+                        rtp = RealtimeProtocol(1,self.protocol_types{i});
                         rtp.protocol_duration = str2double(protocols_durations_obj(j).String);  %%%%%duration is taken from the figure
-                        rtp.protocol_size = rtp.protocol_duration * self.sampling_frequency; %%% size is calculated accordingly
-                        rtp.stop_after = self.protocol_types{i}.bStopAfter;
-                        rtp.string_to_show = self.protocol_types{i}.cString;
-                        try %#ok<TRYNC>
-                            
-                            rtp.filter_filename = self.protocol_types{i}.sFilterFilename;
-                            
-                        end
-                        try %#ok<TRYNC>
-                            rtp.band = self.protocol_types{i}.dBand;
-                        end
-                        try %#ok<TRYNC>
-                            rtp.fb_type = self.protocol_types{i}.sFb_type;
-                        end
-                        try %#ok<TRYNC>
-                            rtp.window_size = self.protocol_types{i}.nMSecondsPerWindow;
-                        end
-                        
+                        rtp.Recalculate(self.sampling_frequency);
                         self.feedback_protocols{end+1} = rtp;
-                        
+                        break;
                     end
                 end
             end
-            
-            %get their durations
-            %set new protocol duration and size (s and samples acc.)
-            %             for p = self.next_protocol:length(self.feedback_protocols)
-            %                 self.feedback_protocols{p}.protocol_duration = str2double(self.protocol_duration_text{p}.String);
-            %                 self.feedback_protocols{p}.protocol_size = self.feedback_protocols{p}.protocol_duration * self.sampling_frequency;
-            %             end
-            
             %check if we reserved enough space
             data_length = 0;
             for p = 1:length(self.feedback_protocols)
@@ -1823,6 +1805,7 @@ classdef EEGLSL < handle
             delete(findobj('Tag','bad_channels_text'));
             delete(text);
             datacursormode('off');
+            set(epb,'Visible','on');
             %update derived signals
             
             for b_ch = 1:length(self.bad_channels)
@@ -1871,26 +1854,26 @@ for i = 1:length(montage.neorec.transmission.clogicals.clogical)
     channels{end+1} = montage.neorec.transmission.clogicals.clogical{i}.name.Text;
 end
 end
-function rtp = GetProtocolFields(protocol_type)
-rtp = RealtimeProtocol;
-rtp.protocol_name = protocol_type.sProtocolName;
-rtp.to_update_statistics = protocol_type.bUpdateStatistics;
-rtp.protocol_duration = protocol_type.fDuration;
-rtp.stop_after = protocol_type.bStopAfter;
-rtp.string_to_show = protocol_type.cString;
-try %#ok<TRYNC>
-    rtp.filter_filename = protocol_type.sFilterFilename;
-end
-try %#ok<TRYNC>
-    rtp.band = protocol_type.dBand;
-end
-try %#ok<TRYNC>
-    rtp.fb_type = protocol_type.sFb_type;
-end
-try %#ok<TRYNC>
-    rtp.window_size = protocol_type.nMSecondsPerWindow;
-end
-end
+% function rtp = GetProtocolFields(protocol_type)
+% rtp = RealtimeProtocol;
+% rtp.protocol_name = protocol_type.sProtocolName;
+% rtp.to_update_statistics = protocol_type.bUpdateStatistics;
+% rtp.protocol_duration = protocol_type.fDuration;
+% rtp.stop_after = protocol_type.bStopAfter;
+% rtp.string_to_show = protocol_type.cString;
+% try %#ok<TRYNC>
+%     rtp.filter_filename = protocol_type.sFilterFilename;
+% end
+% try %#ok<TRYNC>
+%     rtp.band = protocol_type.dBand;
+% end
+% try %#ok<TRYNC>
+%     rtp.fb_type = protocol_type.sFb_type;
+% end
+% try %#ok<TRYNC>
+%     rtp.window_size = protocol_type.nMSecondsPerWindow;
+% end
+% end
 
 
 

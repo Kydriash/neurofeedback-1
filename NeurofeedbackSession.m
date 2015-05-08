@@ -109,29 +109,9 @@ classdef NeurofeedbackSession < handle
             for j = 1: length(self.protocol_sequence)
                 for i = 1:length(self.protocol_types)
                     if strcmp(self.protocol_sequence{j},self.protocol_types{i}.sProtocolName)
-                        rtp = RealtimeProtocol;
-                        rtp.protocol_name = self.protocol_types{i}.sProtocolName;
-                        rtp.to_update_statistics = self.protocol_types{i}.bUpdateStatistics;
-                        rtp.protocol_duration = self.protocol_types{i}.fDuration;
-                        rtp.stop_after = self.protocol_types{i}.bStopAfter;
-                        rtp.string_to_show = self.protocol_types{i}.cString;
-                        try %#ok<TRYNC>
-                            
-                            rtp.filter_filename = self.protocol_types{i}.sFilterFilename;
-                            
-                        end
-                        try %#ok<TRYNC>
-                            rtp.band = self.protocol_types{i}.dBand;
-                        end
-                        try %#ok<TRYNC>
-                            rtp.fb_type = self.protocol_types{i}.sFb_type;
-                        end
-                        try %#ok<TRYNC>
-                            rtp.window_duration = self.protocol_types{i}.nMSecondsPerWindow;
-                        end
-                        
+                        rtp = RealtimeProtocol(1,self.protocol_types{i});
                         self.feedback_protocols{end+1} = rtp;
-                        rtp.set_ds_index(self.protocol_sequence);
+                        %rtp.set_ds_index(self.protocol_sequence);
                     end
                 end
             end
