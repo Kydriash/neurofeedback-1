@@ -132,6 +132,9 @@ classdef EEGLSL < handle
         files_pathname
         looped
         run_protocols
+        settings
+        bad_channels
+        raw_data_indices
     end
     
     methods
@@ -196,6 +199,12 @@ classdef EEGLSL < handle
             self.fb_sigmas = 16;
             self.from_file = 0;
             
+            self.settings = struct();
+            self.settings.subject = 'Null';
+            self.settings.montage_fname = 'D:\neurofeedback\settings\nvx136.nvx136.monopolar-Pz.xml';
+            self.settings.settings_file =  'settings\LeftVsRightMu.nss.xml';
+            self.bad_channels = {};
+            self.raw_data_indices = [];
             
             
         end
@@ -568,7 +577,7 @@ classdef EEGLSL < handle
                                             self.feedback_protocols{pr}.actual_protocol_size = 0;
                                         end
                                     else
-                                    self.StopRecording();
+                                        self.StopRecording();
                                     end
                                 end
                             end
@@ -584,7 +593,30 @@ classdef EEGLSL < handle
             end;
             
         end
-        
+        %         function Run(self)
+        %             %draw self.raw_and_ds_figure
+        %              self.raw_and_ds_figure = figure('Tag','raw_and_ds_figure'); %add Tag
+        %                 set(self.raw_and_ds_figure,'ResizeFcn',@self.FitFigure);
+        %
+        %                 settings_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
+        %                     'String', 'Settings','Tag','settings_button','Callback',@SetExpSettings);
+        %                 self.connect_button =  uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton',...
+        %                     'String', 'Start recording','Tag','connect_button');
+        %                 self.disconnect_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
+        %                     'String', 'Disconnect', 'Callback', @self.Disconnect,'Tag','disconnect_button');
+        %                 self.log_text = uicontrol('Parent', self.raw_and_ds_figure  ,'Style', 'Text','String', {'Log'}, 'Tag','log_text');
+        %                 self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ','HorizontalAlignment','left','Tag','status_text');
+        %                 self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ','Tag','curr_protocol_text');
+        %                 %self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
+        %                 self.raw_subplot = subplot(2,1,1);
+        %                 self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0,  'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
+        %                 self.raw_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '','Tag', 'raw_line');
+        %                 self.ds_subplot = subplot(2,1,2);
+        %
+        %                 self.FitFigure;
+        %
+        %
+        %         end
         function Connect(self,predicate, value)
             RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
             lsllib = lsl_loadlib();
@@ -748,8 +780,8 @@ classdef EEGLSL < handle
                     self.from_file = get(from_file_chb,'Value');
                     if self.from_file
                         
-                    self.looped = get(loop_replay_chb,'Value');
-                    self.run_protocols = get(use_protocols_chb,'Value');
+                        self.looped = get(loop_replay_chb,'Value');
+                        self.run_protocols = get(use_protocols_chb,'Value');
                     end
                     
                 else
@@ -760,8 +792,8 @@ classdef EEGLSL < handle
                     self.show_fb = show_fb_check.Value;
                     self.from_file = from_file_chb.Value;
                     if self.from_file
-                    self.looped = loop_replay_chb.Value;
-                    self.run_protocols = use_protocols_chb.Value;
+                        self.looped = loop_replay_chb.Value;
+                        self.run_protocols = use_protocols_chb.Value;
                     end
                 end
                 subjects = [subjects {self.subject_record.subject_name}];
@@ -790,23 +822,23 @@ classdef EEGLSL < handle
                     [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
                     self.channel_labels = channels;
                     if self.run_protocols
-                    self.protocol_sequence = protocols;
-                    for pr = 1:length(protocols)
-                        
-                        self.feedback_protocols{pr} = RealtimeProtocol;
-                        self.feedback_protocols{pr}.protocol_name = protocols{pr};
-                        self.feedback_protocols{pr}.protocol_duration = durations(pr);
-                        
-                        if strcmpi(protocols{pr},'ssd')
-                            self.ssd = 1;
-                            self.feedback_protocols{pr}.to_update_statistics = 1;
-                            self.feedback_protocols{pr}.band = 1;
-                        elseif strcmpi(protocols{pr},'baseline')
-                            self.feedback_protocols{pr}.to_update_statistics = 1;
-                        elseif strfind(lower(protocols{pr}),'feedback')
-                            self.feedback_protocols{pr}.fb_type = protocols{pr};
+                        self.protocol_sequence = protocols;
+                        for pr = 1:length(protocols)
+                            
+                            self.feedback_protocols{pr} = RealtimeProtocol;
+                            self.feedback_protocols{pr}.protocol_name = protocols{pr};
+                            self.feedback_protocols{pr}.protocol_duration = durations(pr);
+                            
+                            if strcmpi(protocols{pr},'ssd')
+                                self.ssd = 1;
+                                self.feedback_protocols{pr}.to_update_statistics = 1;
+                                self.feedback_protocols{pr}.band = 1;
+                            elseif strcmpi(protocols{pr},'baseline')
+                                self.feedback_protocols{pr}.to_update_statistics = 1;
+                            elseif strfind(lower(protocols{pr}),'feedback')
+                                self.feedback_protocols{pr}.fb_type = protocols{pr};
+                            end
                         end
-                    end
                     end
                     
                     
@@ -831,7 +863,6 @@ classdef EEGLSL < handle
                 self.Connect(predicate,value);
             end
         end
-        
         function PlotEEGData(self,timer_obj, event) %#ok<INUSD>
             
             if ~self.connected
@@ -845,12 +876,17 @@ classdef EEGLSL < handle
                 self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ', 'Position', [0 210 200 20],'HorizontalAlignment','left','Tag','status_text');
                 self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
                 %self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Position',[70 400 80 15],'Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
-                
+                select_bad_channels_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
+                    'String', 'Select bad channels', 'Callback', @self.SelectBadChannels,'Tag','select_bad_channels_button'); %#ok<NASGU>
+%                 bad_channels_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', '',...
+%                     'HorizontalAlignment','left','Tag','bad_channels_text');
                 
                 self.raw_subplot = subplot(2,1,1);
                 set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
                 self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
-                r_temp = zeros(length(self.used_ch),fix(self.plot_size));
+               
+                self.raw_data_indices = 1:length(self.used_ch);
+                r_temp = zeros(length(self.raw_data_indices),fix(self.plot_size));
                 self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
                 self.raw_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 320 100 25],'Tag', 'raw_line');
                 
@@ -863,29 +899,36 @@ classdef EEGLSL < handle
                     for i = 1:length(self.used_ch)
                         set(self.raw_plot(i),'DisplayName', self.used_ch{i,1});
                     end
+                    
+                    
                     self.raw_ylabels_fixed = 1;
                 end
-
+                
+                
+                
                 self.ds_subplot = subplot(2,1,2);
                 set(self.ds_subplot,'YLim', [0 self.raw_shift*length(self.derived_signals)]);
+                
+                
+                self.FitFigure;
                 self.connected = 1;
+                
             elseif self.connected
-                set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
+                set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.raw_data_indices)+1)]);
                 set(self.ds_subplot,'YLim', [0 self.raw_shift*(length(self.derived_signals))]);
                 r_sp = get(self.raw_subplot);
                 ds_sp = get(self.ds_subplot);
                 
                 try
+                    
                     %plot filtered data
                     if length(self.derived_signals) > 1
                         if ~self.ds_ylabels_fixed && length(self.derived_signals)>1
                             
                             ds_temp = zeros(length(self.derived_signals)-1,fix(self.plot_size));
-                            fig = get(self.raw_and_ds_figure);
-                            fp = fig.Position;
                             self.ds_plot = plot(ds_temp', 'Parent', self.ds_subplot);
-                            self.ds_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)],'Tag','ds_line');
-                            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [0.93*fp(3),0.12*fp(4) , 0.02*fp(3), 0.3*fp(4)], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
+                            self.ds_line = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'Text','String', '', 'Position', [480 120 100 25],'Tag','ds_line');
+                            self.ds_scale_slider= uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','DS scale', 'Value', 0, 'Position', [520 100 10 100], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','ds_slider');
                             
                             self.ds_ytick_labels = {' '};
                             for i = 2:length(self.derived_signals)
@@ -928,6 +971,7 @@ classdef EEGLSL < handle
                     if raw_last_to_show > raw_first_to_show
                         raw_data = self.derived_signals{1}.ring_buff.raw(self.derived_signals{1}.ring_buff.lst-self.plot_size+1:self.derived_signals{1}.ring_buff.lst,:);
                         raw_data = raw_data';
+                        raw_data = raw_data(self.raw_data_indices,:);
                         for i = 1:size(raw_data,1)
                             set(self.raw_plot(i),'YData', raw_data(i:i,:)*self.raw_ydata_scale+self.raw_shift*i);
                         end
@@ -952,25 +996,7 @@ classdef EEGLSL < handle
             end
             %set recording status
             try
-                if self.from_file
-                    if verLessThan('matlab','8.4.0')
-                        set(self.curr_protocol_text, 'String', {strcat('Samples acquired', num2str(self.samples_acquired)),...% num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
-                            strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
-                            strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
-                            strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
-                            strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
-                            strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
-                            });
-                    else
-                        self.curr_protocol_text.String = {strcat('Samples acquired', num2str(self.samples_acquired)),...%num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
-                            strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
-                            strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
-                            strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
-                            strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
-                            strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
-                            };
-                    end
-                elseif(self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols)) %non-zero protocol
+                if(self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols)) %non-zero protocol
                     if verLessThan('matlab','8.4.0')
                         set(self.curr_protocol_text, 'String', {strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.protocol_name),...
                             strcat('Samples acquired', num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
@@ -1013,7 +1039,7 @@ classdef EEGLSL < handle
             end
             
             self.SetRecordingStatus;
-        end
+        end     
         function RefreshFB(self,timer_obj,event) %#ok<INUSD>
             %feedback
             if length(self.derived_signals) > 1
@@ -1114,8 +1140,8 @@ classdef EEGLSL < handle
         function StartRecording(self,obj,event) %#ok<INUSD>
             if self.from_file && ~self.run_protocols
             else
-            self.current_protocol = self.next_protocol;
-            self.next_protocol = self.next_protocol + 1;
+                self.current_protocol = self.next_protocol;
+                self.next_protocol = self.next_protocol + 1;
             end
             self.recording = 1;
             self.InitTimer();
@@ -1271,8 +1297,15 @@ classdef EEGLSL < handle
             self.AddNotes;
         end
         function AddNotes(self)
+             if ~isempty(self.bad_channels)
+                 notes_string = ['The channels ' strjoin(self.bad_channels) ' were excluded from analysis.'];
+             else
+                 notes_string = '';
+             end
+             
             self.add_notes_window = figure;
-            self.add_notes_field = uicontrol('Parent', self.add_notes_window, 'Style', 'edit', 'Position', [ 10 30 300 200]);
+            self.add_notes_field = uicontrol('Parent', self.add_notes_window, 'Style', 'edit', 'Position',...
+                [ 10 30 300 200],'String', notes_string); %there's no such thing as VerticalAlignment in uicontrols
             self.write_notes = uicontrol('Parent', self.add_notes_window, 'Style', 'pushbutton', 'Position',[ 150 10 100 20], 'Callback', 'uiresume', 'String', 'Save notes');
             uiwait;
             if verLessThan('matlab','8.4.0')
@@ -1296,7 +1329,7 @@ classdef EEGLSL < handle
                     set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
                 end
             else
-
+                
                 if self.from_file && isempty(self.feedback_protocols)
                     self.status_text.String = 'Playing from file';
                 elseif self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
@@ -1368,8 +1401,15 @@ classdef EEGLSL < handle
             cpt = findobj('Tag','curr_protocol_text');
             rl = findobj('Tag', 'raw_line');
             dsl = findobj('Tag','ds_line');
+            sb = findobj('Tag','settings_button');
+            sbch = findobj('Tag','select_bad_channels_button');
             %  epb = findobj('Tag','edit_protocols_button');
-            
+            try %#ok<TRYNC>
+                ok = findobj('Tag', 'add_bad_channel_button');
+                fin = findobj('Tag','finish adding bad channels button');
+                bcht = findobj('Tag','bad_channels_text');
+                cht = findobj('Tag','ch_text');
+            end
             
             set(db,'Position',[0.85*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
             set(cb,'Position',[0.03*fp(3), 0.02*fp(4), 0.12*fp(3), 0.04*fp(4)]);
@@ -1382,17 +1422,24 @@ classdef EEGLSL < handle
             set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
             set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
             %  set(epb,'Position', [0.13*fp(3), 0.95*fp(4), 0.12*fp(3), 0.04*fp(4)]);
+            set(sb,'Position', [0.1*fp(3), 0.94*fp(4),0.1*fp(3), 0.05*fp(4)]);
+            set(ok,'Position', [0.65*fp(3), 0.94*fp(4), 0.1*fp(3),0.05*fp(4)]);
+            set(fin,'Position', [0.75*fp(3), 0.94*fp(4), 0.1*fp(3),0.05*fp(4)]);
+            set(bcht, 'Position',[fp(3)*0.2,fp(4)*0.75,fp(3)*0.05,fp(4)*0.20]);
+            set(cht,'Position', [fp(3)*0.35,fp(4)*0.92,fp(3)*0.3,fp(4)*0.07]);
+            set(sbch,'Position', [fp(3)*0.14,fp(4)*0.945,fp(3)*0.2,fp(4)*0.05]);
             self.SetRawYTicks;
             self.SetDSYTicks;
         end
         function SetRawYTicks(self)
             try %#ok<TRYNC>
                 r_sp = get(self.raw_subplot);
-                r_yticks = [r_sp.YLim(1):(r_sp.YLim(2)-r_sp.YLim(1))/length(self.used_ch):r_sp.YLim(2)]; %#ok<NBRAK>
+                r_yticks = [r_sp.YLim(1):(r_sp.YLim(2)-r_sp.YLim(1))/length(self.raw_data_indices):r_sp.YLim(2)]; %#ok<NBRAK>
                 set(self.raw_subplot, 'YTick', r_yticks);
                 set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
-                set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.used_ch)+1)/self.raw_ydata_scale));
+                set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.raw_data_indices)+1)/self.raw_ydata_scale));
             end
+            %self.FitFigure;
         end
         function SetDSYTicks(self)
             try %#ok<TRYNC>
@@ -1723,8 +1770,93 @@ classdef EEGLSL < handle
                 delete(obj);
             end
         end
+        function SelectBadChannels(self,obj,event) %#ok<INUSD>
+            global finished;
+            global ok;
+            f = findobj('Tag','raw_and_ds_figure');
+            bad_channels_text =  uicontrol('Parent',f,'Style','text','String', self.bad_channels,'HorizontalAlignment','right','Tag','bad_channels_text'); 
+            ok_button = uicontrol('Parent',f,'style','pushbutton', 'String', 'Add','Tag','add_bad_channel_button','Callback','global ok; ok = 1;');
+            finished_button= uicontrol('Parent',f,'style','pushbutton', 'String', 'Finish','Tag','finish adding bad channels button','Callback','global ok; global finished; ok = 1;finished = 1;');
+            text =  uicontrol('Parent',f,'Style','text','String', 'Select a channel and press Add','HorizontalAlignment','right','Tag','ch_text','HorizontalAlignment','center'); 
+            datacursormode('off');
+            r_sp = get(self.raw_subplot);
+            self.FitFigure;
+            finished = 0;
+            while ~finished
+                ok = 0;
+                dcm_obj = datacursormode(f);
+                set(dcm_obj,'UpdateFcn',@cursor_callback);
+                %if 'OK'
+                while ~(~isempty(getCursorInfo(dcm_obj)) && ok)
+                    datacursormode('on');
+                    pause(1);
+                    if finished
+                        break; %#ok<UNRCH>
+                    end
+%                     %%%set it gray
+%                     if ~isempty(getCursorInfo(dcm_obj))
+%                         cursor_info = getCursorInfo(dcm_obj);
+%                         
+%                         for ch = 1:length(self.derived_signals{1}.channels)
+%                             if strcmp(self.derived_signals{1}.channels{ch}, cursor_info.Target.DisplayName)
+%                                 set(r_sp.Children(length(r_sp.Children)-ch+1),'Color',[0.75 0.75 0.75]);
+%                             end
+%                         end
+%                     end
+                end
+                if ~finished
+                    datacursormode('off');
+                    cursor_info = getCursorInfo(dcm_obj);
+                    self.bad_channels{end+1} = cursor_info.Target.DisplayName;
+                    self.bad_channels = unique(self.bad_channels);
+                    set(bad_channels_text,'String',self.bad_channels);
+                    dcm_obj.removeAllDataCursors();
+                end
+            end
+            delete(ok_button);
+            delete(finished_button);
+            delete(findobj('Tag','bad_channels_text'));
+            delete(text);
+            datacursormode('off');
+            %update derived signals
+            
+            for b_ch = 1:length(self.bad_channels)
+                for child = 1:length(r_sp.Children)
+                    if strcmp(self.bad_channels{b_ch},r_sp.Children(length(r_sp.Children)-child+1).DisplayName)
+                        self.raw_data_indices = self.raw_data_indices(self.raw_data_indices ~= child);
+                    end
+                end
+            end
+            for ds = 1:length(self.derived_signals)
+                self.derived_signals{ds}.ZeroOutBadChannels(self.bad_channels);
+            end
+            %update  YTickLabels
+            for b_ch = 1:length(self.bad_channels)
+                self.r_ytick_labels(strcmp(self.bad_channels{b_ch},self.r_ytick_labels)) = [];
+            end
+            %update shift
+            r_temp = zeros(length(self.raw_data_indices),fix(self.plot_size));
+            self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
+            for i = 2:length(self.r_ytick_labels)-1
+                set(self.raw_plot(i-1),'DisplayName',self.r_ytick_labels{i});
+            end
+            %and set them
+            set(self.raw_subplot,'YLim',[0 self.raw_shift*length(self.r_ytick_labels)]);
+            self.SetRawYTicks();
+
+        end
+        %         function SetExpSettings(self,obj,event)
+        %             settings_figure = figure;
+        %             SetDesignFile
+        %             SetMontageFile
+        %             SetSubject
+        %
+        %         end
+        %         function ObtainSettings(self,obj,event)
+        %         end
     end
 end
+
 
 function channels = read_montage_file(fname)
 montage = xml2struct(fname);

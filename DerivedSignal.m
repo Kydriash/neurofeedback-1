@@ -11,9 +11,9 @@ classdef DerivedSignal < handle
         window_coefficients
         signal_name
         data
-        channels
-        all_channels
-        channels_file
+        channels %used channels
+        all_channels %all received channels
+        %channels_file 
         collect_buff %collects all the data
         channels_indices
         filtered %temp for debugging
@@ -34,21 +34,15 @@ classdef DerivedSignal < handle
             if strcmpi(self.signal_name, 'raw')         
                 self.collect_buff = circVBuf(data_length, length(signal.channels), 0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),length(signal.channels), 0); 
-                
-
-                
-                   
             else
                 self.collect_buff = circVBuf(data_length,1,0);
                 self.ring_buff = circVBuf(fix(plot_length*sampling_frequency*1.1),1, 0);
-
             end
             
             for i = 1:length(self.all_channels)
                 for j = 1:length(self.channels)
                     if strcmp(self.all_channels{i},self.channels{j,1})
                         try
-                            
                             self.channels_indices(j) = i;
                         catch i,j %#ok<NASGU,NOPRT>
                         end
@@ -64,12 +58,8 @@ classdef DerivedSignal < handle
                     [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
                     self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
                     self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-            end
-            
-            
-            
-            self.filtered = 0;
-            
+            end 
+            self.filtered = 0; 
         end
         
         
@@ -88,18 +78,13 @@ classdef DerivedSignal < handle
                         end
                     end
                 end
-                
             elseif isnumeric(sp_filter) && min(size(sp_filter)) == 1 %vector
                 for idx = 1:length(self.channels_indices)
                     self.spatial_filter(self.channels_indices(idx)) = sp_filter(self.channels_indices(idx));
                 end
             end
-                
-                
-            
-            
-            
         end
+        
         function UpdateTemporalFilter(self,range,order,mode)
             if(nargin<4)
                 mode = 'bandpass';
@@ -156,7 +141,16 @@ classdef DerivedSignal < handle
             end
            
         end
-        
+        function ZeroOutBadChannels(self,bad_channels)
+            for bad = 1:length(bad_channels)
+                for ch = 1:length(self.all_channels) 
+                    if strcmp(self.all_channels(ch),bad_channels{bad})
+                        %self.channel_indices = self.channel_indices(self.channel_indices ~= ch);
+                        self.spatial_filter(ch) = 0;
+                    end
+                end
+            end
+        end
     end
 end
 
