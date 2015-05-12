@@ -20,7 +20,6 @@ classdef DerivedSignal < handle
         composite_montage
         spf_times_cm
         sampling_frequency
-        channels_file
     end
     
     methods
@@ -87,10 +86,9 @@ classdef DerivedSignal < handle
                     end
                 else 
                     for s_ch = 1:length(sp_filter)
-                        if isempty(nonzeros(strcmp(raw_signal.channels(:,1),sp_filter{s_ch,1})))
-                            warning(['The channel ',sp_filter{s_ch,1},' is not presented in the raw data.'])
-                        elseif ~isempty(nonzeros(strcmp(bad_channels, sp_filter{s_ch,1})))
-                            warning(['The channel ',sp_filter{s_ch,1}, ' was eliminated from the raw signal.']);
+                        if isempty(nonzeros(strcmp(raw_signal.channels(:,1),sp_filter{idx,1})))
+                            warning(['The channel ',sp_filter{idx,1},' is not presented in the raw data.'])
+                        elseif 
                         end
                     end
                 end

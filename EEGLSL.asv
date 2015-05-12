@@ -431,7 +431,7 @@ classdef EEGLSL < handle
                         NewDS.signal_name = sn{1};
                         NewDS.ring_buff = circVBuf(self.plot_size,1,0);
                         NewDS.collect_buff = circVBuf(self.exp_data_length,1,0);
-                        NewDS.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);
+                        NewDS.UpdateSpatialFilter(spatial_filter);
                         NewDS.UpdateTemporalFilter(Rng(middle_point,:));
                         NewDS.channels_file = full_name;
                         self.derived_signals{end+1} = NewDS;
@@ -614,11 +614,11 @@ classdef EEGLSL < handle
         function Connect(self,predicate, value)
             RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
             lsllib = lsl_loadlib();
-            disp('Connecting...')
+            %self.channel_labels = [];
             while isempty(self.streams)
                 self.streams = lsl_resolve_byprop(lsllib,predicate, value);
             end
-            disp('Connected')
+            
             self.sampling_frequency = self.streams{1}.nominal_srate();
 
             self.inlet = lsl_inlet(self.streams{1});
@@ -626,12 +626,10 @@ classdef EEGLSL < handle
                 delete(strcat(self.program_path,'\','channels.txt'))
             end
             command = ['resolve_channels.exe' ' ' predicate ' ' value];
-            disp('Trying to read the channels... ');
             status = system(command);
             if ~status
-                self.channel_labels = read_channel_file('channels.txt');
+                
             end
-           
             
             
             self.plot_size = self.plot_length * self.sampling_frequency;
@@ -686,10 +684,8 @@ classdef EEGLSL < handle
                     self.derived_signals = cell(1,length(self.signals));
                 end
                 for i = 1: length(self.derived_signals)
-                
                     self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-                    
-                    self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels,self.derived_signals{1},self.bad_channels);
+                    self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels);
                 end
             end
             for ds = 1:length(self.derived_signals)
@@ -842,7 +838,7 @@ classdef EEGLSL < handle
                     
                     
                 else
-                    %self.channel_labels = read_montage_file(self.montage_fname);
+                    self.channel_labels = read_montage_file(self.montage_fname);
                     nfs = NeurofeedbackSession;
                     nfs.LoadFromFile(self.settings_file);
                     self.protocol_types = nfs.protocol_types;
@@ -1452,7 +1448,7 @@ classdef EEGLSL < handle
         function SetRawYTicks(self)
             try %#ok<TRYNC>
                 r_sp = get(self.raw_subplot);
-                r_yticks = [r_sp.YLim(1):(r_sp.YLim(2)-r_sp.YLim(1))/(length(self.raw_data_indices)+1):r_sp.YLim(2)]; %#ok<NBRAK>
+                r_yticks = [r_sp.YLim(1):(r_sp.YLim(2)-r_sp.YLim(1))/length(self.raw_data_indices):r_sp.YLim(2)]; %#ok<NBRAK>
                 set(self.raw_subplot, 'YTick', r_yticks);
                 set(self.raw_subplot, 'YTickLabel', self.r_ytick_labels);
                 set(self.raw_line,'String',num2str((r_sp.YLim(2)-r_sp.YLim(1))/(length(self.raw_data_indices)+1)/self.raw_ydata_scale));
@@ -1816,14 +1812,8 @@ classdef EEGLSL < handle
             
             for b_ch = 1:length(self.bad_channels)
                 for child = 1:length(r_sp.Children)
-                    try
-                        if strcmp(self.bad_channels{b_ch},r_sp.Children(length(r_sp.Children)-child+1).DisplayName)
-                            self.raw_data_indices = self.raw_data_indices(self.raw_data_indices ~= child);
-                            
-                        end
-                    catch
-                        length(r_sp.Children)
-                        child
+                    if strcmp(self.bad_channels{b_ch},r_sp.Children(length(r_sp.Children)-child+1).DisplayName)
+                        self.raw_data_indices = self.raw_data_indices(self.raw_data_indices ~= child);
                     end
                 end
             end
@@ -1842,7 +1832,7 @@ classdef EEGLSL < handle
             end
             %and set them
             set(self.raw_subplot,'YLim',[0 self.raw_shift*length(self.r_ytick_labels)]);
-            self.FitFigure;
+            self.SetRawYTicks();
 
         end
         %         function SetExpSettings(self,obj,event)
@@ -1859,7 +1849,7 @@ classdef EEGLSL < handle
 end
 
 
-function channels = read_montage_file(fname) %#ok<DEFNU>
+function channels = read_montage_file(fname)
 montage = xml2struct(fname);
 channels = {};
 for i = 1:length(montage.neorec.transmission.clogicals.clogical)
@@ -1908,7 +1898,7 @@ end
 function channels = read_channel_file(fname)%input = txt file
 
 if nargin<1
-    fname = 'channels.txt';
+    fname = 'channels.txt');
 end
 t = fileread(fname);
 ch = strsplit(t, '\n');
@@ -1916,16 +1906,13 @@ if strcmp(ch(end), '')
     
     ch(end) = [];
 end
-channel_count = str2double(ch{1});
+channel_count = str2double(ch{1})
 channels = {};
-for c = 2:length(ch)
+for c = 2:length(channels)
     channels{end+1} = ch{c};
 end
-channels = strtrim(channels);
 if length(channels) ~= channel_count
-    disp('Wrong number of channels')
-else
-    disp('Channels read successfully')
+    disp('Wrong number of channels'
 end
 
 end
