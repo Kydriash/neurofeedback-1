@@ -404,7 +404,7 @@ classdef EEGLSL < handle
                                     f = fopen(full_name,'w');
                                     fwrite(f,x);
                                     fclose(f);
-                                    spatial_filter = chan_w;
+                                    spatial_filter = chs;
                                 case 'No, use the old one'
                                     
                                     s = xml2struct(full_name);
@@ -416,7 +416,7 @@ classdef EEGLSL < handle
                                     spatial_filter = channels_coeff;
                             end
                         else
-                            spatial_filter = chan_w;
+                            spatial_filter = chs;
                             f = fopen(full_name,'w');
                             fwrite(f,x);
                             fclose(f);
@@ -445,42 +445,42 @@ classdef EEGLSL < handle
                     end
                     
                     %calculate feedback avg, std
-                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-                    if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
-                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
-                        self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
-                    else
-                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
-                    end
+%                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+%                     if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
+%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
+%                         self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
+%                     else
+%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
+%                     end
                     
                     %filter
-                    dummy_signal = struct();
-                    dummy_signal.sSignalName = 'Temp';
+%                     dummy_signal = struct();
+%                     dummy_signal.sSignalName = 'Temp';
                     channels = cell(size(self.channel_labels,2));
                     for i = 1:length(channels)
                         channels{i,1} = self.channel_labels{i};
                         channels{i,2} = 1;
                     end
-                    dummy_signal.filters = cell(0,0);
-                    dummy_signal.channels = channels;
-                    temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-                    temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
-                    temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
-                    temp_derived_signal.spatial_filter = w_ssd(self.derived_signals{1}.channels_indices)';
-                    temp_derived_signal.UpdateTemporalFilter(Rng(middle_point,:));
-                    temp_derived_signal.Apply(x_raw',1);
-                    values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
-                    self.feedback_manager.average(1) = mean(values);
-                    self.feedback_manager.standard_deviation(1) = std(values);
-                    self.SetRawYTicks;
-                    self.SetDSYTicks;
-                    self.yscales_fixed = 1;
-                    self.raw_yscale_fixed = 1;
-                    self.ds_yscale_fixed = 1;
-                    self.fb_statistics_set = 1;
-                    self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
-                    self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
-                    self.fb_manager_set = 1;
+%                     dummy_signal.filters = cell(0,0);
+%                     dummy_signal.channels = channels;
+%                     temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+%                     temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
+%                     temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
+%                     temp_derived_signal.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);% = w_ssd(self.derived_signals{1}.channels_indices)';
+%                     temp_derived_signal.UpdateTemporalFilter(Rng(middle_point,:));
+%                     temp_derived_signal.Apply(x_raw',1);
+%                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
+%                     self.feedback_manager.average(1) = mean(values);
+%                     self.feedback_manager.standard_deviation(1) = std(values);
+%                     self.SetRawYTicks;
+%                     self.SetDSYTicks;
+%                     self.yscales_fixed = 1;
+%                     self.raw_yscale_fixed = 1;
+%                     self.ds_yscale_fixed = 1;
+%                     self.fb_statistics_set = 1;
+%                     self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+%                     self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
+%                     self.fb_manager_set = 1;
                     
                 else
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
@@ -1590,8 +1590,10 @@ classdef EEGLSL < handle
             %!!!!
             pr_idx = strsplit(insert_obj.String{insert_obj.Value});
             idx = str2num(pr_idx{1}); %#ok<ST2NM>
-            protocols_names = [protocols_names(1:idx) new_protocol.protocol_name protocols_names(idx+1:end)];
-            protocols_durations = [protocols_durations(1:idx) num2str(new_protocol.protocol_duration) protocols_durations(idx+1:end)];
+            protocols_names = [protocols_names(end:-1:idx+1) new_protocol.protocol_name protocols_names(idx:-1:1)];
+            protocols_names = protocols_names(end:-1:1);
+            protocols_durations = [protocols_durations(end:-1:idx+1) num2str(new_protocol.protocol_duration) protocols_durations(idx:-1:1)];
+            protocols_durations = protocols_durations(end:-1:1);
             self.UpdateEditProtocolsFigure(protocols_names,protocols_durations);
         end
         function DeleteProtocol(self,obj,event) %#ok<INUSD>
@@ -1609,8 +1611,8 @@ classdef EEGLSL < handle
                 protocols_durations = [protocols_durations {protocols_durations_obj(pd).String}];
             end
             
-            protocols_names = [protocols_names(1:delete_obj.Value-1) protocols_names(delete_obj.Value+1:end)];
-            protocols_durations = [protocols_durations(1:delete_obj.Value) protocols_durations(delete_obj.Value+1:end)];
+            protocols_names = [protocols_names(1:delete_obj.Value+self.next_protocol-2) protocols_names(delete_obj.Value+self.next_protocol:end)];
+            protocols_durations = [protocols_durations(1:delete_obj.Value+self.next_protocol-2) protocols_durations(delete_obj.Value+self.next_protocol:end)];
             self.UpdateEditProtocolsFigure(protocols_names,protocols_durations);
         end
         function UpdateEditProtocolsFigure(self,protocols_names,protocols_durations)
@@ -1653,7 +1655,7 @@ classdef EEGLSL < handle
             if self.next_protocol == 1
             insert_protocol_dropmenu.String = [{'0'} new_protocols_names];
             else
-                insert_protocol_dropmenu.String = new_protocols_names;
+                insert_protocol_dropmenu.String = new_protocols_names; %%%%delete prt dropmenu
             end
             delete_protocol_dropmenu.String = new_protocols_names;
             
@@ -1665,7 +1667,7 @@ classdef EEGLSL < handle
             self.feedback_protocols(self.next_protocol:end) = [];
             protocols_names_obj = findobj('Tag', 'Protocol name text');
             protocols_durations_obj = findobj('Tag', 'Protocol duration text');
-            for j = length(protocols_names_obj):-1:self.next_protocol
+            for j = length(protocols_names_obj)-self.next_protocol+1:-1:1
                 for i = 1:length(self.protocol_types)
                     if strcmp(protocols_names_obj(j).String,self.protocol_types{i}.sProtocolName)
                         rtp = RealtimeProtocol(1,self.protocol_types{i});
@@ -1827,7 +1829,7 @@ classdef EEGLSL < handle
                         end
                     catch
                         length(r_sp.Children)
-                        child
+                        child %#ok<NOPRT>
                     end
                 end
             end
