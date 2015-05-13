@@ -627,6 +627,7 @@ classdef EEGLSL < handle
             end
             command = ['resolve_channels.exe' ' ' predicate ' ' value];
             disp('Trying to read the channels... ');
+            cd(self.program_path);
             status = system(command);
             if ~status
                 self.channel_labels = read_channel_file('channels.txt');
@@ -690,7 +691,9 @@ classdef EEGLSL < handle
                     self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
                     
                     self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels,self.derived_signals{1},self.bad_channels);
+                    
                 end
+                
             end
             for ds = 1:length(self.derived_signals)
                 if strcmpi(self.derived_signals{ds}.signal_name, 'raw')
@@ -698,6 +701,7 @@ classdef EEGLSL < handle
                     self.used_ch = raw.channels;
                 end
             end
+            
             %self.RunInterface;
             if self.from_file
                 self.StartRecording();
@@ -892,11 +896,11 @@ classdef EEGLSL < handle
                 if ~self.raw_ylabels_fixed
                     self.r_ytick_labels = {' '};
                     for i = 1:length(self.used_ch)
-                        self.r_ytick_labels{end+1} = self.used_ch{i,1};
+                        self.r_ytick_labels{end+1} = self.used_ch{i};
                     end
                     self.r_ytick_labels{end+1} = ' ';
                     for i = 1:length(self.used_ch)
-                        set(self.raw_plot(i),'DisplayName', self.used_ch{i,1});
+                        set(self.raw_plot(i),'DisplayName', self.used_ch{i});
                     end
                     
                     
