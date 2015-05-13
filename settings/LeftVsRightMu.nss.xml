@@ -153,9 +153,21 @@
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
-
+<loop count = '1'>
 <s>SSD</s>
+</loop>
+
+<loop count = '5'>
 <s>Baseline</s>
+<s>Rest</s>
+</loop>
+
+<loop count = '2'>
+<s>Mock_feedback</s>
+</loop>
+
+
+
 
 
 	</vPSequence>

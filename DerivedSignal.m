@@ -83,6 +83,7 @@ classdef DerivedSignal < handle
                     end
                 else
                     for s_ch = 1:length(sp_filter)
+                        
                         if isempty(nonzeros(strcmp(raw_signal.channels(:,1),sp_filter{s_ch,1})))
                             warning(['The channel ',sp_filter{s_ch,1},' is not presented in the raw data.'])
                         elseif ~isempty(nonzeros(strcmp(bad_channels, sp_filter{s_ch,1})))
@@ -97,7 +98,10 @@ classdef DerivedSignal < handle
             end
             
             
-            self.channels = self.channels(self.channels_indices~=0);
+ 
+            chs(:,1) = self.channels(self.channels_indices(1,:)~=0,1);
+            chs(:,2) = self.channels(self.channels_indices(1,:)~=0,2);
+            self.channels = chs;
             self.channels_indices = nonzeros(self.channels_indices);
             if ~exist(self.collect_buff, 'var')
                 if strcmpi(self.signal_name, 'raw')
