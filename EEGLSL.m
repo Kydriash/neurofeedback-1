@@ -445,42 +445,52 @@ classdef EEGLSL < handle
                     end
                     
                     %calculate feedback avg, std
-%                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-%                     if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
-%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
-%                         self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
-%                     else
-%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
-%                     end
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
+                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
+                        self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
+                    else
+                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
+                    end
+                    j = 1;
+                    x = zeros(size(x_raw,1),length(self.derived_signals{1}.spatial_filter));
+                    for i = 1:length(self.derived_signals{1}.spatial_filter)
+                        if self.derived_signals{1}.spatial_filter(i)
+                            x(:,i) = x_raw(:,j);
+                            j = j+1;
+                        else
+                            x(:,i) = 0;
+                        end
+                    end
                     
                     %filter
-%                     dummy_signal = struct();
-%                     dummy_signal.sSignalName = 'Temp';
-                    channels = cell(size(self.channel_labels,2));
+                    dummy_signal = struct();
+                    dummy_signal.sSignalName = 'Temp';
+                    channels = cell(length(self.derived_signals{1}.channels),2);
                     for i = 1:length(channels)
-                        channels{i,1} = self.channel_labels{i};
+                        channels{i,1} = self.derived_signals{1}.channels{i};
                         channels{i,2} = 1;
                     end
-%                     dummy_signal.filters = cell(0,0);
-%                     dummy_signal.channels = channels;
-%                     temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-%                     temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
-%                     temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
-%                     temp_derived_signal.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);% = w_ssd(self.derived_signals{1}.channels_indices)';
-%                     temp_derived_signal.UpdateTemporalFilter(Rng(middle_point,:));
-%                     temp_derived_signal.Apply(x_raw',1);
-%                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
-%                     self.feedback_manager.average(1) = mean(values);
-%                     self.feedback_manager.standard_deviation(1) = std(values);
-%                     self.SetRawYTicks;
-%                     self.SetDSYTicks;
-%                     self.yscales_fixed = 1;
-%                     self.raw_yscale_fixed = 1;
-%                     self.ds_yscale_fixed = 1;
-%                     self.fb_statistics_set = 1;
-%                     self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
-%                     self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
-%                     self.fb_manager_set = 1;
+                    dummy_signal.filters = cell(0,0);
+                    dummy_signal.channels = channels;
+                    temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+                    temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
+                    temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
+                    temp_derived_signal.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);% = w_ssd(self.derived_signals{1}.channels_indices)';
+                    temp_derived_signal.UpdateTemporalFilter(Rng(middle_point,:));
+                    temp_derived_signal.Apply(x',1);
+                    values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
+                    self.feedback_manager.average(1) = mean(values);
+                    self.feedback_manager.standard_deviation(1) = std(values);
+                    self.SetRawYTicks;
+                    self.SetDSYTicks;
+                    self.yscales_fixed = 1;
+                    self.raw_yscale_fixed = 1;
+                    self.ds_yscale_fixed = 1;
+                    self.fb_statistics_set = 1;
+                    self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+                    self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
+                    self.fb_manager_set = 1;
                     
                 else
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;

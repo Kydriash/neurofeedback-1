@@ -91,38 +91,57 @@ classdef DerivedSignal < handle
                 for i = 1:length(sp_filter)
                     channel_names{end+1} = sp_filter(i).channel_name;
                 end
-                for idx = 1:length(sp_filter)
-                    for ch = 1:length(self.all_channels)
-                         if strcmp(sp_filter(idx).channel_name,self.all_channels(ch)) && ~isempty(nonzeros(strncmpi(self.all_channels{ch},self.channels(:,1),5)))
-                            self.spatial_filter(ch) = sp_filter(idx).coefficient;
-                            for c = 1:length(self.channels)
-                                if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
-                                    self.channels{c,2} = sp_filter(idx).coefficient;
+                if strcmpi(self.signal_name, 'raw')
+                    for idx = 1:length(sp_filter)
+                        for ch = 1:length(self.all_channels)
+                            if strcmp(sp_filter(idx).channel_name,self.all_channels(ch)) && ~isempty(nonzeros(strncmpi(self.all_channels{ch},self.channels(:,1),5)))
+                                self.spatial_filter(ch) = sp_filter(idx).coefficient;
+                                for c = 1:length(self.channels)
+                                    if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
+                                        self.channels{c,2} = sp_filter(idx).coefficient;
+                                    end
                                 end
                             end
-                         end
-                    end
-                end
-                
-                 
-            end
-           
-             if strcmpi(self.signal_name, 'raw')
-                    for s_ch = 1:length(sp_filter)
-                        if isempty(nonzeros(strcmp(self.all_channels,channel_names{s_ch})))
-                            warning(['The channel ',channel_names{s_ch},' is not transmitted by the device.'])
                         end
                     end
                 else
-                    for s_ch = 1:length(sp_filter)
-                        
-                        if isempty(nonzeros(strcmp(raw_signal.channels(:,1),channel_names{s_ch})))
-                            warning(['The channel ',channel_names{s_ch},' is not presented in the raw data.'])
-                        elseif ~isempty(nonzeros(strcmp(bad_channels, channel_names{s_ch})))
-                            warning(['The channel ',channel_names{s_ch}, ' was eliminated from the raw signal.']);
+                    self.spatial_filter = zeros(1,length(raw_signal.spatial_filter));
+                    for idx = 1:length(sp_filter)
+                        for ch = 1:length(raw_signal.all_channels)
+                            if strcmp(sp_filter(idx).channel_name,raw_signal.all_channels{ch}) && ~isempty(nonzeros(strncmpi(raw_signal.all_channels{ch},self.channels(:,1),5)))
+                                self.spatial_filter(ch) = sp_filter(idx).coefficient;
+                                for c = 1:length(self.channels)
+                                    if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
+                                        self.channels{c,2} = sp_filter(idx).coefficient;
+                                        break;
+                                    end
+                                end
+                                break;
+                            end
                         end
                     end
+                    
                 end
+                 
+            end
+            
+            if strcmpi(self.signal_name, 'raw')
+                for s_ch = 1:length(sp_filter)
+                    if isempty(nonzeros(strcmp(self.all_channels,channel_names{s_ch})))
+                        warning(['The channel ',channel_names{s_ch},' is not transmitted by the device.'])
+                    end
+                end
+            else
+                
+                for s_ch = 1:length(sp_filter)
+                    
+                    if isempty(nonzeros(strcmp(raw_signal.channels(:,1),channel_names{s_ch})))
+                        warning(['The channel ',channel_names{s_ch},' is not presented in the raw data.'])
+                    elseif ~isempty(nonzeros(strcmp(bad_channels, channel_names{s_ch})))
+                        warning(['The channel ',channel_names{s_ch}, ' was eliminated from the raw signal.']);
+                    end
+                end
+            end
             
  
             chs(:,1) = self.channels(self.channels_indices(1,:)~=0,1);
