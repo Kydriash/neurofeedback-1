@@ -4,7 +4,6 @@ global pushed;
 %read the files
 
 %check if fnames ets exist
-if ~isempty(pathname)
     
     [protocols, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
     
@@ -67,7 +66,7 @@ if ~isempty(pathname)
 %         
 %     end
 end
-end
+    
 
 
 

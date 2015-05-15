@@ -100,35 +100,37 @@ classdef NeurofeedbackSession < handle
             %%% upd on 2015-05-13
             try
                 seq = nfs.NeurofeedbackSignalSpecs.vPSequence.s;
+                 ps = {};
+                 if length(seq) == 1
+                     self.protocol_sequence{end+1} = seq.Text;
+                 else
+                      for s = 1:length(seq)
+                          self.protocol_sequence{end+1} = seq{s}.Text;
+                      end
+                 end
+
             catch err
                 if strcmp(err.identifier, 'MATLAB:nonExistentField')
                     seq = nfs.NeurofeedbackSignalSpecs.vPSequence.loop;
-                end
-            end
-            ps = {};
-            for s = 1:length(seq)
-                for a = 1:str2double(seq{s}.Attributes.count)
-                    for p = 1:length(seq{s}.s)
-                        if length(seq{s}.s) == 1
-                            self.protocol_sequence{end+1} = seq{s}.s(p).Text;
-                        else
-                            self.protocol_sequence{end+1} = seq{s}.s{p}.Text;
+                    ps = {};
+                    for s = 1:length(seq)
+                        for a = 1:str2double(seq{s}.Attributes.count)
+                            for p = 1:length(seq{s}.s)
+                                if length(seq{s}.s) == 1
+                                    self.protocol_sequence{end+1} = seq{s}.s(p).Text;
+                                else
+                                    self.protocol_sequence{end+1} = seq{s}.s{p}.Text;
+                                end
+                            end
                         end
                     end
                 end
             end
+           
             
             
             %%%
             
-%             ps = nfs.NeurofeedbackSignalSpecs.vPSequence.s;
-%             if length(ps) == 1
-%                 self.protocol_sequence{end+1} = ps.Text;
-%             else
-%                 for i = 1:length(ps)
-%                     self.protocol_sequence{end+1} = ps{i}.Text;
-%                 end
-%             end
             
             for j = 1: length(self.protocol_sequence)
                 for i = 1:length(self.protocol_types)

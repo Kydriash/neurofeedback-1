@@ -46,7 +46,6 @@
 			<fDuration>2</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
-			<sFilterFilename>xxx.xml</sFilterFilename>
 <dBand>1</dBand>
 		</FeedbackProtocol>
 		<FeedbackProtocol>
@@ -147,7 +146,7 @@
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
 <sFb_type>Mock</sFb_type>
-			<fDuration>180</fDuration>
+			<fDuration>3</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString></cString>
 		</FeedbackProtocol>
@@ -157,12 +156,7 @@
 <s>SSD</s>
 </loop>
 
-<loop count = '5'>
-<s>Baseline</s>
-<s>Rest</s>
-</loop>
-
-<loop count = '2'>
+<loop count = '1'>
 <s>Mock_feedback</s>
 </loop>
 

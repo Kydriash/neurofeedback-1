@@ -622,7 +622,12 @@ classdef EEGLSL < handle
         %
         %         end
         function Connect(self,predicate, value)
-            RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
+            if self.from_file && any([self.fnames,self.files_pathname])
+                RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
+            elseif self.from_file
+                warning('No files selected')
+                return;
+            end
             lsllib = lsl_loadlib();
             disp('Connecting...')
             while isempty(self.streams)
@@ -830,7 +835,9 @@ classdef EEGLSL < handle
                 self.feedback_manager = FeedbackManager;
                 if self.from_file
                     %self.channel_labels = get_channel_labels(self.inlet);
+                    
                     [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
+                    if any([self.fnames, self.files_pathname, filterindex] )
                     %subject_folder = self.streams{1}.source_id;
                     [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
                     self.channel_labels = channels;
@@ -853,7 +860,7 @@ classdef EEGLSL < handle
                             end
                         end
                     end
-                    
+                    end
                     
                 else
                     %self.channel_labels = read_montage_file(self.montage_fname);
@@ -1072,7 +1079,7 @@ classdef EEGLSL < handle
                             set(self.fb_stub, 'Visible', 'off'); %string
                             if strfind(lower(self.fb_type),'bar')
                                 set(self.fbplot_handle,'Visible','on'); %feedback if bar
-                                self.y_limit = [-1 7];
+                                %self.y_limit = [-1 7];
                                 xlim(self.feedback_axis_handle, [1 3]);
                                 ylim(self.feedback_axis_handle,self.y_limit);
                                 set(self.fbplot_handle,'FaceColor',[1 0 0]);
@@ -1109,7 +1116,7 @@ classdef EEGLSL < handle
                         set(self.fb_stub, 'Visible', 'off'); %string
                         if strfind(lower(self.fb_type),'bar')
                             set(self.fbplot_handle,'Visible','on'); %feedback if bar
-                            self.y_limit = [-1 7];
+                            %self.y_limit = [-1 7];
                             xlim(self.feedback_axis_handle, [1 3]);
                             ylim(self.feedback_axis_handle,self.y_limit);
                             set(self.fbplot_handle,'FaceColor',[1 0 0]);
@@ -1500,13 +1507,15 @@ classdef EEGLSL < handle
             end
         end
         function SetSubjectFolder(self,obj,event) %#ok<INUSD>
-            [~, b, ~ ] = fileparts(uigetdir);
+            subj_directory = uigetdir;
+            if subj_directory
+            [~, b, ~ ] = fileparts(subj_directory);
             if b
                 self.subject_record.subject_name = b;
                 set(self.subjects_dropmenu,'String',[{b} get(self.subjects_dropmenu,'String')']);
                 set(self.subjects_dropmenu,'Value',1);
             end
-            
+            end 
         end
         function EditProtocols(self,obj,event) %#ok<INUSD>
             if min(length(findobj('Tag', 'EditProtocolFigure'))) %if it already exists, bring it to front
@@ -1693,7 +1702,8 @@ classdef EEGLSL < handle
             for p = 1:length(self.feedback_protocols)
                 data_length = data_length + self.feedback_protocols{p}.protocol_size;
             end
-            if data_length > self.exp_data_length
+            if fix(data_length*1.1)> self.exp_data_length
+                
                 self.exp_data_length = fix(data_length*1.1);
                 for ds = 1:length(self.derived_signals)
                     new_circbuff = circVBuf(self.exp_data_length, size(self.derived_signals{ds}.collect_buff.raw,2),0);
@@ -1701,8 +1711,10 @@ classdef EEGLSL < handle
                     self.derived_signals{ds}.collect_buff = new_circbuff;
                 end
                 new_fb_records = circVBuf(self.exp_data_length,6,0);
-                new_fb_records.append(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst:self.feedback_manager.feedback_records.lst,:));
-                self.feedback_manager.feedback_records = new_fb_records;
+                if ~isempty(self.feedback_manager.feedback_records)
+                    new_fb_records.append(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst:self.feedback_manager.feedback_records.lst,:));
+                    self.feedback_manager.feedback_records = new_fb_records;
+                end
             end
             
             %delete the figure
