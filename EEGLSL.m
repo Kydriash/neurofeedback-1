@@ -115,7 +115,7 @@ classdef EEGLSL < handle
         %other
         tstop
         sizes
-        window %counts fb windows 
+        window %counts fb windows
         default_window_size
         buffer_length
         ssd %if an ssd protocol exists
@@ -178,7 +178,7 @@ classdef EEGLSL < handle
             self.ds_ydata_scale = 1000;
             self.nd = [];
             
-
+            
             self.samples_acquired = 0;
             %self.montage_fname = 'C:\Users\user1\AppData\Local\MCS\NeoRec\nvx136.nvx136.monopolar-Pz';
             self.montage_fname = 'D:\neurofeedback\settings\nvx136.nvx136.monopolar-Pz.xml';
@@ -186,7 +186,7 @@ classdef EEGLSL < handle
             self.raw_shift = 1;
             self.ds_shift = 1;
             %self.sizes = [0]; %#ok<NBRAK>
-            self.window = 0; 
+            self.window = 0;
             self.fb_type = 'Color';
             self.default_window_size = 0;
             self.buffer_length = 0;
@@ -271,7 +271,7 @@ classdef EEGLSL < handle
                     if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
                         mkdir(strcat(self.path,'\',self.subject_record.subject_name));
                     end
-                    pth = (strcat(self.path,'\',self.subject_record.subject_name));
+                    pth = (strcat(self.path,'\',self.subject_record.subject_name)); %#ok<NASGU>
                     
                     
                     peaks_found = 0; %#ok<NASGU>
@@ -366,6 +366,10 @@ classdef EEGLSL < handle
                     %                             break
                     %                         end
                     %x_raw = x_raw * w;
+                    hh1 = figure; %#ok<NASGU>
+                    StandChannels = load('StandardEEGChannelLocations.mat');
+                    rearranged_map = rearrange_channels(G(:,middle_point),self.used_ch, StandChannels.channels);
+                    topoplot(rearranged_map, StandChannels.channels, 'electrodes', 'labelpoint', 'chaninfo', StandChannels.chaninfo);
                     
                     %b_ssd = B(middle_point,:);
                     %a_ssd = A(middle_point,:);
@@ -396,6 +400,10 @@ classdef EEGLSL < handle
                         dummy_signal.sSignalName = sn;
                         dummy_signal.channels = self.derived_signals{1}.channels;
                         dummy_signal.filters = cell(0,0);
+                        if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
+                            mkdir(strcat(self.path,'\',self.subject_record.subject_name));
+                        end
+                        pth = (strcat(self.path,'\',self.subject_record.subject_name));
                         full_name = [pth '\SSD_' sn{1} '.xml'];
                         if exist(full_name,'file')
                             choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No, use the old one','No, use the old one');
@@ -491,7 +499,205 @@ classdef EEGLSL < handle
                     self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
                     self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                     self.fb_manager_set = 1;
+                elseif strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name), 'csp')
                     
+                    self.inlet.close_stream();
+                    stop(self.timer_new_data);
+                    stop(self.timer_disp);
+                    stop(self.timer_fb);
+                     if length(self.derived_signals) > 1
+                        self.derived_signals(2:end) = [];
+                     end
+                    
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
+                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
+                        self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
+                    else
+                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
+                    end
+                    Ncomp = 2;
+                    init_band = [7 9];
+                    for ib = 1:4
+                        band = init_band +ib-1 ;
+                        [z, p, k] = cheby1(3,1,band/(0.5*self.sampling_frequency),'bandpass');
+                        [b,a] = zp2tf(z,p,k);
+                        x = filtfilt(b,a,x_raw)';
+                        C10 = x(:,1:fix(end/2))* x(:,1:fix(end/2))'/fix(size(x,2)/2);
+                        C20 = x(:,fix(end/2)+1:end)* x(:,fix(end/2)+1:end)'/fix(size(x,2)/2);
+                        
+                        nchan = size(C10,1);
+                        
+                        %regularize covariances
+                        Lambda = 0.1;
+                        C1 = C10 + Lambda * trace(C10) * eye(nchan) / nchan;
+                        C2 = C20 + Lambda * trace(C20) * eye(nchan) / nchan;
+                        % do generalized eigenvalue decomp
+                        [V, d] = eig(C1,C2); %#ok<ASGLU>
+                        iV = inv(V);
+                        M12{ib} = V(:,[1:Ncomp, end-Ncomp+1:end])';
+                        G12{ib} = iV([1:Ncomp, end-Ncomp+1:end],:);
+                        
+                    end
+                    
+                    hh1 = figure; %#ok<NASGU>
+                    
+                    StandChannels = load('StandardEEGChannelLocations.mat');
+                    chan_labels = self.used_ch(:,1)';
+                    Nbands = length(G12);
+                    PlotIndex = 1;
+                    for ib = 1:Nbands
+                        rearranged_map = rearrange_channels(G12{ib}',chan_labels, StandChannels.channels);
+                        Nmaps = size(rearranged_map,2);
+                        for tpm=1:Nmaps
+                            subplot(Nbands,Nmaps,PlotIndex);
+                            %                            topoplot(rearranged_map(:,tpm), StandChannels.channels, 'electrodes', 'labelpoint', 'chaninfo', StandChannels.chaninfo);
+                            topoplot(rearranged_map(:,tpm), StandChannels.channels,  'chaninfo', StandChannels.chaninfo);
+                            title(num2str(PlotIndex));
+                            PlotIndex = PlotIndex+1;
+                        end;
+                    end
+                    
+                    mi = inputdlg;
+                    mi = strsplit(mi{1});
+                    MapIndex =  str2double(mi);
+                    BandNumber = fix((MapIndex-1)/(2*Ncomp))+1;
+                    CompNumber = mod(MapIndex-1,(2*Ncomp))+1;
+                    
+                    w_ssd = zeros(length(MapIndex),length(M12{1}));
+                    for bn = 1:length(MapIndex)
+                        w_ssd(bn,:) = M12{BandNumber(bn)}(CompNumber(bn),:);
+                    end
+                    for ind = 1:length(MapIndex)
+                        band = init_band + BandNumber(ind);
+                        for i=1:length(w_ssd)
+                            %self.derived_signals{1}: the first DS is ALWAYS RAW signal
+                            chan_w{i,1} = self.derived_signals{1}.channels{i};
+                            chan_w{i,2} = w_ssd(ind,i);
+                        end;
+                        
+                        %write to file
+                        try %write
+                            %convert cell chan_w to structure
+                            clear chs
+                            chs(size(chan_w,1)) = struct();
+                            for ch = 1:size(chan_w,1)
+                                chs(ch).channel_name = chan_w{ch,1};
+                                chs(ch).coefficient = chan_w{ch,2};
+                            end
+                            chan_structure = struct();
+                            chan_structure.channels.channel = chs;
+                            x = struct2xml(chan_structure);
+                            
+                            
+                            sn = {''};
+                            while isempty(sn{1})
+                                sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('DS_',num2str(ind))});
+                            end
+                            dummy_signal = struct();
+                            dummy_signal.sSignalName = sn;
+                            dummy_signal.channels = self.derived_signals{1}.channels;
+                            dummy_signal.filters = cell(0,0);
+                            if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
+                                mkdir(strcat(self.path,'\',self.subject_record.subject_name));
+                            end
+                            pth = (strcat(self.path,'\',self.subject_record.subject_name));
+                            full_name = [pth '\CSP_' sn{1} '.xml'];
+                            if exist(full_name,'file')
+                                choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No, use the old one','No, use the old one');
+                                switch choice
+                                    case 'Yes'
+                                        f = fopen(full_name,'w');
+                                        fwrite(f,x);
+                                        fclose(f);
+                                        spatial_filter = chs;
+                                    case 'No, use the old one'
+                                        
+                                        s = xml2struct(full_name);
+                                        channels_coeff = cell(length(s.channels.channel),2);
+                                        for i = 1:length(s.channels.channel)
+                                            channels_coeff{i,1} = strtrim(s.channels.channel{i}.channel_name.Text);
+                                            channels_coeff{i,2} = str2double(strtrim(s.channels.channel{i}.coefficient.Text));
+                                        end
+                                        spatial_filter = channels_coeff;
+                                end
+                            else
+                                spatial_filter = chs;
+                                f = fopen(full_name,'w');
+                                fwrite(f,x);
+                                fclose(f);
+                            end
+                            
+                            
+                        catch
+                            'Error while writing to file, function UpdateStatistics' %#ok<NOPRT>
+                        end
+                        
+                        
+                        try
+                            dummy_signal = struct();
+                            dummy_signal.sSignalName = 'Temp';
+                            channels = cell(length(self.derived_signals{1}.channels),2);
+                            for i = 1:length(channels)
+                                channels{i,1} = self.derived_signals{1}.channels{i};
+                                channels{i,2} = 1;
+                            end
+                            dummy_signal.filters = cell(0,0);
+                            dummy_signal.channels = channels;
+                            
+                            NewDS= DerivedSignal(1,dummy_signal, self.sampling_frequency, self.exp_data_length ,self.channel_labels,self.plot_length);
+                            NewDS.signal_name = sn{1};
+                            NewDS.ring_buff = circVBuf(self.plot_size,1,0);
+                            NewDS.collect_buff = circVBuf(self.exp_data_length,1,0);
+                            NewDS.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);
+                            NewDS.UpdateTemporalFilter(band);
+                            NewDS.channels_file = full_name;
+                            self.derived_signals{end+1} = NewDS;
+                            
+                            
+                            dummy_signal = struct();
+                            dummy_signal.sSignalName = 'Temp';
+                            channels = cell(length(self.derived_signals{1}.channels),2);
+                            for i = 1:length(channels)
+                                channels{i,1} = self.derived_signals{1}.channels{i};
+                                channels{i,2} = 1;
+                            end
+                            dummy_signal.filters = cell(0,0);
+                            dummy_signal.channels = channels;
+                            temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+                            temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
+                            temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
+                            temp_derived_signal.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);% = w_ssd(self.derived_signals{1}.channels_indices)';
+                            temp_derived_signal.UpdateTemporalFilter(band);
+                            j = 1;
+                            x = zeros(size(x_raw,1),length(self.derived_signals{1}.spatial_filter));
+                            for i = 1:length(self.derived_signals{1}.spatial_filter)
+                                if self.derived_signals{1}.spatial_filter(i)
+                                    x(:,i) = x_raw(:,j);
+                                    j = j+1;
+                                else
+                                    x(:,i) = 0;
+                                end
+                            end
+                            temp_derived_signal.Apply(x',1);
+                            values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
+                            self.feedback_manager.average(ind) = mean(values);
+                            self.feedback_manager.standard_deviation(ind) = std(values);
+                            
+                            
+                        catch
+                            'Error while creating a new derived signal, function UpdateStatistics' %#ok<NOPRT>
+                        end
+                    end
+                    self.SetRawYTicks;
+                    self.SetDSYTicks;
+                    self.yscales_fixed = 1;
+                    self.raw_yscale_fixed = 1;
+                    self.ds_yscale_fixed = 1;
+                    self.fb_statistics_set = 1;
+                    self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+                    self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
+                    self.fb_manager_set = 1;
                 else
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                     if(N>0)
@@ -635,7 +841,7 @@ classdef EEGLSL < handle
             end
             disp('Connected')
             self.sampling_frequency = self.streams{1}.nominal_srate();
-
+            
             self.inlet = lsl_inlet(self.streams{1});
             if exist(strcat(self.program_path,'\','channels.txt'), 'file')
                 delete(strcat(self.program_path,'\','channels.txt'))
@@ -647,7 +853,7 @@ classdef EEGLSL < handle
             if ~status
                 self.channel_labels = read_channel_file('channels.txt');
             end
-           
+            
             
             
             self.plot_size = self.plot_length * self.sampling_frequency;
@@ -658,11 +864,11 @@ classdef EEGLSL < handle
             end
             if ~self.from_file
                 for i = 1:length(self.feedback_protocols)
-                    if strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd')
+                    if any([strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd'), strfind(lower(self.feedback_protocols{i}.protocol_name),'csp')]);
                         self.ssd = 1;
                     end
                     
-                   
+                    
                     try %#ok<TRYNC>
                         if self.feedback_protocols{i}.window_size
                             self.feedback_manager.window_size(i) = self.feedback_protocols{i}.window_size;
@@ -702,7 +908,7 @@ classdef EEGLSL < handle
                     self.derived_signals = cell(1,length(self.signals));
                 end
                 for i = 1: length(self.derived_signals)
-                
+                    
                     self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
                     
                     self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels,self.derived_signals{1},self.bad_channels);
@@ -838,28 +1044,32 @@ classdef EEGLSL < handle
                     
                     [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
                     if any([self.fnames, self.files_pathname, filterindex] )
-                    %subject_folder = self.streams{1}.source_id;
-                    [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
-                    self.channel_labels = channels;
-                    if self.run_protocols
-                        self.protocol_sequence = protocols;
-                        for pr = 1:length(protocols)
-                            
-                            self.feedback_protocols{pr} = RealtimeProtocol;
-                            self.feedback_protocols{pr}.protocol_name = protocols{pr};
-                            self.feedback_protocols{pr}.protocol_duration = durations(pr);
-                            
-                            if strfind(protocols{pr},'ssd')
-                                self.ssd = 1;
-                                self.feedback_protocols{pr}.to_update_statistics = 1;
-                                self.feedback_protocols{pr}.band = 1;
-                            elseif strcmpi(protocols{pr},'baseline')
-                                self.feedback_protocols{pr}.to_update_statistics = 1;
-                            elseif strfind(lower(protocols{pr}),'feedback')
-                                self.feedback_protocols{pr}.fb_type = protocols{pr};
+                        %subject_folder = self.streams{1}.source_id;
+                        [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
+                        self.channel_labels = channels;
+                        if self.run_protocols
+                            self.protocol_sequence = protocols;
+                            for pr = 1:length(protocols)
+                                
+                                self.feedback_protocols{pr} = RealtimeProtocol;
+                                self.feedback_protocols{pr}.protocol_name = protocols{pr};
+                                self.feedback_protocols{pr}.protocol_duration = durations(pr);
+                                
+                                if strfind(protocols{pr},'ssd')
+                                    self.ssd = 1;
+                                    self.feedback_protocols{pr}.to_update_statistics = 1;
+                                    self.feedback_protocols{pr}.band = 1;
+                                elseif strfind(protocols{pr},'csp')
+                                    self.ssd = 1;
+                                    self.feedback_protocols{pr}.to_update_statistics = 1;
+                                    self.feedback_protocols{pr}.band = 1;
+                                elseif strcmpi(protocols{pr},'baseline')
+                                    self.feedback_protocols{pr}.to_update_statistics = 1;
+                                elseif strfind(lower(protocols{pr}),'feedback')
+                                    self.feedback_protocols{pr}.fb_type = protocols{pr};
+                                end
                             end
                         end
-                    end
                     end
                     
                 else
@@ -898,13 +1108,13 @@ classdef EEGLSL < handle
                 self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
                 select_bad_channels_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
                     'String', 'Select bad channels', 'Callback', @self.SelectBadChannels,'Tag','select_bad_channels_button'); %#ok<NASGU>
-%                 bad_channels_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', '',...
-%                     'HorizontalAlignment','left','Tag','bad_channels_text');
+                %                 bad_channels_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', '',...
+                %                     'HorizontalAlignment','left','Tag','bad_channels_text');
                 
                 self.raw_subplot = subplot(2,1,1);
                 set(self.raw_subplot,'YLim', [0, self.raw_shift*(length(self.used_ch)+1)]);
                 self.raw_scale_slider = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'slider', 'String','Raw scale', 'Value', 0, 'Position', [520 300 10 100], 'Max', 24, 'Min',-24,'SliderStep',[1 1],'Callback',@self.SetYScale,'Tag','raw_slider');
-               
+                
                 self.raw_data_indices = 1:length(self.used_ch);
                 r_temp = zeros(length(self.raw_data_indices),fix(self.plot_size));
                 self.raw_plot = plot(r_temp', 'Parent', self.raw_subplot);
@@ -1059,7 +1269,7 @@ classdef EEGLSL < handle
             end
             
             self.SetRecordingStatus;
-        end     
+        end
         function RefreshFB(self,timer_obj,event) %#ok<INUSD>
             %feedback
             if length(self.derived_signals) > 1
@@ -1146,7 +1356,7 @@ classdef EEGLSL < handle
                     'Error while setting feedback' %#ok<NOPRT>
                     1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1) %#ok<NOPRT>
                 end
-            elseif self.current_protocol && strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name),'ssd')
+            elseif any([self.current_protocol, strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name),'ssd')])
                 set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
                 set(self.fb_stub,'Visible','on');
                 set(self.feedback_axis_handle,'Visible','off');
@@ -1214,7 +1424,7 @@ classdef EEGLSL < handle
             end
         end
         function PlotErrorBar(self)
-            if ~strfind(lower(self.feedback_protocols{1}.protocol_name),'ssd')
+            if ~any([strfind(lower(self.feedback_protocols{1}.protocol_name),'ssd'),strfind(lower(self.feedback_protocols{1}.protocol_name),'csp')])
                 pr = length(self.feedback_protocols);
                 pr_shift = 0;
             else
@@ -1229,7 +1439,7 @@ classdef EEGLSL < handle
                 idx12= self.protocol_indices(i+1,1);
                 idx21 = self.protocol_indices(i,2);
                 idx22 = self.protocol_indices(i+1,2);
-                if ~strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd')
+                if ~strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd')&&~strfind(lower(self.feedback_protocols{i}.protocol_name),'csp')
                     if idx22-idx21 ~= idx12-idx11
                         warning('Something went wrong... Function PlotErrorBar')
                     end
@@ -1274,7 +1484,7 @@ classdef EEGLSL < handle
                 idx21 = self.protocol_indices(i,2);
                 idx22 = self.protocol_indices(i+1,2);
                 
-                if strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd')
+                if any([strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd'),strfind(lower(self.feedback_protocols{i}.protocol_name),'csp')])
                     %correct second indices
                     start = self.protocol_indices(2,2);
                     for j = 2:length(self.feedback_protocols)+1
@@ -1284,9 +1494,13 @@ classdef EEGLSL < handle
                     
                     raw_data_matrix = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx11:self.derived_signals{1}.collect_buff.fst+idx12-1,:);
                     whole_data = raw_data_matrix;
-                    inf_file = fopen('ssd_exp_info.hdr','w');
-                    fprintf(inf_file,string); %basically writes channels names only
-                    fclose(inf_file);
+                    if strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd')
+                        inf_file = fopen('ssd_exp_info.hdr','w');
+                    elseif strfind(lower(self.feedback_protocols{i}.protocol_name),'csp')
+                        inf_file = fopen('csp_exp_info.hdr','w');
+                    end
+                        fprintf(inf_file,string); %basically writes channels names only
+                        fclose(inf_file);
                     
                 else
                     if idx22-idx21 ~= idx12-idx11
@@ -1325,12 +1539,12 @@ classdef EEGLSL < handle
             self.AddNotes;
         end
         function AddNotes(self)
-             if ~isempty(self.bad_channels)
-                 notes_string = ['The channels ' strjoin(self.bad_channels) ' were excluded from analysis.'];
-             else
-                 notes_string = '';
-             end
-             
+            if ~isempty(self.bad_channels)
+                notes_string = ['The channels ' strjoin(self.bad_channels) ' were excluded from analysis.'];
+            else
+                notes_string = '';
+            end
+            
             self.add_notes_window = figure;
             self.add_notes_field = uicontrol('Parent', self.add_notes_window, 'Style', 'edit', 'Position',...
                 [ 10 30 300 200],'String', notes_string); %there's no such thing as VerticalAlignment in uicontrols
@@ -1509,13 +1723,13 @@ classdef EEGLSL < handle
         function SetSubjectFolder(self,obj,event) %#ok<INUSD>
             subj_directory = uigetdir;
             if subj_directory
-            [~, b, ~ ] = fileparts(subj_directory);
-            if b
-                self.subject_record.subject_name = b;
-                set(self.subjects_dropmenu,'String',[{b} get(self.subjects_dropmenu,'String')']);
-                set(self.subjects_dropmenu,'Value',1);
+                [~, b, ~ ] = fileparts(subj_directory);
+                if b
+                    self.subject_record.subject_name = b;
+                    set(self.subjects_dropmenu,'String',[{b} get(self.subjects_dropmenu,'String')']);
+                    set(self.subjects_dropmenu,'Value',1);
+                end
             end
-            end 
         end
         function EditProtocols(self,obj,event) %#ok<INUSD>
             if min(length(findobj('Tag', 'EditProtocolFigure'))) %if it already exists, bring it to front
@@ -1672,7 +1886,7 @@ classdef EEGLSL < handle
                 new_protocols_names(i) = {[num2str(i) ' ' pn{1}]};
             end
             if self.next_protocol == 1
-            insert_protocol_dropmenu.String = [{'0'} new_protocols_names];
+                insert_protocol_dropmenu.String = [{'0'} new_protocols_names];
             else
                 insert_protocol_dropmenu.String = new_protocols_names; %%%%delete prt dropmenu
             end
@@ -1801,10 +2015,10 @@ classdef EEGLSL < handle
             f = findobj('Tag','raw_and_ds_figure');
             epb = findobj('Tag','edit_protocols_button');
             set(epb,'Visible','off');
-            bad_channels_text =  uicontrol('Parent',f,'Style','text','String', self.bad_channels,'HorizontalAlignment','right','Tag','bad_channels_text'); 
+            bad_channels_text =  uicontrol('Parent',f,'Style','text','String', self.bad_channels,'HorizontalAlignment','right','Tag','bad_channels_text');
             ok_button = uicontrol('Parent',f,'style','pushbutton', 'String', 'Add','Tag','add_bad_channel_button','Callback','global ok; ok = 1;');
             finished_button= uicontrol('Parent',f,'style','pushbutton', 'String', 'Finish','Tag','finish adding bad channels button','Callback','global ok; global finished; ok = 1;finished = 1;');
-            text =  uicontrol('Parent',f,'Style','text','String', 'Select a channel and press Add','HorizontalAlignment','right','Tag','ch_text','HorizontalAlignment','center'); 
+            text =  uicontrol('Parent',f,'Style','text','String', 'Select a channel and press Add','HorizontalAlignment','right','Tag','ch_text','HorizontalAlignment','center');
             datacursormode('off');
             r_sp = get(self.raw_subplot);
             self.FitFigure;
@@ -1823,7 +2037,7 @@ classdef EEGLSL < handle
                     if finished
                         break; %#ok<UNRCH>
                     end
-
+                    
                 end
                 if ~finished
                     datacursormode('off');
@@ -1871,7 +2085,7 @@ classdef EEGLSL < handle
             %and set them
             set(self.raw_subplot,'YLim',[0 self.raw_shift*length(self.r_ytick_labels)]);
             self.FitFigure;
-
+            
         end
         %         function SetExpSettings(self,obj,event)
         %             settings_figure = figure;
