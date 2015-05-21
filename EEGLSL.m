@@ -645,6 +645,9 @@ classdef EEGLSL < handle
                             dummy_signal.filters = cell(0,0);
                             dummy_signal.channels = channels;
                             
+                            
+                            
+                            
                             NewDS= DerivedSignal(1,dummy_signal, self.sampling_frequency, self.exp_data_length ,self.channel_labels,self.plot_length);
                             NewDS.signal_name = sn{1};
                             NewDS.ring_buff = circVBuf(self.plot_size,1,0);
