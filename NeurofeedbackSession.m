@@ -19,7 +19,6 @@ classdef NeurofeedbackSession < handle
             [folder, fn, ext] = fileparts(fname); %#ok<ASGLU>
             %derived signals
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
-            
             for i = 1:length(ds)
                 if isstruct(ds)
                     fields = fieldnames(ds(i));
@@ -32,21 +31,30 @@ classdef NeurofeedbackSession < handle
                 
                 for j = 1: numel(fields)
                     if strcmp(fields{j},'SpatialFilterMatrix')
-                        [directory, filename, extension] = fileparts(d.SpatialFilterMatrix.Text); %#ok<ASGLU>
-                        if isempty(directory)
-                            t = xml2struct(strcat(folder,'\',d.SpatialFilterMatrix.Text));
-                        else
-                            t = xml2struct(d.SpatialFilterMatrix.Text);
-                        end
-                        chs = fieldnames(t.channels);
-                        d.channels = cell(length(chs),2);
-                        for ch = 1:numel(chs);
-                            try
-                                d.channels(ch,1) = chs(ch);
-                                d.channels(ch,2) = {str2num(t.channels.(chs{ch}).Text)}; %#ok<ST2NM>
-                            catch
-                                chs{ch} %#ok<NOPRT>
+                        if ~isempty(d.SpatialFilterMatrix.Text)
+                            [directory, filename, extension] = fileparts(d.SpatialFilterMatrix.Text); %#ok<ASGLU>
+                            if isempty(directory)
+                                t = xml2struct(strcat(folder,'\',d.SpatialFilterMatrix.Text));
+                            else
+                                t = xml2struct(d.SpatialFilterMatrix.Text);
                             end
+                            
+                            chs = fieldnames(t.channels);
+                            d.channels = cell(length(chs),2);
+                            for ch = 1:numel(chs);
+                                try
+                                    d.channels(ch,1) = chs(ch);
+                                    coeffs = str2num(t.channels.(chs{ch}).Text); %#ok<ST2NM>
+                                    for j = 1:length(coeffs)
+                                        
+                                        d.channels{ch,j+1} = coeffs(j);
+                                    end
+                                catch
+                                    chs{ch} %#ok<NOPRT>
+                                end
+                            end
+                        else
+                            d.channels = cell(0,0);
                         end
                     else
                         try
@@ -100,7 +108,7 @@ classdef NeurofeedbackSession < handle
             %%% upd on 2015-05-13
             try
                 seq = nfs.NeurofeedbackSignalSpecs.vPSequence.s;
-                 ps = {};
+                 %ps = {};
                  if length(seq) == 1
                      self.protocol_sequence{end+1} = seq.Text;
                  else
@@ -112,14 +120,14 @@ classdef NeurofeedbackSession < handle
             catch err
                 if strcmp(err.identifier, 'MATLAB:nonExistentField')
                     seq = nfs.NeurofeedbackSignalSpecs.vPSequence.loop;
-                    ps = {};
-                    for s = 1:length(seq)
-                        for a = 1:str2double(seq{s}.Attributes.count)
-                            for p = 1:length(seq{s}.s)
-                                if length(seq{s}.s) == 1
-                                    self.protocol_sequence{end+1} = seq{s}.s(p).Text;
+                    %ps = {};
+                    for ss = 1:length(seq)
+                        for a = 1:str2double(seq(ss).Attributes.count)
+                            for p = 1:length(seq(ss).s)
+                                if length(seq(ss).s) == 1
+                                    self.protocol_sequence{end+1} = seq(ss).s(p).Text;
                                 else
-                                    self.protocol_sequence{end+1} = seq{s}.s{p}.Text;
+                                    self.protocol_sequence{end+1} = seq(ss).s{p}.Text;
                                 end
                             end
                         end

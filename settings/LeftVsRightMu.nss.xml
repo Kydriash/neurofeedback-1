@@ -3,7 +3,7 @@
 	<vSignals>
 		<DerivedSignal>
 			<sSignalName>Raw</sSignalName>
-			<SpatialFilterMatrix>UsedChannels.xml</SpatialFilterMatrix>
+			<SpatialFilterMatrix></SpatialFilterMatrix>
 			<sType>plain</sType>
 		</DerivedSignal>
 		<DerivedSignal>
@@ -56,6 +56,7 @@
 			<fDuration>6</fDuration>
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
+<iNComp>2</iNComp>
 <dBand>1</dBand>
 		</FeedbackProtocol>
 
@@ -165,8 +166,9 @@
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
-
-<s>CSP</s>
+<loop count = '5'>
+<s>Baseline</s>
+</loop>
 
 
 

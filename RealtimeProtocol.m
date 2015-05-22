@@ -12,6 +12,7 @@ classdef RealtimeProtocol < handle
         fb_type
         filter_filename
         band %range to calculate spatial filter
+        n_comp
         
         
     end 
@@ -28,6 +29,7 @@ classdef RealtimeProtocol < handle
                 self.string_to_show = '';
                 self.window_size             = 0;
                 self.protocol_size           = 0;
+                
             elseif nargin >= 2
                 self.protocol_name = protocol_type.sProtocolName;
                 self.to_update_statistics    = protocol_type.bUpdateStatistics;
@@ -46,6 +48,9 @@ classdef RealtimeProtocol < handle
                 try %#ok<TRYNC>
                     self.window_duration = protocol_type.nMSecondsPerWindow;
                 end
+                try
+                    self.n_comp = protocol_type.NComp;
+                end
                 self.window_size             = 0;
                 self.protocol_size           = 0;
             end
@@ -55,6 +60,7 @@ classdef RealtimeProtocol < handle
             end
             
             self.actual_protocol_size = 0;
+            
         end
         
         function Recalculate(self,sampling_frequency)

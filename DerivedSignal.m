@@ -23,17 +23,28 @@ classdef DerivedSignal < handle
         channels_file
         data_length
         plot_length
+        signal_type
     end
     
     methods
         
         function self = DerivedSignal(self,signal, sampling_frequency, data_length,channels,plot_length) %#ok<INUSL>
             self.signal_name = signal.sSignalName;
+           
             self.all_channels = channels;
-            self.channels = signal.channels;
+            if ~isempty(signal.channels)
+                
+                self.channels = signal.channels;
+            else
+                self.channels = cell(length(self.all_channels),2);
+                for ch = 1:length(self.all_channels)
+                    self.channels(ch,1) = self.all_channels(ch);
+                    self.channels{ch,2} = 1;
+                end
+            end
             self.sampling_frequency = sampling_frequency;
             self.channels_indices = zeros(1,length(signal.channels));
-            self.spatial_filter = zeros(1,length(self.all_channels));
+            self.spatial_filter = zeros(length(self.all_channels),1);
             self.data_length = data_length;
             self.plot_length = plot_length;
             for i = 1:length(self.all_channels)
@@ -57,8 +68,14 @@ classdef DerivedSignal < handle
                 self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
             end
            % self.filtered = 0;
-            self.collect_buff = 0;
-            self.ring_buff = 0;
+           self.collect_buff = 0;
+           self.ring_buff = 0;
+           try
+               self.signal_type = signal.sType;
+           catch
+               self.signal_type = 'plain';
+           end
+           
         end
         
         
@@ -73,12 +90,15 @@ classdef DerivedSignal < handle
                 for idx = 1:length(sp_filter)
                     for ch = 1:length(self.all_channels)
                         if strcmp(sp_filter{idx,1},self.all_channels(ch)) && ~isempty(nonzeros(strncmpi(self.all_channels{ch},self.channels(:,1),5)))
-                            self.spatial_filter(ch) = sp_filter{idx,2};
                             for c = 1:length(self.channels)
                                 if strcmp(sp_filter{idx,1},self.channels{c,1})
-                                    self.channels{c,2} = sp_filter{idx,2};
+                                    for coeff = 2:size(sp_filter,2)
+                                        self.channels{c,coeff} = sp_filter{idx,coeff};
+                                        self.spatial_filter(self.channels_indices(c),coeff-1) = sp_filter{idx,coeff};
+                                    end
+                                    break;
                                 end
-                            end
+                            end            
                         end
                     end
                 end
@@ -86,42 +106,43 @@ classdef DerivedSignal < handle
                 for idx = 1:length(self.channels_indices)
                     self.spatial_filter(self.channels_indices(idx)) = sp_filter(self.channels_indices(idx));
                 end
-            elseif isstruct(sp_filter)
-                channel_names = {};
-                for i = 1:length(sp_filter)
-                    channel_names{end+1} = sp_filter(i).channel_name;
-                end
-                if strcmpi(self.signal_name, 'raw')
-                    for idx = 1:length(sp_filter)
-                        for ch = 1:length(self.all_channels)
-                            if strcmp(sp_filter(idx).channel_name,self.all_channels(ch)) && ~isempty(nonzeros(strncmpi(self.all_channels{ch},self.channels(:,1),5)))
-                                self.spatial_filter(ch) = sp_filter(idx).coefficient;
-                                for c = 1:length(self.channels)
-                                    if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
-                                        self.channels{c,2} = sp_filter(idx).coefficient;
-                                    end
-                                end
-                            end
-                        end
-                    end
-                else
-                    self.spatial_filter = zeros(1,length(raw_signal.spatial_filter));
-                    for idx = 1:length(sp_filter)
-                        for ch = 1:length(raw_signal.all_channels)
-                            if strcmp(sp_filter(idx).channel_name,raw_signal.all_channels{ch}) && ~isempty(nonzeros(strncmpi(raw_signal.all_channels{ch},self.channels(:,1),5)))
-                                self.spatial_filter(ch) = sp_filter(idx).coefficient;
-                                for c = 1:length(self.channels)
-                                    if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
-                                        self.channels{c,2} = sp_filter(idx).coefficient;
-                                        break;
-                                    end
-                                end
-                                break;
-                            end
-                        end
-                    end
-                    
-                end
+%             elseif isstruct(sp_filter)
+%                 channel_names = {};
+%                 for i = 1:length(sp_filter)
+%                     channel_names{end+1} = sp_filter(i).channel_name;
+%                 end
+%                 if strcmpi(self.signal_name, 'raw')
+%                     for idx = 1:length(sp_filter)
+%                         for ch = 1:length(self.all_channels)
+%                             if strcmp(sp_filter(idx).channel_name,self.all_channels(ch)) && ~isempty(nonzeros(strncmpi(self.all_channels{ch},self.channels(:,1),5)))
+%                                 self.spatial_filter(ch) = sp_filter(idx).coefficient;
+%                                 for c = 1:length(self.channels)
+%                                     if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
+%                                         self.channels{c,2} = sp_filter(idx).coefficient;
+%                                     end
+%                                 end
+%                             end
+%                         end
+%                     end
+%                 else
+%                     self.spatial_filter = zeros(1,length(raw_signal.spatial_filter));
+%                     for idx = 1:length(sp_filter)
+%                         for ch = 1:length(raw_signal.all_channels)
+%                             if strcmp(sp_filter(idx).channel_name,raw_signal.all_channels{ch}) && ~isempty(nonzeros(strncmpi(raw_signal.all_channels{ch},self.channels(:,1),5)))
+%                                 self.spatial_filter(ch) = sp_filter(idx).coefficient;
+%                                 for c = 1:length(self.channels)
+%                                     if strcmp(sp_filter(idx).channel_name,self.channels{c,1})
+%                                         
+%                                         self.channels{c,2} = sp_filter(idx).coefficient;
+%                                         break;
+%                                     end
+%                                 end
+%                                 break;
+%                             end
+%                         end
+%                     end
+%                     
+%                 end
                  
             end
             
@@ -143,9 +164,12 @@ classdef DerivedSignal < handle
                 end
             end
             
- 
-            chs(:,1) = self.channels(self.channels_indices(1,:)~=0,1);
-            chs(:,2) = self.channels(self.channels_indices(1,:)~=0,2);
+            for i = 1:size(self.channels,2)
+                chs(:,i) = self.channels(self.channels_indices(1,:)~=0,i);
+            end
+%             chs(:,1) = self.channels(self.channels_indices(1,:)~=0,1);
+%             chs(:,2) = self.channels(self.channels_indices(1,:)~=0,2);
+%             chs(:,3) = self.channels(self.channels_indices(1,:)~=0,3);
             self.channels = chs;
             self.channels_indices = nonzeros(self.channels_indices);
             if ~isempty(self.collect_buff)
@@ -188,11 +212,42 @@ classdef DerivedSignal < handle
                 if recording
                     self.collect_buff.append(self.data');
                 end
+            elseif strfind(lower(self.signal_type), 'composite')
+                sz = zeros(size(self.spatial_filter,2),size(newdata,2));
+                for i =1:size(self.spatial_filter,2)
+                    sz(i,:) = (self.spatial_filter(:,i)' * newdata).^2;
+                end
+                res = sqrt(sum(sz,1));
+                 if size(res,2) > 5
+                    %add selection
+                    for i = 1:size(res,1)
+                        for f = 1:length(self.temporal_filter)
+                            [res(i,:), self.temporal_filter{f}.Zf(:,i) ] = filter(self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi(:,i));
+                            self.temporal_filter{f}.Zi(:,i) = self.temporal_filter{f}.Zf(:,i);
+                        end
+                    end
+                    
+                    
+                    try
+                        self.ring_buff.append(res');
+                        if recording
+                            self.collect_buff.append(res');
+                        end
+                    catch
+                        1 %#ok<NOPRT>
+                    end
+                end
+                
+                
+                %there goes a piece of code which performs calculation of
+                %derived signal as follows
+                % signal = sqrt(sum((sp_fn* data).^2) for n = 1:length(sp_f))
+                
             else
                 
                 
                 %sz = self.spatial_filter*self.composite_montage * newdata;
-                sz = self.spatial_filter*newdata;
+                sz = self.spatial_filter'*newdata;
                 if size(sz,2) > 5
                     %add selection
                     for i = 1:size(sz,1)
