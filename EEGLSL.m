@@ -788,7 +788,7 @@ classdef EEGLSL < handle
                                             spatial_filter = channels_coeff;
                                     end
                                 else
-                                    spatial_filter = chs;
+                                    spatial_filter = chan_w;
                                     f = fopen(full_name,'w');
                                     fwrite(f,x);
                                     fclose(f);
