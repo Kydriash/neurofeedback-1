@@ -770,7 +770,7 @@ classdef EEGLSL < handle
                                             f = fopen(full_name,'w');
                                             fwrite(f,x);
                                             fclose(f);
-                                            spatial_filter = chs;
+                                            spatial_filter = chan_w;
                                         case 'No, use the old one'
                                             
                                             s = xml2struct(full_name);
