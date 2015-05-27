@@ -554,7 +554,7 @@ classdef EEGLSL < handle
                     chan_labels = self.used_ch(:,1)';
                     Nbands = length(G12);
                     PlotIndex = 1;
-                    selected = [];
+                    selected = {};
                     for ib = 1:Nbands
                         rearranged_map = rearrange_channels(G12{ib}',chan_labels, StandChannels.channels);
                         Nmaps = size(rearranged_map,2);
@@ -630,7 +630,7 @@ classdef EEGLSL < handle
                             
                             sn = {''};
                             while isempty(sn{1})
-                                sn = inputdlg('Enter derived signal name','Derived signal name',1,{'CompositeDS'});
+                                sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('CompositeDS_',num2str(band(1)),'-',num2str(band(2)))});
                             end
                             
                             %write spatial_filter to file
@@ -732,7 +732,7 @@ classdef EEGLSL < handle
                             self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
                             self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                             self.fb_manager_set = 1;
-                        
+                            
                         end
                     end
                     
@@ -763,7 +763,7 @@ classdef EEGLSL < handle
                                 if CompNumber(ind) <= Nmaps/2
                                     n = CompNumber(ind);
                                 else
-                                    n = -CompNumber(ind);
+                                    n = CompNumber(ind)-Nmaps-1;
                                 end
                                 while isempty(sn{1})
                                     sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('DS_', num2str(band(1)),'-',num2str(band(2)),'_',num2str(n))});
@@ -864,28 +864,28 @@ classdef EEGLSL < handle
                     self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
                     self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                     self.fb_manager_set = 1;
-                    end
-                else
-                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-                    if(N>0)
-                        for s = 2:length(self.derived_signals)
-                            if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
-                                values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
-                            else
-                                values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.lst - N+1:self.derived_signals{s}.collect_buff.lst,:);
-                            end
-                            self.feedback_manager.average(s-1) = mean(values);
-                            self.feedback_manager.standard_deviation(s-1) = std(values);
-                        end
-                    end;
-                    
-                    self.SetRawYTicks;
-                    self.SetDSYTicks;
-                    self.yscales_fixed = 1;
-                    self.raw_yscale_fixed = 1;
-                    self.ds_yscale_fixed = 1;
-                    self.fb_statistics_set = 1;
                 end
+            else
+                N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                if(N>0)
+                    for s = 2:length(self.derived_signals)
+                        if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
+                            values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
+                        else
+                            values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.lst - N+1:self.derived_signals{s}.collect_buff.lst,:);
+                        end
+                        self.feedback_manager.average(s-1) = mean(values);
+                        self.feedback_manager.standard_deviation(s-1) = std(values);
+                    end
+                end;
+                
+                self.SetRawYTicks;
+                self.SetDSYTicks;
+                self.yscales_fixed = 1;
+                self.raw_yscale_fixed = 1;
+                self.ds_yscale_fixed = 1;
+                self.fb_statistics_set = 1;
+            end
             
             
         end
@@ -1534,6 +1534,7 @@ classdef EEGLSL < handle
                     self.current_protocol = 0;
                 end
                 self.finished = 1;
+                set(self.connect_button,'enable', 'off');
                 temp_log_text = get(self.log_text,'String');
                 temp_log_text{end+1} = 'Finished';
                 set(self.log_text,'String',temp_log_text);
