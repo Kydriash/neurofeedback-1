@@ -635,6 +635,7 @@ classdef EEGLSL < handle
                             end
                             pth = (strcat(self.path,'\',self.subject_record.subject_name));
                             full_name = [pth '\CSP_' sn{1} '.xml'];
+                            
                             if exist(full_name,'file')
                                 choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No, use the old one','No, use the old one');
                                 switch choice
@@ -754,8 +755,13 @@ classdef EEGLSL < handle
                                 
                                 
                                 sn = {''};
+                                if CompNumber(ind) <= Nmaps/2
+                                    n = CompNumber(ind);
+                                else
+                                    n = -CompNumber(ind);
+                                end
                                 while isempty(sn{1})
-                                    sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('DS_',num2str(ind))});
+                                    sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('DS_', num2str(band(1)),'-',num2str(band(2)),'_',num2str(n))});
                                 end
                                 
                                 if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))

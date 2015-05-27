@@ -755,7 +755,7 @@ classdef EEGLSL < handle
                                 
                                 sn = {''};
                                 while isempty(sn{1})
-                                    sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('DS_',num2str(ind))});
+                                    sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('DS_',num2str(band),)});
                                 end
                                 
                                 if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
@@ -770,7 +770,7 @@ classdef EEGLSL < handle
                                             f = fopen(full_name,'w');
                                             fwrite(f,x);
                                             fclose(f);
-                                            spatial_filter = chs;
+                                            spatial_filter = chan_w;
                                         case 'No, use the old one'
                                             
                                             s = xml2struct(full_name);
