@@ -24,7 +24,13 @@ if select
     yp=src.Parent.YLim(2)*sin(ang);
     plot(src.Parent,x+xp,y+yp,'Color',[0.5 0 1],'LineWidth',3,'Tag','Selection');
 end
-
+ok_btn = findobj('Tag','SelectHeadsBtn');
+if ~isempty(selected)
+    set(ok_btn,'enable','on');
+else
+    set(ok_btn,'enable','off');
+end
+    
 
 %else
     

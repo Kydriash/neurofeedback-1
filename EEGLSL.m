@@ -572,8 +572,12 @@ classdef EEGLSL < handle
                             PlotIndex = PlotIndex+1;
                         end;
                     end
-                    okay_btn = uicontrol('Parent',hh1,'Style', 'pushbutton', 'String', 'OK', 'Callback', 'uiresume', 'Position', [230 10 100 35]);  %#ok<NASGU>
+                    okay_btn = uicontrol('Parent',hh1,'Style', 'pushbutton', 'String', 'OK', 'Callback', 'uiresume', 'Position', [230 10 100 35],'Tag','SelectHeadsBtn','enable','off');  %#ok<NASGU>
+                    
+                    
                     uiwait();
+                    
+                    
                     %                     mi = '';
                     %                     while isempty(mi)
                     %                         mi = inputdlg;
@@ -728,6 +732,7 @@ classdef EEGLSL < handle
                             self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
                             self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                             self.fb_manager_set = 1;
+                        
                         end
                     end
                     
@@ -849,6 +854,7 @@ classdef EEGLSL < handle
                             end
                         end
                     end
+                    
                     self.SetRawYTicks;
                     self.SetDSYTicks;
                     self.yscales_fixed = 1;
@@ -858,6 +864,7 @@ classdef EEGLSL < handle
                     self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
                     self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
                     self.fb_manager_set = 1;
+                    end
                 else
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                     if(N>0)
@@ -879,7 +886,7 @@ classdef EEGLSL < handle
                     self.ds_yscale_fixed = 1;
                     self.fb_statistics_set = 1;
                 end
-            end
+            
             
         end
         function Receive(self,timer_obj, event) %#ok<INUSD>
@@ -1115,8 +1122,8 @@ classdef EEGLSL < handle
             self.settings_file_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.settings_file_text,'Position', [120 90 200 35],'HorizontalAlignment','left');
             settings_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp.design', 'Callback', @self.SetDesignFile, 'Position', [20 100 100 35]); %#ok<NASGU>
             set_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Run the experiment', 'Position', [100 20 200 40],'Callback','uiresume'); %#ok<NASGU>
-            montage_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp. montage', 'Callback', @self.SetMontageFile, 'Position', [20 60 100 35]); %#ok<NASGU>
-            self.montage_fname_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
+            %montage_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp. montage', 'Callback', @self.SetMontageFile, 'Position', [20 60 100 35]); %#ok<NASGU>
+            %self.montage_fname_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
             show_feedback = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Show feedback to subject','Position', [20 290 135 20],'HorizontalAlignment','left'); %#ok<NASGU>
             show_fb_check = uicontrol('Parent', self.fig_interface, 'Style', 'checkbox' ,'Position', [160 295 20 20],'HorizontalAlignment','left','Value',1);
             self.subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[170 320 100 20],'String',subjects,'Callback',@self.SetSubject);
