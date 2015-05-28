@@ -150,8 +150,8 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>20</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<fDuration>2</fDuration>
+			<bStopAfter>0</bStopAfter>
 			<cString> 	 </cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -166,7 +166,13 @@
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
+<loop count = '1'>
 <s>CSP</s>
+</loop>
+<loop count = '4'>
+<s>Feedback_color</s>
+<s>Rest</s>
+</loop>
 
 
 

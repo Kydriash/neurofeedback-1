@@ -122,12 +122,12 @@ classdef NeurofeedbackSession < handle
                     seq = nfs.NeurofeedbackSignalSpecs.vPSequence.loop;
                     %ps = {};
                     for ss = 1:length(seq)
-                        for a = 1:str2double(seq(ss).Attributes.count)
-                            for p = 1:length(seq(ss).s)
-                                if length(seq(ss).s) == 1
-                                    self.protocol_sequence{end+1} = seq(ss).s(p).Text;
+                        for a = 1:str2double(seq{ss}.Attributes.count)
+                            for p = 1:length(seq{ss}.s)
+                                if length(seq{ss}.s) == 1
+                                    self.protocol_sequence{end+1} = seq{ss}.s(p).Text;
                                 else
-                                    self.protocol_sequence{end+1} = seq(ss).s{p}.Text;
+                                    self.protocol_sequence{end+1} = seq{ss}.s{p}.Text;
                                 end
                             end
                         end

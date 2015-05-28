@@ -136,6 +136,7 @@ classdef EEGLSL < handle
         bad_channels
         raw_data_indices
         paused
+        current_window_size
     end
     
     methods
@@ -217,28 +218,28 @@ classdef EEGLSL < handle
                     self.fb_manager_set=1;
                 end
                 
-                if self.current_protocol >0 && self.current_protocol <= length(self.feedback_protocols)
-                    if self.current_protocol <= length(self.feedback_manager.window_size)
-                        n = self.feedback_manager.window_size(self.current_protocol);
-                    else
-                        n = self.default_window_size;
-                    end
-                elseif self.default_window_size == 0 %zero protocol at the beginning
-                    n = self.feedback_manager.window_size(1);
-                else
-                    n = self.default_window_size;
-                end
+%                 if self.current_protocol >0 && self.current_protocol <= length(self.feedback_protocols)
+%                     if self.current_protocol <= length(self.feedback_manager.window_size)
+%                         n = self.feedback_manager.window_size(self.current_protocol);
+%                     else
+%                         n = self.default_window_size;
+%                     end
+%                 elseif self.default_window_size == 0 %zero protocol at the beginning
+%                     n = self.feedback_manager.window_size(1);
+%                 else
+%                     n = self.default_window_size;
+%                 end
                 
                 for s = 2:length(self.derived_signals)
-                    dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-n+1:self.derived_signals{s}.ring_buff.lst);
+                    dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-self.current_window_size+1:self.derived_signals{s}.ring_buff.lst);
                     avg  = self.feedback_manager.average(s-1);
                     sdev = self.feedback_manager.standard_deviation(s-1);
-                    val = sum(abs(dat))/n;
+                    val = sum(abs(dat))/self.current_window_size;
                     self.feedback_manager.feedback_vector(s-1)  = (val-avg)/sdev;
                 end
                 
                 if self.recording
-                    fb = zeros(n,6);
+                    fb = zeros(self.current_window_size,6);
                     self.window = self.window + 1;
                     fb(:,1) = self.signal_to_feedback-1;
                     fb(:,2) = self.feedback_manager.feedback_vector(self.signal_to_feedback-1);
@@ -894,23 +895,12 @@ classdef EEGLSL < handle
             [sample, timestamp] = self.inlet.pull_chunk(); %#ok<ASGLU>
             self.nd = [self.nd sample];
             sz = size(self.nd,2);
-            if self.current_protocol > 0 && self.current_protocol <= length(self.feedback_protocols)
-                if self.current_protocol <= length(self.feedback_manager.window_size)
-                    window_size = self.feedback_manager.window_size(self.current_protocol);
-                    self.default_window_size = window_size;
-                else
-                    window_size = self.default_window_size;
-                end
-            elseif self.default_window_size == 0 %zero protocol at the beginning
-                window_size = self.feedback_manager.window_size(1);
-            else  %zero protocol after some data was recorded
-                window_size = self.default_window_size;
-            end
-            if (sz >= window_size)
+            
+            if (sz >= self.current_window_size)
                 for ds = 1:length(self.derived_signals)
-                    self.derived_signals{ds}.Apply(self.nd(:,1:window_size),self.recording);
+                    self.derived_signals{ds}.Apply(self.nd(:,1:self.current_window_size),self.recording);
                 end
-                self.nd =self.nd(:,window_size+1:end);
+                self.nd =self.nd(:,self.current_window_size+1:end);
                 try
                     self.UpdateFeedbackSignal;
                 catch
@@ -918,11 +908,11 @@ classdef EEGLSL < handle
                 end
                 
                 
-                self.samples_acquired = self.samples_acquired+window_size;
+                self.samples_acquired = self.samples_acquired+self.current_window_size;
                 if(self.current_protocol>0 && self.current_protocol <= length(self.feedback_protocols))
-                    self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size + window_size;
+                    self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.feedback_protocols{self.current_protocol}.actual_protocol_size +self.current_window_size;
                     
-                    if self.feedback_protocols{self.current_protocol}.actual_protocol_size + window_size >= self.feedback_protocols{self.current_protocol}.protocol_size
+                    if self.feedback_protocols{self.current_protocol}.actual_protocol_size + self.current_window_size >= self.feedback_protocols{self.current_protocol}.protocol_size
                         self.protocol_indices(self.current_protocol+1,:) = self.derived_signals{1}.collect_buff.lst -self.derived_signals{1}.collect_buff.fst +1;
                         try
                             if self.feedback_protocols{self.current_protocol}.to_update_statistics
@@ -946,6 +936,7 @@ classdef EEGLSL < handle
                                 
                                 self.current_protocol = self.next_protocol;
                                 self.next_protocol = self.next_protocol + 1;
+                                
                                 if self.current_protocol > length(self.feedback_protocols)
                                     if self.looped
                                         self.current_protocol = 1;
@@ -1065,7 +1056,7 @@ classdef EEGLSL < handle
                     self.used_ch = raw.channels;
                 end
             end
-            
+             self.current_window_size = self.feedback_manager.window_size(1);
             %self.RunInterface;
             if self.from_file
                 self.StartRecording();
@@ -1518,6 +1509,18 @@ classdef EEGLSL < handle
                 self.current_protocol = self.next_protocol;
                 self.next_protocol = self.next_protocol + 1;
             end
+            if self.current_protocol > 0 && self.current_protocol <= length(self.feedback_protocols)
+                if self.current_protocol <= length(self.feedback_manager.window_size)
+                    self.current_window_size = self.feedback_manager.window_size(self.current_protocol);
+                    self.default_window_size =  self.current_window_size;
+                else
+                    self.current_window_size = self.default_window_size;
+                end
+            elseif self.default_window_size == 0 %zero protocol at the beginning
+                self.current_window_size = self.feedback_manager.window_size(1);
+            else  %zero protocol after some data was recorded
+                 self.current_window_size = self.default_window_size;
+            end
             self.paused = 0;
             self.recording = 1;
             self.InitTimer();
@@ -1573,9 +1576,11 @@ classdef EEGLSL < handle
             if ~any([strfind(lower(self.feedback_protocols{1}.protocol_name),'ssd'),strfind(lower(self.feedback_protocols{1}.protocol_name),'csp')])
                 pr = length(self.feedback_protocols);
                 pr_shift = 0;
+                const_shift = 0;
             else
                 pr = length(self.feedback_protocols)-1;
                 pr_shift = 1;
+                const_shift = self.protocol_indices(2,2);
             end
             averages = zeros(pr,1);
             deviations =  zeros(pr,1);
@@ -1589,9 +1594,10 @@ classdef EEGLSL < handle
                     if idx22-idx21 ~= idx12-idx11
                         warning('Something went wrong... Function PlotErrorBar')
                     end
+                else
                     names{i-pr_shift} = self.feedback_protocols{i}.protocol_name;
-                    averages(i-pr_shift) = mean(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21:self.feedback_manager.feedback_records.fst+idx22-1,2));
-                    deviations(i-pr_shift) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21:self.feedback_manager.feedback_records.fst+idx22-1,2));
+                    averages(i-pr_shift) = mean(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
+                    deviations(i-pr_shift) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
                 end
             end
             names = ['' names' ''];
