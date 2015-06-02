@@ -17,7 +17,7 @@ classdef NeurofeedbackSession < handle
             
             nfs = xml2struct(fname);
             [folder, fn, ext] = fileparts(fname); %#ok<ASGLU>
-            %derived signals
+            %% derived signals
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
             for i = 1:length(ds)
                 if isstruct(ds)
@@ -78,7 +78,7 @@ classdef NeurofeedbackSession < handle
                 
                 self.derived_signals{end+1} = d;
             end
-            %protocols
+            %% protocols
             self.protocol_types = nfs.NeurofeedbackSignalSpecs.vProtocols.FeedbackProtocol;
             for i = 1:length(self.protocol_types)
                 fields = fieldnames(self.protocol_types{i});
@@ -86,15 +86,18 @@ classdef NeurofeedbackSession < handle
                 for j = 1: numel(fields)
                     
                     try
-                        if str2num(pr.(fields{j}).Text) || str2num(pr.(fields{j}).Text) ==0 %#ok<ST2NM>
+                        % upd on 2015-06-02
+                        if any(str2num(pr.(fields{j}).Text)) || all(str2num(pr.(fields{j}).Text)) ==0 %#ok<ST2NM>
                             pr.(fields{j}) = str2num(pr.(fields{j}).Text); %#ok<ST2NM>
+                        else
+                            pr.(fields{j}) = pr.(fields{j}).Text;
                         end
                         
                     catch  err
                         switch err.identifier
-                            case 'MATLAB:nonLogicalConditional'
-                                
-                                pr.(fields{j}) = pr.(fields{j}).Text;
+%                             case 'MATLAB:nonLogicalConditional'
+%                                 
+%                                 pr.(fields{j}) = pr.(fields{j}).Text;
                             case  'MATLAB:nonExistentField'
                                 pr.(fields{j}) = pr.(fields{j});
                         end
@@ -104,7 +107,7 @@ classdef NeurofeedbackSession < handle
                 end
                 self.protocol_types{i} = pr;
             end
-            %protocol_sequence
+            %% protocol_sequence
             %%% upd on 2015-05-13
             try
                 seq = nfs.NeurofeedbackSignalSpecs.vPSequence.s;

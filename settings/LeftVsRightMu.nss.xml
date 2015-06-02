@@ -57,6 +57,7 @@
 			<bStopAfter>1</bStopAfter>
 			<cString>Baseline acquisition</cString>
 <iNComp>2</iNComp>
+<dInitBand>7 9</dInitBand>
 <dBand>1</dBand>
 		</FeedbackProtocol>
 

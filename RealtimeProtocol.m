@@ -13,6 +13,7 @@ classdef RealtimeProtocol < handle
         filter_filename
         band %range to calculate spatial filter
         n_comp
+        init_band
         
         
     end 
