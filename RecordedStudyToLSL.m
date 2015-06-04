@@ -1,57 +1,61 @@
 
 function RecordedStudyToLSL(fnames,pathname,looped)
-global pushed;
+global pushed
+global is_transmitting
+global connected
+
 %read the files
 
 %check if fnames ets exist
-    
-    [protocols, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
-    
-    %create lsl
-    sampling_frequency = 500;
-    source_id = pathname;
-    lsllib = lsl_loadlib();
-    
-    eeg_info = lsl_streaminfo(lsllib,'File', 'Data',length(channels), sampling_frequency,'cf_float32',source_id);
-    chns = eeg_info.desc().append_child('channels');
-    
-    for label = channels
-        ch = chns.append_child('channel');
-        ch.append_child_value('label',label{1});
-    end
-    outlet = lsl_outlet(eeg_info);
-    filenames ={};
-    if ischar(fnames)
-        filenames{end+1} = strcat(pathname,fnames);
-    else
+
+[protocols, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
+
+%create lsl
+sampling_frequency = 500;
+source_id = pathname;
+lsllib = lsl_loadlib();
+
+eeg_info = lsl_streaminfo(lsllib,'File', 'Data',length(channels), sampling_frequency,'cf_float32',source_id);
+chns = eeg_info.desc().append_child('channels');
+
+for label = channels
+    ch = chns.append_child('channel');
+    ch.append_child_value('label',label{1});
+end
+outlet = lsl_outlet(eeg_info);
+filenames ={};
+if ischar(fnames)
+    filenames{end+1} = strcat(pathname,fnames);
+else
     for f = fnames
-        filenames{end+1} = strcat(pathname,f{1}); 
+        filenames{end+1} = strcat(pathname,f{1});
     end
-    end
-    data = [];
-    for fn = filenames
-        protocol_data = ReadEEGData(fn{1});
-        protocol_data = protocol_data(:,1:length(channels))';
-        data = [data protocol_data];
-    end
-    
-    
-    pushed = 1;
+end
+data = [];
+for fn = filenames
+    protocol_data = ReadEEGData(fn{1});
+    protocol_data = protocol_data(:,1:length(channels))';
+    data = [data protocol_data];
+end
+
+
+pushed = 1;
 %     while ~outlet.have_consumers()
 %         pause(0.01);
 %     end
-    timer_push_data = timer('Name','push_data','TimerFcn', {@PushDataToLSL,outlet,data,looped},'ExecutionMode','fixedRate','Period',1/sampling_frequency);
-
-    start(timer_push_data);
+timer_push_data = timer('Name','push_data','TimerFcn', {@PushDataToLSL,outlet,data,looped},'ExecutionMode','fixedRate','Period',1/sampling_frequency);
+is_transmitting = 0;
+connected = 0;
+start(timer_push_data);
 
 %     for fn = filenames
 %         protocol_data = ReadEEGData(fn{1});
 %         protocol_data = protocol_data(:,1:length(channels))';
 %         pushed = 1;
-%         
+%
 %         while outlet.have_consumers() && pushed <= size(protocol_data,2)
 %             try
-%                 
+%
 %                 outlet.push_chunk(protocol_data(:,pushed));
 %             catch
 %                 pushed, size(protocol_data,2) %#ok<NOPRT>
@@ -62,33 +66,63 @@ global pushed;
 %                 'Protocol finished. Sent %d samples', pushed
 %             end
 %         end
-%         
-%         
+%
+%
 %     end
 end
-    
+
 
 
 
 function PushDataToLSL(timer_obj,event,outlet, data,looped) %#ok<INUSL>
 global pushed
+%global is_transmitting
+global connected
 if looped
     if outlet.have_consumers()
+        %is_transmitting = 1;
+        connected = 1;
         try %#ok<TRYNC>
-        outlet.push_chunk(data(:,mod(pushed,size(data,2))))
-%         catch 
-%             mod(pushed,size(data,2))
+            outlet.push_chunk(data(:,mod(pushed,size(data,2))))
+            %         catch
+            %             mod(pushed,size(data,2))
         end
         pushed = pushed + 1;
-       
+        %     elseif is_transmitting && ~(outlet.have_consumers())
+        %         outlet.wait_for_consumers();
+        %         is_transmitting = 0;
+    else
+        eeg_figure = findobj('Tag','raw_and_ds_figure');
+        if connected &&  isempty(eeg_figure)
+            delete(outlet);
+            stop(timer_obj);
+        end
     end
+    
 else
     if outlet.have_consumers() && pushed <= size(data,2)
+        connected = 1;
+        % is_transmitting = 1;
         outlet.push_chunk(data(:,pushed));
         pushed = pushed + 1;
-        
+        %     elseif is_transmitting && ~(outlet.have_consumers())
+        %         outlet.wait_for_consumers();
+        %         is_transmitting = 0;
+    else
+        eeg_figure = findobj('Tag','raw_and_ds_figure');
+        if connected && isempty(eeg_figure)
+            delete(outlet);
+            stop(timer_obj);
+        end
     end
+    
+    
 end
+
+
 end
+
+
+
 
 

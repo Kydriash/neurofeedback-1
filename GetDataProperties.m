@@ -29,7 +29,7 @@ end
 
 all_fs = dir(pathname);
 for n = 1:length(all_fs)
-    if strcmp(all_fs(n).name,'ssd_exp_info.hdr')
+    if strcmp(all_fs(n).name,'ssd_exp_info.hdr') || strcmp(all_fs(n).name,'csp_exp_info.hdr')
         sh = fopen(strcat(pathname,'\',all_fs(n).name),'r');
         if verLessThan('matlab','8.1')
             channels = regexp(fscanf(sh,'%c'),',','split');

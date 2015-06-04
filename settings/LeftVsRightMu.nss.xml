@@ -88,7 +88,7 @@
 			<nMSecondsPerWindow>100</nMSecondsPerWindow>
 <sFb_type>Color intensity</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>3</fDuration>
+			<fDuration>2</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString></cString>
 		</FeedbackProtocol>
@@ -124,7 +124,7 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>60</fDuration>
+			<fDuration>6</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString>Imagine moving left hand</cString>
 		</FeedbackProtocol>
@@ -133,8 +133,8 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>60</fDuration>
-			<bStopAfter>0</bStopAfter>
+			<fDuration>6</fDuration>
+			<bStopAfter>1</bStopAfter>
 			<cString>Imagine moving right hand</cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -167,17 +167,12 @@
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
-<loop count = '1'>
 <s>CSP</s>
-</loop>
-<loop count = '4'>
 <s>Feedback_color</s>
-<s>Rest</s>
-</loop>
-
-
-
-
-
+<s>Feedback_color</s>
+<s>Feedback_color</s>
 	</vPSequence>
+
+
+
 </NeurofeedbackSignalSpecs>

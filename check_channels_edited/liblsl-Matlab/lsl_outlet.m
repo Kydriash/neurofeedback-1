@@ -115,6 +115,7 @@ classdef lsl_outlet < handle
 
         
         function success = wait_for_consumers(self,timeout)
+
             % Wait until some consumer shows up (without wasting resources).
             %
             % In:

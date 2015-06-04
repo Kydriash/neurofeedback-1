@@ -154,11 +154,11 @@ if isempty(g.getresult)
         g.uilist = { g.uilist{:}, { 'width' 80 'align' 'right' 'Style', 'pushbutton', 'string', 'Cancel', 'tag' 'cancel' 'callback', 'close gcbf' } };
         g.uilist = { g.uilist{:}, { 'width' 80 'align' 'right' 'stickto' 'on' 'Style', 'pushbutton', 'tag', 'ok', 'string', 'OK', 'callback', 'set(gcbo, ''userdata'', ''retuninginputui'');' } };
         if ~isempty(g.geom)
-            [tmp tmp2 allobj] = supergui( 'fig', fig, 'minwidth', 200, 'geom', g.geom, 'uilist', g.uilist );
+            [tmp tmp2 allobj] = supergui( 'fig', fig.Number, 'minwidth', 200, 'geom', g.geom, 'uilist', g.uilist );
         elseif isempty(g.geomvert)
-            [tmp tmp2 allobj] = supergui( 'fig', fig, 'minwidth', 200, 'geomhoriz', g.geometry, 'uilist', g.uilist );
+            [tmp tmp2 allobj] = supergui( 'fig', fig.Number, 'minwidth', 200, 'geomhoriz', g.geometry, 'uilist', g.uilist );
         else
-            [tmp tmp2 allobj] = supergui( 'fig', fig, 'minwidth', 200, 'geomhoriz', g.geometry, 'uilist', g.uilist, 'geomvert', [g.geomvert(:)' 1 1] );
+            [tmp tmp2 allobj] = supergui( 'fig', fig.Number, 'minwidth', 200, 'geomhoriz', g.geometry, 'uilist', g.uilist, 'geomvert', [g.geomvert(:)' 1 1] );
         end;
     else 
         fig = g.mode;

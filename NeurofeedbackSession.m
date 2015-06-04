@@ -4,6 +4,7 @@ classdef NeurofeedbackSession < handle
         feedback_protocols
         protocol_sequence
         protocol_types
+        csp_settings
     end
     
     methods
@@ -95,9 +96,9 @@ classdef NeurofeedbackSession < handle
                         
                     catch  err
                         switch err.identifier
-%                             case 'MATLAB:nonLogicalConditional'
-%                                 
-%                                 pr.(fields{j}) = pr.(fields{j}).Text;
+                            %                             case 'MATLAB:nonLogicalConditional'
+                            %
+                            %                                 pr.(fields{j}) = pr.(fields{j}).Text;
                             case  'MATLAB:nonExistentField'
                                 pr.(fields{j}) = pr.(fields{j});
                         end
@@ -111,15 +112,15 @@ classdef NeurofeedbackSession < handle
             %%% upd on 2015-05-13
             try
                 seq = nfs.NeurofeedbackSignalSpecs.vPSequence.s;
-                 %ps = {};
-                 if length(seq) == 1
-                     self.protocol_sequence{end+1} = seq.Text;
-                 else
-                      for s = 1:length(seq)
-                          self.protocol_sequence{end+1} = seq{s}.Text;
-                      end
-                 end
-
+                %ps = {};
+                if length(seq) == 1
+                    self.protocol_sequence{end+1} = seq.Text;
+                else
+                    for s = 1:length(seq)
+                        self.protocol_sequence{end+1} = seq{s}.Text;
+                    end
+                end
+                
             catch err
                 if strcmp(err.identifier, 'MATLAB:nonExistentField')
                     seq = nfs.NeurofeedbackSignalSpecs.vPSequence.loop;
@@ -137,7 +138,7 @@ classdef NeurofeedbackSession < handle
                     end
                 end
             end
-           
+            
             
             
             %%%
@@ -152,6 +153,44 @@ classdef NeurofeedbackSession < handle
                     end
                 end
             end
+            try
+                csp = nfs.NeurofeedbackSignalSpecs.CSP_settings;
+                
+                fields = fieldnames(csp);
+                if length(fields) == 1 && strcmp(fields,'Text')
+                    csp = [];
+                else
+                    
+                    for i = 1:numel(fields)
+                        try
+                            % upd on 2015-06-02
+                            if any(str2num(csp.(fields{i}).Text)) || all(str2num(csp.(fields{i}).Text)) ==0 %#ok<ST2NM>
+                                csp.(fields{i}) = str2num(csp.(fields{i}).Text); %#ok<ST2NM>
+                            else
+                                csp.(fields{i}) = csp.(fields{i}).Text;
+                            end
+                            
+                        catch  err
+                            switch err.identifier
+                                %                             case 'MATLAB:nonLogicalConditional'
+                                %
+                                %                                 pr.(fields{j}) = pr.(fields{j}).Text;
+                                case  'MATLAB:nonExistentField'
+                                    csp.(fields{i}) = csp.(fields{i});
+                            end
+                        end
+                    end
+                    
+                end
+            catch err
+                switch err.identifier
+                    case 'MATLAB:nonExistentField'
+                        csp = [];
+                end
+                
+            end
+            
+            self.csp_settings = csp;
         end
     end
     

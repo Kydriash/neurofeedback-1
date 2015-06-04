@@ -44,7 +44,11 @@ classdef DerivedSignal < handle
             end
             self.sampling_frequency = sampling_frequency;
             self.channels_indices = zeros(1,length(signal.channels));
-            self.spatial_filter = zeros(length(self.all_channels),1);
+            if strcmpi(self.signal_name,'raw');
+                self.spatial_filter = ones(length(self.all_channels),1);
+            else
+                self.spatial_filter = zeros(length(self.all_channels),1);
+            end
             self.data_length = data_length;
             self.plot_length = plot_length;
             for i = 1:length(self.all_channels)
@@ -102,6 +106,24 @@ classdef DerivedSignal < handle
                         end
                     end
                 end
+                if strcmpi(self.signal_name, 'raw')
+                    for s_ch = 1:length(sp_filter)
+                        if isempty(nonzeros(strcmp(self.all_channels,channel_names{s_ch})))
+                            warning(['The channel ',channel_names{s_ch},' is not transmitted by the device.'])
+                        end
+                    end
+                else
+                    if nargin>1
+                    for s_ch = 1:length(sp_filter)
+                        
+                        if isempty(nonzeros(strcmp(raw_signal.channels(:,1),channel_names{s_ch})))
+                            warning(['The channel ',channel_names{s_ch},' is not presented in the raw data.'])
+                        elseif ~isempty(nonzeros(strcmp(bad_channels, channel_names{s_ch})))
+                            warning(['The channel ',channel_names{s_ch}, ' was eliminated from the raw signal.']);
+                        end
+                    end
+                    end
+                end
             elseif isnumeric(sp_filter) && min(size(sp_filter)) == 1 %vector
                 for idx = 1:length(self.channels_indices)
                     self.spatial_filter(self.channels_indices(idx)) = sp_filter(self.channels_indices(idx));
@@ -146,23 +168,7 @@ classdef DerivedSignal < handle
                  
             end
             
-            if strcmpi(self.signal_name, 'raw')
-                for s_ch = 1:length(sp_filter)
-                    if isempty(nonzeros(strcmp(self.all_channels,channel_names{s_ch})))
-                        warning(['The channel ',channel_names{s_ch},' is not transmitted by the device.'])
-                    end
-                end
-            else
-                
-                for s_ch = 1:length(sp_filter)
-                    
-                    if isempty(nonzeros(strcmp(raw_signal.channels(:,1),channel_names{s_ch})))
-                        warning(['The channel ',channel_names{s_ch},' is not presented in the raw data.'])
-                    elseif ~isempty(nonzeros(strcmp(bad_channels, channel_names{s_ch})))
-                        warning(['The channel ',channel_names{s_ch}, ' was eliminated from the raw signal.']);
-                    end
-                end
-            end
+            
             
             for i = 1:size(self.channels,2)
                 chs(:,i) = self.channels(self.channels_indices(1,:)~=0,i);
@@ -183,19 +189,20 @@ classdef DerivedSignal < handle
             end
         end
         
-        function UpdateTemporalFilter(self,range,order,mode)
-            if(nargin<4)
+        function UpdateTemporalFilter(self,size,range,order,mode)
+            %size - size of spatial_filter
+            if(nargin<5)
                 mode = 'bandpass';
             end;
-            if(nargin<3)
+            if(nargin<4)
                 order = 3;
             end;
             
             self.temporal_filter{1}.range = range;
             [z, p, k] = cheby1(order,1,self.temporal_filter{1}.range/(self.sampling_frequency/2),mode);
             [self.temporal_filter{1}.B, self.temporal_filter{1}.A] = zp2tf(z,p,k);
-            self.temporal_filter{1}.Zf = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,1);
-            self.temporal_filter{1}.Zi = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,1);
+            self.temporal_filter{1}.Zf = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,min(size));
+            self.temporal_filter{1}.Zi = zeros(max(length(self.temporal_filter{1}.A),length(self.temporal_filter{1}.B))-1,min(size));
             
         end
         
@@ -213,21 +220,27 @@ classdef DerivedSignal < handle
                     self.collect_buff.append(self.data');
                 end
             elseif strfind(lower(self.signal_type), 'composite')
-                sz = zeros(size(self.spatial_filter,2),size(newdata,2));
+                 sz = zeros(size(self.spatial_filter,2),size(newdata,2));
                 for i =1:size(self.spatial_filter,2)
-                    sz(i,:) = (self.spatial_filter(:,i)' * newdata).^2;
+                    sz(i,:) = (self.spatial_filter(:,i)' * newdata); %.^2;
                 end
-                res = sqrt(sum(sz,1));
-                 if size(res,2) > 5
+                
+                 if size(sz,2) > 5
                     %add selection
-                    for i = 1:size(res,1)
+                    for i = 1:size(sz,1)
                         for f = 1:length(self.temporal_filter)
-                            [res(i,:), self.temporal_filter{f}.Zf(:,i) ] = filter(self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi(:,i));
+                            clear sztmp
+                            % do filtering
+                            
+                            [sztmp, Zftmp] = filter(self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi(:,i));
+                            sz(i,:) = sztmp';
+                            self.temporal_filter{f}.Zf(:,i) = Zftmp;
+                            %update the internal initial state variable
                             self.temporal_filter{f}.Zi(:,i) = self.temporal_filter{f}.Zf(:,i);
                         end
                     end
                     
-                    
+                    res = sqrt(sum(sz.^2,1));
                     try
                         self.ring_buff.append(res');
                         if recording
@@ -252,7 +265,10 @@ classdef DerivedSignal < handle
                     %add selection
                     for i = 1:size(sz,1)
                         for f = 1:length(self.temporal_filter)
-                            [sz(i,:), self.temporal_filter{f}.Zf(:,i) ] = filter(self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi(:,i));
+                            [sztmp, Zftmp] = filter(self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi(:,i));
+                            sz(i,:) = sztmp';
+                            self.temporal_filter{f}.Zf(:,i) = Zftmp;
+                            %[sz(i,:), self.temporal_filter{f}.Zf(:,i) ] = filter(self.temporal_filter{f}.B,  self.temporal_filter{f}.A, sz(i,:)', self.temporal_filter{f}.Zi(:,i));
                             self.temporal_filter{f}.Zi(:,i) = self.temporal_filter{f}.Zf(:,i);
                         end
                     end
