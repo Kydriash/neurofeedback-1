@@ -980,15 +980,36 @@ classdef EEGLSL < handle
             end
             lsllib = lsl_loadlib();
             disp('Connecting...')
-            while isempty(self.streams)
-                if self.from_file
-                    predicate = 'name';
-                    value = 'File';
-                
+            fl = 1;
+            while fl<5
+                self.streams = lsl_resolve_byprop(lsllib,predicate, value);%found
+                if ~isempty(self.streams)
+                    break;
                 end
-                self.streams = lsl_resolve_byprop(lsllib,predicate, value);
+                disp(strcat('Streams were not found yet, attempt ', num2str(fl), '/', num2str(5)) )
+                pause(0.5);
+                fl = fl+1;
             end
             
+            if fl == 5 && isempty(self.streams)
+                %                      disp('Please make sure that the hardware is plugged and software running.'
+                %                      'Or try to change pair "predicate/value" and re-run the script')
+                %                 end
+                in = questdlg('Select the source ','Choose the source', 'Hardware', 'File','File');
+                switch in
+                    case 'Hardware'
+                        disp('Please make sure that the hardware is plugged and software running./nOr try to change pair "predicate/value" and re-run the script')
+                        self.RunInterface(predicate,value);
+                    case 'File'
+                        self.from_file = 1;
+                        
+                        self.RunInterface(predicate,value);
+%                         while isempty(self.streams)
+%                             self.streams = lsl_resolve_byprop(lsllib,predicate, value);%found
+%                         end
+                end
+                
+            end
             disp('Connected')
             if length(self.streams) > 1
                 warning('The pair predicate/value matches more than one channel. The results might be inconsistent. You might want to restart MATLAB');
@@ -1158,9 +1179,9 @@ classdef EEGLSL < handle
             frr = uicontrol('Parent', self.fig_interface, 'Style', 'edit', 'String', num2str(self.fb_refresh_rate), 'Position', [125 190 50 20]);
             self.path_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.path,'Position', [120 125 200 35],'HorizontalAlignment','left');
             path_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select path', 'Callback', @self.SetWorkpath, 'Position', [20 135 100 35]); %#ok<NASGU>
-            self.settings_file_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.settings_file_text,'Position', [120 90 200 35],'HorizontalAlignment','left');
+            self.settings_file_text =uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.settings_file,'Position', [120 90 200 35],'HorizontalAlignment','left');
             settings_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp.design', 'Callback', @self.SetDesignFile, 'Position', [20 100 100 35]); %#ok<NASGU>
-            set_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Run the experiment', 'Position', [100 20 200 40],'Callback','uiresume'); %#ok<NASGU>
+            set_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Run the experiment', 'Position', [100 20 200 40],'Callback','uiresume','Tag','set_button'); %#ok<NASGU>
             %montage_file_button = uicontrol('Parent',self.fig_interface,'Style', 'pushbutton', 'String', 'Select exp. montage', 'Callback', @self.SetMontageFile, 'Position', [20 60 100 35]); %#ok<NASGU>
             %self.montage_fname_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', self.montage_fname_text,'Position', [120 60 200 35],'HorizontalAlignment','left');
             show_feedback = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Show feedback to subject','Position', [20 290 135 20],'HorizontalAlignment','left'); %#ok<NASGU>
@@ -1168,11 +1189,11 @@ classdef EEGLSL < handle
             self.subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[170 320 100 20],'String',subjects,'Callback',@self.SetSubject);
             sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Choose/Enter subject name', 'Position',[20 315 140 20],'HorizontalAlignment','left'); %#ok<NASGU>
             subj_folder_button = uicontrol('Parent', self.fig_interface,'Style','pushbutton','Position',[285 320 150 20],'String','Or select subject folder','Callback',@self.SetSubjectFolder); %#ok<NASGU>
-            from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 20 20]);
+            from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 20 20],'Tag','from_file_chb');
             from_file_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[285 270 50 20],'String','From file'); %#ok<NASGU>
-            loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 20 20]);
+            loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 20 20],'Tag','From_file_loop');
             loop_replay_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[220 250 120 20],'String','Loop the recording?'); %#ok<NASGU>
-            use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 20 20],'Value',1);
+            use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 20 20],'Value',1,'Tag','Protocols from files');
             use_protocols_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[200 230 140 20],'String','Use protocols from files?'); %#ok<NASGU>
             uiwait();
             if ishandle(self.fig_interface) %if the window is not closed
@@ -1194,9 +1215,9 @@ classdef EEGLSL < handle
                     self.plot_refresh_rate = str2double(prr.String);
                     self.data_receive_rate = str2double(drr.String);
                     self.fb_refresh_rate = str2double(frr.String);
-                    self.fig_interface.Visible = 'off';
-                    self.show_fb = show_fb_check.Value;
-                    self.from_file = from_file_chb.Value;
+                    set(self.fig_interface,'Visible','off');
+                    self.show_fb = get(show_fb_check,'Value');
+                    self.from_file = get(from_file_chb,'Value');
                     if self.from_file
                         self.looped = loop_replay_chb.Value;
                         self.run_protocols = use_protocols_chb.Value;
@@ -1222,6 +1243,10 @@ classdef EEGLSL < handle
                     'Period',self.fb_refresh_rate);
                 self.feedback_manager = FeedbackManager;
                 if self.from_file
+                    predicate = 'name';
+                        value = 'File';
+                        self.looped = loop_replay_chb.Value;
+                        self.run_protocols = use_protocols_chb.Value;
                     %self.channel_labels = get_channel_labels(self.inlet);
                     
                     [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
@@ -1231,6 +1256,7 @@ classdef EEGLSL < handle
                         self.channel_labels = channels;
                         if self.run_protocols
                             self.protocol_sequence = protocols;
+                            self.feedback_protocols = [];
                             for pr = 1:length(protocols)
                                 
                                 self.feedback_protocols{pr} = RealtimeProtocol;
@@ -1251,15 +1277,15 @@ classdef EEGLSL < handle
                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
                                 end
                             end
-                        else
-                            nfs = NeurofeedbackSession;
+                             nfs = NeurofeedbackSession;
                             nfs.LoadFromFile(self.settings_file);
                             self.protocol_types = nfs.protocol_types;
-                            self.feedback_protocols = nfs.feedback_protocols;
+                            %self.feedback_protocols = nfs.feedback_protocols;
                             self.csp_settings = nfs.csp_settings;
+                        
                         end
-                    end
-                    
+            end
+            
                 else
                     %self.channel_labels = read_montage_file(self.montage_fname);
                     nfs = NeurofeedbackSession;
@@ -1293,7 +1319,7 @@ classdef EEGLSL < handle
                 self.log_text = uicontrol('Parent', self.raw_and_ds_figure  ,'Style', 'Text','String', {'Log'}, 'Position', [0 300 50 100],'Tag','log_text');
                 self.status_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', 'Status: ', 'Position', [0 210 200 20],'HorizontalAlignment','left','Tag','status_text');
                 self.curr_protocol_text = uicontrol('Parent', self.raw_and_ds_figure, 'Style', 'text','String', 'Current protocol: ', 'Position', [0 40  190 100],'Tag','curr_protocol_text');
-                self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
+                %self.edit_protocols_button = uicontrol('Parent',self.raw_and_ds_figure,'Style','pushbutton','Callback',@self.EditProtocols,'Tag','edit_protocols_button','String','Edit protocols');
                 select_bad_channels_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton', ...
                     'String', 'Select bad channels', 'Callback', @self.SelectBadChannels,'Tag','select_bad_channels_button'); %#ok<NASGU>
                 %                 bad_channels_text = uicontrol('Parent', self.raw_and_ds_figure,'Style', 'text', 'String', '',...
@@ -1654,16 +1680,18 @@ classdef EEGLSL < handle
                     if idx22-idx21 ~= idx12-idx11
                         warning('Something went wrong... Function PlotErrorBar')
                     end
+                    plot_size = length(self.feedback_protocols)-1;
                 else
                     names{i-pr_shift} = self.feedback_protocols{i}.protocol_name;
                     averages(i-pr_shift) = mean(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
                     deviations(i-pr_shift) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
+                    plot_size = length(self.feedback_protocols);
                 end
             end
-            names = names';
+            names = [names' ' '];
             f = figure; %#ok<NASGU>
             e = errorbar(averages, deviations); %#ok<NASGU>
-            set(gca,'XTick',1:length(self.feedback_protocols));
+            set(gca,'XTick',1:plot_size);
             set(gca,'XTickLabel',names);
             xlabel('Protocols');
             ylabel('Mean values of feedback +/- standard_deviation');
@@ -1947,65 +1975,73 @@ classdef EEGLSL < handle
         function EditProtocols(self,obj,event) %#ok<INUSD>
             if min(length(findobj('Tag', 'EditProtocolFigure'))) %if it already exists, bring it to front
                 uistack(findobj('Tag', 'EditProtocolFigure'));
-            else
-                protocol_figure = figure('Tag','EditProtocolFigure');
-                delta_y = protocol_figure.Position(4)/(length(self.feedback_protocols)+3);
-                max_height = protocol_figure.Position(4);
-                existing_prs = cell(length(self.feedback_protocols),1);
-                for p = 1:length(self.feedback_protocols)
-                    bgr = 0.94-[0.1 0.1 0.1] * mod(p-1,2);
-                    existing_prs{p} = self.feedback_protocols{p}.protocol_name;
-                    protocol_count{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.01,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(p),'HorizontalAlignment','left','Tag','Protocol count','BackgroundColor',bgr); %#ok<NASGU>
-                    protocol_name{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.04,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.25, protocol_figure.Position(4)*0.04],'String', existing_prs{p},'HorizontalAlignment','left','Tag','Protocol name text','BackgroundColor',bgr);
-                    
-                    if p < self.next_protocol %already recorded; duration cannot be changed
-                        self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.3, max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(self.feedback_protocols{p}.protocol_duration),'Tag','Protocol duration text','HorizontalAlignment','right');
-                    else
-                        self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','edit','Position', [protocol_figure.Position(3)*0.3, max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(self.feedback_protocols{p}.protocol_duration),'HorizontalAlignment','right','Tag', 'Protocol duration text');
-                        
-                    end
-                    ms{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.35,max_height-protocol_figure.Position(4)*0.05*p,protocol_figure.Position(3)*0.02 , protocol_figure.Position(4)*0.04],'String', 's','HorizontalAlignment','left','BackgroundColor',bgr,'Tag','s text'); %#ok<NASGU>
-                end
-                
-                
-                prs_types = {};
-                for pt = 1:length(self.protocol_types)
-                    prs_types = [prs_types {self.protocol_types{pt}.sProtocolName}];
-                end
-                pr_dpmenu = {};
-                for p = self.next_protocol-1:length(existing_prs)
-                    if p < 1
-                        continue;
-                    end
-                    
-                    pr_dpmenu = [pr_dpmenu {[num2str(p) ' ' protocol_name{p}.String]}];
-                end
-                if self.next_protocol == 1
-                    
-                    ins_pr_dpmenu = [{'0'} pr_dpmenu];
-                    del_pr_dpmenu = pr_dpmenu;
-                else
-                    ins_pr_dpmenu = pr_dpmenu;
-                    del_pr_dpmenu = pr_dpmenu(2:end);
-                end
-                
-                
-                add_protocol_text = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.4,protocol_figure.Position(4)*0.92,protocol_figure.Position(3)*0.20 , protocol_figure.Position(4)*0.05],'String', 'Add a protocol','HorizontalAlignment','right'); %#ok<NASGU>
-                insert_protocol_text = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.4,protocol_figure.Position(4)*0.85,protocol_figure.Position(3)*0.20 , protocol_figure.Position(4)*0.05],'String', 'Insert after','HorizontalAlignment','right'); %#ok<NASGU>
-                
-                add_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','popupmenu','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.925,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', prs_types,'Tag','Add protocol dropmenu'); %#ok<NASGU>
-                insert_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','popupmenu','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.855,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', ins_pr_dpmenu,'Tag', 'Insert protocol dropmenu'); %#ok<NASGU>
-                add_protocol_pushbutton =uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.78, protocol_figure.Position(3)*0.2, protocol_figure.Position(4)*0.06],'String', 'Add','Tag','add_protocol_button','Callback',@self.AddProtocol); %#ok<NASGU>
-                
-                delete_protocol_text = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.4,protocol_figure.Position(4)*0.6,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', 'Delete a protocol','HorizontalAlignment','right'); %#ok<NASGU>
-                delete_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','popupmenu','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.61,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', del_pr_dpmenu,'Tag','Delete protocol dropmenu'); %#ok<NASGU>
-                delete_protocol_pushbutton = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.53, protocol_figure.Position(3)*0.2, protocol_figure.Position(4)*0.06],'String', 'Delete','Tag','delete_protocol_button','Callback',@self.DeleteProtocol); %#ok<NASGU>
-                
-                okay_button = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.75,delta_y/2, protocol_figure.Position(3)*0.09,protocol_figure.Position(4)*0.12],'String', 'Apply','Tag','okay_button','Callback',@self.ChangeProtocols); %#ok<NASGU>
-                cancel_button = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.85,delta_y/2, protocol_figure.Position(3)*0.09, protocol_figure.Position(4)*0.12],'String', 'Cancel','Tag','cancel_button','Callback',@self.DoNothing); %#ok<NASGU>
-                
             end
+            protocol_figure = figure('Tag','EditProtocolFigure');
+            delta_y = protocol_figure.Position(4)/(length(self.feedback_protocols)+3);
+            max_height = protocol_figure.Position(4);
+            existing_prs = cell(length(self.feedback_protocols),1);
+            for p = 1:length(self.feedback_protocols)
+                bgr = 0.94-[0.1 0.1 0.1] * mod(p-1,2);
+                existing_prs{p} = self.feedback_protocols{p}.protocol_name;
+                protocol_count{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.01,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(p),'HorizontalAlignment','left','Tag','Protocol count','BackgroundColor',bgr); %#ok<NASGU>
+                protocol_name{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.04,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.25, protocol_figure.Position(4)*0.04],'String', existing_prs{p},'HorizontalAlignment','left','Tag','Protocol name text','BackgroundColor',bgr);
+                
+                if p < self.next_protocol %already recorded; duration cannot be changed
+                    self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.3, max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(self.feedback_protocols{p}.protocol_duration),'Tag','Protocol duration text','HorizontalAlignment','right');
+                else
+                    self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','edit','Position', [protocol_figure.Position(3)*0.3, max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(self.feedback_protocols{p}.protocol_duration),'HorizontalAlignment','right','Tag', 'Protocol duration text');
+                    
+                end
+                ms{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.35,max_height-protocol_figure.Position(4)*0.05*p,protocol_figure.Position(3)*0.02 , protocol_figure.Position(4)*0.04],'String', 's','HorizontalAlignment','left','BackgroundColor',bgr,'Tag','s text'); %#ok<NASGU>
+            end
+            
+            
+            prs_types = {};
+            for pt = 1:length(self.protocol_types)
+                prs_types = [prs_types {self.protocol_types{pt}.sProtocolName}];
+            end
+            pr_dpmenu = {};
+            for p = self.next_protocol-1:length(existing_prs)
+                if p < 1
+                    continue;
+                end
+                
+                pr_dpmenu = [pr_dpmenu {[num2str(p) ' ' protocol_name{p}.String]}];
+            end
+            if self.next_protocol == 1
+                
+                ins_pr_dpmenu = [{'0'} pr_dpmenu];
+                del_pr_dpmenu = pr_dpmenu;
+            else
+                ins_pr_dpmenu = pr_dpmenu;
+                del_pr_dpmenu = pr_dpmenu(2:end);
+            end
+            
+            
+            add_protocol_text = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.4,protocol_figure.Position(4)*0.92,protocol_figure.Position(3)*0.20 , protocol_figure.Position(4)*0.05],'String', 'Add a protocol','HorizontalAlignment','right'); %#ok<NASGU>
+            insert_protocol_text = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.4,protocol_figure.Position(4)*0.85,protocol_figure.Position(3)*0.20 , protocol_figure.Position(4)*0.05],'String', 'Insert after','HorizontalAlignment','right'); %#ok<NASGU>
+            
+            add_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','popupmenu','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.925,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', prs_types,'Tag','Add protocol dropmenu'); %#ok<NASGU>
+            insert_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','popupmenu','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.855,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', ins_pr_dpmenu,'Tag', 'Insert protocol dropmenu'); %#ok<NASGU>
+            add_protocol_pushbutton =uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.78, protocol_figure.Position(3)*0.2, protocol_figure.Position(4)*0.06],'String', 'Add','Tag','add_protocol_button','Callback',@self.AddProtocol); %#ok<NASGU>
+            
+            delete_protocol_text = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.4,protocol_figure.Position(4)*0.6,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', 'Delete a protocol','HorizontalAlignment','right'); %#ok<NASGU>
+            delete_protocol_pushbutton = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.53, protocol_figure.Position(3)*0.2, protocol_figure.Position(4)*0.06],'String', 'Delete','Tag','delete_protocol_button','Callback',@self.DeleteProtocol); %#ok<NASGU>
+            if isempty(del_pr_dpmenu)
+                
+                set(delete_protocol_pushbutton,'enable','off');
+                delete_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.6,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', 'No protocols to delete','Tag','Delete protocol dropmenu'); %#ok<NASGU>
+            else
+                delete_protocol_dropmenu = uicontrol('Parent',protocol_figure,'Style','popupmenu','Position', [protocol_figure.Position(3)*0.62,protocol_figure.Position(4)*0.61,protocol_figure.Position(3)*0.2 , protocol_figure.Position(4)*0.05],'String', del_pr_dpmenu,'Tag','Delete protocol dropmenu'); %#ok<NASGU>
+                set(delete_protocol_pushbutton,'enable','on');
+            end
+            
+            
+            okay_button = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.75,delta_y/2, protocol_figure.Position(3)*0.09,protocol_figure.Position(4)*0.12],'String', 'Apply','Tag','okay_button','Callback',@self.ChangeProtocols); %#ok<NASGU>
+            cancel_button = uicontrol('Parent',protocol_figure,'Style','pushbutton','Position', [protocol_figure.Position(3)*0.85,delta_y/2, protocol_figure.Position(3)*0.09, protocol_figure.Position(4)*0.12],'String', 'Cancel','Tag','cancel_button','Callback',@self.DoNothing); %#ok<NASGU>
+            
         end
+
         function AddProtocol(self,obj,event) %#ok<INUSD>
             
             add_obj = findobj('Tag','Add protocol dropmenu');
@@ -2074,11 +2110,13 @@ classdef EEGLSL < handle
             delete(old_ms);
             
             max_height = protocol_figure.Position(4) - 0.05;
-            %mind the numbers!
+            %mind the numbers
+            
+            self.protocol_duration_text = {};
             for p = 1:length(protocols_names)
                 bgr = 0.94-[0.1 0.1 0.1] * mod(p-1,2);
                 protocol_count{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.01,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(p),'HorizontalAlignment','left','Tag','Protocol count','BackgroundColor',bgr); %#ok<NASGU>
-                protocol_name{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.04,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.25, protocol_figure.Position(4)*0.04],'String', protocols_names{p},'HorizontalAlignment','left','Tag','Protocol name text','BackgroundColor',bgr); %#ok<NASGU>
+                protocol_name{end+1} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.04,max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.25, protocol_figure.Position(4)*0.04],'String', protocols_names{p},'HorizontalAlignment','left','Tag','Protocol name text','BackgroundColor',bgr); %#ok<NASGU>
                 if p < self.next_protocol %already recorded; duration cannot be changed
                     self.protocol_duration_text{p} = uicontrol('Parent',protocol_figure,'Style','text','Position', [protocol_figure.Position(3)*0.3, max_height-protocol_figure.Position(4)*0.05*p, protocol_figure.Position(3)*0.05, protocol_figure.Position(4)*0.04],'String', num2str(protocols_durations{p}),'Tag','Protocol duration text','HorizontalAlignment','right');
                 else
@@ -2467,7 +2505,35 @@ classdef EEGLSL < handle
             end
         end
         
-        
+       function DeriveSettingsFromFile(self)
+            [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
+%                     if any([self.fnames, self.files_pathname, filterindex] )
+%                         %subject_folder = self.streams{1}.source_id;
+%                         [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
+%                         self.channel_labels = channels;
+%                         if self.run_protocols
+%                             self.protocol_sequence = protocols;
+%                             for pr = 1:length(protocols)
+%                                 
+%                                 self.feedback_protocols{pr} = RealtimeProtocol;
+%                                 self.feedback_protocols{pr}.protocol_name = protocols{pr};
+%                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
+%                                 
+%                                 if strfind(protocols{pr},'ssd')
+%                                     self.ssd = 1;
+%                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%                                     self.feedback_protocols{pr}.band = 1;
+%                                 elseif strfind(protocols{pr},'csp')
+%                                     self.ssd = 1;
+%                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%                                     self.feedback_protocols{pr}.band = 1;
+%                                 elseif strcmpi(protocols{pr},'baseline')
+%                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%                                 elseif strfind(lower(protocols{pr}),'feedback')
+%                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
+%                                 end
+%                             end
+    end
     end
 end
 
