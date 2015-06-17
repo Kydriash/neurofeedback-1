@@ -134,7 +134,7 @@
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>6</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<bStopAfter>0</bStopAfter>
 			<cString>Imagine moving right hand</cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -168,7 +168,11 @@
 			</vProtocols>
 	<vPSequence>
 <loop count = '1'>
-<s>CSP</s>
+    <s>CSP</s>
+<s>Left_hand_imagination</s>
+<s>Right_hand_imagination</s>
+<s>Left_hand_movement</s>
+<s>Right_hand_movement</s>
 </loop>
 <loop count = '4'>
 <s>Feedback_color</s>

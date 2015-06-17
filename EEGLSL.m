@@ -198,7 +198,7 @@ classdef EEGLSL < handle
             self.raw_yscale_fixed = 0;
             self.fb_manager_set = 0;
             self.protocol_indices = 0;
-            self.fb_sigmas = 16;
+            self.fb_sigmas = 8;
             self.from_file = 0;
             
             self.settings = struct();
@@ -1491,10 +1491,12 @@ classdef EEGLSL < handle
                 self.fig_feedback;
                 set(self.feedback_axis_handle,'Visible','off'); %axes
                 if self.current_protocol && self.current_protocol <= length(self.feedback_protocols)
-                    try
-                        self.fb_type = self.feedback_protocols{self.current_protocol}.fb_type;
-                    catch
-                        'Error while getting fb_type, function RefreshFB' %#ok<NOPRT>
+                    if isprop(self.feedback_protocols{self.current_protocol},'fb_type') && ~isempty(self.feedback_protocols{self.current_protocol}.fb_type)
+                        try
+                            self.fb_type = self.feedback_protocols{self.current_protocol}.fb_type;
+                        catch
+                            'Error while getting fb_type, function RefreshFB' %#ok<NOPRT>
+                        end
                     end
                 end
                 try
@@ -1528,7 +1530,7 @@ classdef EEGLSL < handle
                         elseif strcmp(self.feedback_protocols{self.current_protocol}.protocol_name,'Rest')
                             set(self.fig_feedback,'Color',[0.94 0.94 0.94]);
                             set(self.fb_stub, 'Visible', 'off'); %string
-                            set(self.fbplot_handle.Visible,'off');
+                            set(self.fbplot_handle,'Visible','off');
                             
                         else %strings must be visible
                             set(self.fig_feedback,'Color',[0.94 0.94 0.94]);
@@ -1569,7 +1571,7 @@ classdef EEGLSL < handle
                 catch
                     %self.current_protocol
                     'Error while setting feedback' %#ok<NOPRT>
-                    1/16+1/16*self.feedback_manager.feedback_vector(self.signal_to_feedback-1) %#ok<NOPRT>
+                    1/self.fb_sigmas+1/self.fb_sigmas*self.feedback_manager.feedback_vector(self.signal_to_feedback-1) %#ok<NOPRT>
                 end
             elseif self.current_protocol
                 if strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name),'ssd')
@@ -1688,6 +1690,27 @@ classdef EEGLSL < handle
                     plot_size = length(self.feedback_protocols);
                 end
             end
+            %write to file
+            curr_date = datestr(date,29);
+            if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
+                mkdir(strcat(self.path,'\',self.subject_record.subject_name));
+            end
+            if ~isdir(strcat(self.path,'\',self.subject_record.subject_name,'\',curr_date))
+                mkdir(strcat(self.path,'\',self.subject_record.subject_name,'\',curr_date));
+            end
+            if ~isdir(strcat(self.path,'\',self.subject_record.subject_name,'\',curr_date,'\',self.subject_record.time_start))
+                mkdir(strcat(self.path,'\',self.subject_record.subject_name,'\',curr_date,'\',self.subject_record.time_start));
+            end
+            filename = strcat(self.path,'\',self.subject_record.subject_name,'\',curr_date,'\',self.subject_record.time_start,'\','stats.txt');
+            f = fopen(filename,'w');
+            fprintf(f, self.derived_signals{self.signal_to_feedback}.signal_name);
+            fprintf(f,'\n');
+            fprintf(f,'Protocol average stddev\n');
+            for i = 1:length(names)
+                fprintf(f, [names{i} ' ' num2str(averages(i)) ' ' num2str(deviations(i)) '\n']);
+            end
+            fclose(f);
+            %show plot
             names = [names' ' '];
             f = figure; %#ok<NASGU>
             e = errorbar(averages, deviations); %#ok<NASGU>
@@ -2347,13 +2370,15 @@ classdef EEGLSL < handle
             %% list the previous protocols and allow to checkbox those
             %% that are supposed to be calculated
             csp_figure = figure('Tag','CSP choice');
-            max_height = csp_figure.Position(4);
+            max_height = csp_figure.Position(4)-csp_figure.Position(4)*0.1;
+            protocols_to_use = uicontrol('Parent', csp_figure,'Style', 'text', 'Position',[csp_figure.Position(3)*0.12,csp_figure.Position(4)*0.85, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.1],'Tag','protocols_to_select','String','Data to classify','FontSize',11,'HorizontalAlignment','center');
+            set_dataset_names = uicontrol('Parent', csp_figure,'Style', 'text', 'Position',[csp_figure.Position(3)*0.45,csp_figure.Position(4)*0.85, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.1],'Tag','names_of_the_datasets','String','Names of the datasets','FontSize',11,'HorizontalAlignment','center');
             for pr = 1:self.next_protocol-1
                 bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2);
-                protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.01,max_height-csp_figure.Position(4)*0.05*pr, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.02],'Tag','csp chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.protocol_name);
+                protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.1,max_height-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'Tag','csp chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.protocol_name);
                 %protocol_count{p} = uicontrol('Parent',csp_figure,'Style','text','Position', [csp_figure.Position(3)*0.03,max_height-csp_figure.Position(4)*0.05*pr, csp_figure.Position(3)*0.05, csp_figure.Position(4)*0.04],'String', num2str(pr),'HorizontalAlignment','left','Tag','Protocol count','BackgroundColor',bgr); %#ok<NASGU>
                 %protocol_name{pr} = uicontrol('Parent',csp_figure,'Style','text','Position', [csp_figure.Position(3)*0.07,max_height-csp_figure.Position(4)*0.05*pr, csp_figure.Position(3)*0.25, csp_figure.Position(4)*0.04],'String', self.feedback_protocols{pr}.protocol_name,'HorizontalAlignment','left','Tag','Protocol name text','BackgroundColor',bgr); %#ok<NASGU>
-                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.33,max_height-csp_figure.Position(4)*0.05*pr, csp_figure.Position(3)*0.25, csp_figure.Position(4)*0.04],'String', self.feedback_protocols{pr}.protocol_name,'HorizontalAlignment','left','Tag','Edit name text','BackgroundColor',bgr);
+                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.45,max_height-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.protocol_name,'HorizontalAlignment','left','Tag','Edit name text','BackgroundColor',bgr);
             end
             okay_button = uicontrol('Parent',csp_figure,'Style','pushbutton','Position', [csp_figure.Position(3)*0.75,csp_figure.Position(4)*0.05, csp_figure.Position(3)*0.09,csp_figure.Position(4)*0.12],'String', 'OK','Tag','csp_okay_button','Callback','uiresume','enable','off'); %#ok<NASGU>
             uiwait();
@@ -2370,6 +2395,7 @@ classdef EEGLSL < handle
                     data_names{end+1} = get(edit_name{pr},'String');
                 end
             end
+            delete(csp_figure);
             %% run csp classificator
             self.CSPLearning(data_sets,data_names);
         end
@@ -2379,21 +2405,36 @@ classdef EEGLSL < handle
             selected = 0;
             for pr = 1:length(protocol_chbs)
                 if get(protocol_chbs(pr),'Value') == 1
-                    set(okay_button,'enable','on');
-                    selected = 1;
+                    selected = selected + 1;
                 end
             end
-            if ~selected
+            if selected < 2
                 set(okay_button,'enable','off');
+            else
+                set(okay_button,'enable','on');
             end
             
         end
         function CSPLearning(self,data_sets,data_names)
             %% data_sets_choices(n,2)
             choices = nchoosek(1:length(data_sets),2);
-            for choice = 1:size(choices,1)
+           
+            for ch = 1:size(choices,1)
+                if size(choices,1) == 1
+                    choice = choices;
+                else
+                    choice = choices(ch,:);
+                end
+                
                 %% run pairwise csp learning
+                first_raw = data_sets{choice(1)};
+                second_raw = data_sets{choice(2)};
+                first_name = data_names(choice(1));
+                second_name = data_names(choice(2));
                 try
+                    
+                    %fetch the data of the choices
+                    
                     if ~isempty(self.csp_settings.n_comp)
                         Ncomp = self.csp_settings.n_comp;
                     else
@@ -2404,21 +2445,26 @@ classdef EEGLSL < handle
                 end
                 try
                     if ~isempty(self.csp_settings.init_band)
-                        init_band = self.feedback_protocols{self.current_protocol}.init_band;
+                        init_band = self.csp_settings.init_band;
                     else
                         init_band = self.init_band;
                     end
                 catch
                     init_band = self.init_band;
                 end
+                
                 for ib = 1:4
                     band = init_band +ib-1 ;
                     [z, p, k] = cheby1(3,1,band/(0.5*self.sampling_frequency),'bandpass');
                     [b,a] = zp2tf(z,p,k);
-                    x = filtfilt(b,a,x_raw)';
-                    C10 = x(:,1:fix(end/2))* x(:,1:fix(end/2))'/fix(size(x,2)/2);
-                    C20 = x(:,fix(end/2)+1:end)* x(:,fix(end/2)+1:end)'/fix(size(x,2)/2);
-                    
+%                     x = filtfilt(b,a,x_raw)';
+%                     C10 = x(:,1:fix(end/2))* x(:,1:fix(end/2))'/fix(size(x,2)/2);
+%                     C20 = x(:,fix(end/2)+1:end)* x(:,fix(end/2)+1:end)'/fix(size(x,2)/2);
+                    x1 = filtfilt(b,a, first_raw)';
+                    x2 = filtfilt(b,a, second_raw)';
+                    C10 = x1 * x1' / size(x1,2);
+                    C20 = x2 * x2' / size(x2,2);
+
                     nchan = size(C10,1);
                     
                     %% regularize covariances
@@ -2432,9 +2478,51 @@ classdef EEGLSL < handle
                     G12{ib} = iV([1:Ncomp, end-Ncomp+1:end],:);
                 end
                 %% show the heads
-                %% add name
-                name{choice} = strcat(data_names{choices(choice,1)},'-',data_names{choices(choice,2)});
-                %% save as DS
+                name = [first_name '-' second_name];
+                hh1 = figure;
+                title(name);
+                
+                StandChannels = load('StandardEEGChannelLocations.mat');
+                chan_labels = self.used_ch(:,1)';
+                Nbands = length(G12);
+                PlotIndex = 1;
+                selected = {};
+                for ib = 1:Nbands
+                    rearranged_map = rearrange_channels(G12{ib}',chan_labels, StandChannels.channels);
+                        Nmaps = size(rearranged_map,2);
+                        for tpm=1:Nmaps
+                            sp(PlotIndex) = subplot(Nbands,Nmaps,PlotIndex);
+                            
+                            %                            topoplot(rearranged_map(:,tpm), StandChannels.channels, 'electrodes', 'labelpoint', 'chaninfo', StandChannels.chaninfo);
+                            topoplot(rearranged_map(:,tpm), StandChannels.channels,  'chaninfo', StandChannels.chaninfo);
+                            hold on;
+                            sibs = get(sp(PlotIndex),'Children');
+                            for k = 1:length(sibs)
+                                set(sp(PlotIndex).Children(k), 'ButtonDownFcn', @(src,event)toggleplot(src,event));
+                            end
+                            title(num2str(PlotIndex));
+                            %add legend
+                            PlotIndex = PlotIndex+1;
+                        end;
+                    end
+                    okay_btn = uicontrol('Parent',hh1,'Style', 'pushbutton', 'String', 'OK', 'Callback', 'uiresume', 'Position', [230 10 100 35],'Tag','SelectHeadsBtn','enable','off');  %#ok<NASGU>
+                    
+                    
+                    uiwait();
+                    
+                     MapIndex = cellfun(@str2num,selected);
+                    BandNumber = fix((MapIndex-1)/(2*Ncomp))+1;
+                    CompNumber = mod(MapIndex-1,(2*Ncomp))+1;
+                    close(hh1);
+                    w_ssd = zeros(length(MapIndex),length(M12{1}));
+                    for bn = 1:length(MapIndex)
+                        w_ssd(bn,:) = M12{BandNumber(bn)}(CompNumber(bn),:);
+                    end
+              
+
+               
+
+                    %% save as DS
             end
             
         end
