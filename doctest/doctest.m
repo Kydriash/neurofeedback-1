@@ -172,7 +172,9 @@ for I = 1:length(to_test)
     
 
     these_results = doctest_run(docstring);
-    
+%      if ~isempty(these_results)
+%          to_test(I).name
+%      end
  
     if ~ isempty(these_results)
         [these_results.link] = deal(to_test(I).link);

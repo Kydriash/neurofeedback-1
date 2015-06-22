@@ -31,26 +31,34 @@ classdef DerivedSignal < handle
         function self = DerivedSignal(self,signal, sampling_frequency, data_length,channels,plot_length) %#ok<INUSL>
             if nargin < 6
                 self.plot_length = 1000;
+            else
+                self.plot_length = plot_length;
             end
+            
             if nargin < 5
-                channels = {};
+                self.all_channels = {};
+            else
+                 self.all_channels = channels;
             end
+            
             if nargin < 4
                 self.data_length = self.plot_length * 2;
+            else
+                 self.data_length = data_length;
             end
+            
             if nargin < 3
                 self.sampling_frequency = 500;
+            else
+                self.sampling_frequency = sampling_frequency;
             end
+            
             if nargin < 2
                 self.signal_name = 'dummy';
-                self.all_channels = channels;
                 self.channels = {};
-                
-            end
-            if nargin > 0
+                self.signal_type = 'plain';
+            else
                 self.signal_name = signal.sSignalName;
-                
-                self.all_channels = channels;
                 if ~isempty(signal.channels)
                     
                     self.channels = signal.channels;
@@ -61,15 +69,35 @@ classdef DerivedSignal < handle
                         self.channels{ch,2} = 1;
                     end
                 end
-                self.sampling_frequency = sampling_frequency;
-                self.channels_indices = zeros(1,length(signal.channels));
+                if isfield(signal,'filters')
+                    
+                    self.temporal_filter = cell(1,length(signal.filters));
+                    for c = 1:length(self.temporal_filter)
+                        self.temporal_filter{c}.order = signal.filters(c).order;
+                        self.temporal_filter{c}.range = signal.filters(c).range;
+                        self.temporal_filter{c}.mode = signal.filters(c).mode;
+                        [z, p, k] = cheby1(self.temporal_filter{c}.order,1,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
+                        [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
+                        self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
+                        self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
+                    end
+                else
+                    self.temporal_filter = cell(0,0);
+                end
+                 try
+                    self.signal_type = signal.sType;
+                catch
+                    self.signal_type = 'plain';
+                end
+            end
+            
+                self.channels_indices = zeros(1,length(self.channels));
                 if strcmpi(self.signal_name,'raw');
                     self.spatial_filter = ones(length(self.all_channels),1);
                 else
                     self.spatial_filter = zeros(length(self.all_channels),1);
                 end
-                self.data_length = data_length;
-                self.plot_length = plot_length;
+                
                 for i = 1:length(self.all_channels)
                     for j = 1:length(self.channels)
                         if strcmp(self.all_channels{i},self.channels{j,1})
@@ -80,33 +108,13 @@ classdef DerivedSignal < handle
                         end
                     end
                 end
-                if isfield(signal,'filters')
-                    
-                self.temporal_filter = cell(1,length(signal.filters));
-                for c = 1:length(self.temporal_filter)
-                    self.temporal_filter{c}.order = signal.filters(c).order;
-                    self.temporal_filter{c}.range = signal.filters(c).range;
-                    self.temporal_filter{c}.mode = signal.filters(c).mode;
-                    [z, p, k] = cheby1(self.temporal_filter{c}.order,1,self.temporal_filter{c}.range/(sampling_frequency/2),self.temporal_filter{c}.mode);
-                    [self.temporal_filter{c}.B, self.temporal_filter{c}.A] = zp2tf(z,p,k);
-                    self.temporal_filter{c}.Zf = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-                    self.temporal_filter{c}.Zi = zeros(max(length(self.temporal_filter{c}.A),length(self.temporal_filter{c}.B))-1,1);
-                end
-                else
-                    self.temporal_filter = cell(0,0);
-                end
-                % self.filtered = 0;
+                
                 self.collect_buff = 0;
                 self.ring_buff = 0;
-                try
-                    self.signal_type = signal.sType;
-                catch
-                    self.signal_type = 'plain';
-                end
+               
             end
             
             
-        end
         
         
         function UpdateSpatialFilter(self,sp_filter, raw_signal,bad_channels)
@@ -161,6 +169,11 @@ classdef DerivedSignal < handle
             %     16
             %     0
             %     0
+            % >> size(self.spatial_filter,2)
+            %
+            %ans =
+            %
+            % 1
             % >> signal_channels = {'G' 1;'E' 0.01; 'A' 8.24};
             % >> hardware_channels = {'A','B','C','D','E','F','G','H'};
             % >> signal_struct = struct('sSignalName','test');
@@ -171,6 +184,8 @@ classdef DerivedSignal < handle
             %ans = 
             %
             % 7 5 1
+            
+            
             if iscell(sp_filter) && size(sp_filter,2) > 1%channels cell array
                 
                 %self.channels = sp_filter;
@@ -233,8 +248,18 @@ classdef DerivedSignal < handle
                 for idx = 1:length(self.channels_indices)
                     self.spatial_filter(self.channels_indices(idx)) = sp_filter(self.channels_indices(idx));
                 end
+                if size(self.spatial_filter,2) > 1
+                    self.spatial_filter = self.spatial_filter';
+                end
             elseif isnumeric(sp_filter)
-                self.spatial_filter = sp_filter;
+                if size(sp_filter,2) > 1
+                    self.spatial_filter = sp_filter';
+                else
+                    self.spatial_filter = sp_filter;
+                end
+                if isempty(self.channels_indices)
+                    self.channels_indices = 1:size(self.spatial_filter,2);
+                end
 %             elseif isstruct(sp_filter)
 %                 channel_names = {};
 %                 for i = 1:length(sp_filter)
@@ -275,7 +300,18 @@ classdef DerivedSignal < handle
                  
             end
             
-            
+%             if isempty(self.channels) 
+%                 self.channels = cell(length(self.all_channels),2);
+%                 for ch = 1:length(self.channels)
+%                     if ~isempty(self.all_channels)
+%                         self.channels{ch,1} = self.all_channels{ch};
+%                         
+%                     else
+%                         self.channels{ch,1} = ch;
+%                     end
+%                     self.channels{ch,2} = self.spatial_filter{ch};
+%                 end
+%             end
             if size(self.channels,2)
             for i = 1:size(self.channels,2)
                 chs(:,i) = self.channels(self.channels_indices(1,:)~=0,i);
@@ -285,6 +321,7 @@ classdef DerivedSignal < handle
 %             chs(:,3) = self.channels(self.channels_indices(1,:)~=0,3);
             self.channels = chs;
             self.channels_indices = nonzeros(self.channels_indices);
+            end
             if ~isempty(self.collect_buff)
                 if strcmpi(self.signal_name, 'raw')
                     self.collect_buff = circVBuf(self.data_length, length(self.channels), 0);
@@ -293,7 +330,7 @@ classdef DerivedSignal < handle
                     self.collect_buff = circVBuf(self.data_length,1,0);
                     self.ring_buff = circVBuf(fix(self.plot_length*self.sampling_frequency*1.1),1, 0);
                 end
-            end
+            
             end
         end
         
@@ -316,6 +353,26 @@ classdef DerivedSignal < handle
         
         
         function Apply(self, newdata,recording)
+            % >> self = DerivedSignal();
+            % >> self.sampling_frequency = 500;
+            % >> self.UpdateSpatialFilter([1 0 1 1]);
+            % >> size(self.spatial_filter)
+            %
+            %ans =
+            %
+            % 4 1
+            % >> self.UpdateTemporalFilter(1, [10 15], 3, 'bandpass');
+            % >> self.Apply(ones(4,10),true);
+            % >> self.ring_buff.raw(self.ring_buff.fst:self.ring_buff.lst)
+            %
+            %ans =
+            %
+            % 0.0000    0.0003    0.0011    0.0026    0.0050    0.0085    0.0131    0.0186    0.0248    0.0315
+            % >> self.ring_buff.raw(self.ring_buff.fst:self.ring_buff.lst) == self.collect_buff.raw(self.collect_buff.fst:self.collect_buff.lst)
+            %
+            %ans = 
+            %
+            % 1
             
             %do projection, i.e. apply spatial filter(s)
             if strcmpi(self.signal_name, 'raw')
@@ -384,7 +441,7 @@ classdef DerivedSignal < handle
                     
                     try
                         self.ring_buff.append(sz');
-                        if recording
+                        if nargin > 2 && recording
                             self.collect_buff.append(sz');
                         end
                     catch
