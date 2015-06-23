@@ -110,6 +110,7 @@ classdef NeurofeedbackSession < handle
             end
             %% protocol_sequence
             %%% upd on 2015-05-13
+            show_as = {};
             try
                 seq = nfs.NeurofeedbackSignalSpecs.vPSequence.s;
                 %ps = {};

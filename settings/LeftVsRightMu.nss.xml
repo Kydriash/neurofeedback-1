@@ -35,7 +35,7 @@
 			<bUpdateStatistics>1</bUpdateStatistics>
 			<nMSecondsPerWindow>50</nMSecondsPerWindow>
 			<fDuration>6</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<bStopAfter>0</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -51,10 +51,10 @@
 <FeedbackProtocol>
 			<sProtocolName>CSP</sProtocolName>
 			<sSignalComposition>Simple</sSignalComposition>
-			<bUpdateStatistics>1</bUpdateStatistics>
+			<bUpdateStatistics>0</bUpdateStatistics>
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<fDuration>6</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<bStopAfter>0</bStopAfter>
 			<cString>Baseline acquisition</cString>
 <iNComp>2</iNComp>
 <dInitBand>7 9</dInitBand>
@@ -152,7 +152,7 @@
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>2</fDuration>
-			<bStopAfter>0</bStopAfter>
+			<bStopAfter>1</bStopAfter>
 			<cString> 	 </cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -168,15 +168,15 @@
 			</vProtocols>
 	<vPSequence>
 <loop count = '1'>
-    <s>CSP</s>
-<s>Left_hand_imagination</s>
-<s>Right_hand_imagination</s>
-<s>Left_hand_movement</s>
-<s>Right_hand_movement</s>
+<s>Baseline</s>
+<s>CSP</s>
+<s>CSP</s>
+<s>CSP</s>
+<s>Rest</s>
 </loop>
+
 <loop count = '4'>
 <s>Feedback_color</s>
-<s>Rest</s>
 </loop>
 <loop count = '1'>
 <s>Baseline</s>

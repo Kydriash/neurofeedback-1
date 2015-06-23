@@ -712,7 +712,7 @@ classdef EEGLSL < handle
                             
                             sn = {''};
                             while isempty(sn{1})
-                                sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('CompositeDS_',num2str(band(1)),'-',num2str(band(2)))});
+                                sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat('CombinedDS_',num2str(band(1)),'-',num2str(band(2)))});
                             end
                             
                             %%write spatial_filter to file
@@ -749,52 +749,22 @@ classdef EEGLSL < handle
                             else
                                 spatial_filter = chs;
                                 f = fopen(full_name,'w');
-                                fwrite(f,x);
+                                fwrite(f,chs);
                                 fclose(f);
                             end
                             
                             %%create DS
-                            %                             dummy_signal = struct();
-                            %                             dummy_signal.sSignalName = sn{1};
-                            %                             dummy_signal.filters = cell(0,0);
                             %
-                            %                             channels = cell(length(self.derived_signals{1}.channels),2);
-                            %                             for i = 1:length(channels)
-                            %                                 channels{i,1} = self.derived_signals{1}.channels{i};
-                            %                                 channels{i,2} = 1;
-                            %                             end
-                            %                             dummy_signal.channels = channels;
-                            %
-                            %                             NewDS= DerivedSignal(1,dummy_signal, self.sampling_frequency, self.exp_data_length ,self.channel_labels,self.plot_length);
-                            %                             NewDS.signal_type = 'composite';
-                            %                             NewDS.ring_buff = circVBuf(self.plot_size,1,0);
-                            %                             NewDS.collect_buff = circVBuf(self.exp_data_length,1,0);
-                            %                             NewDS.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);
-                            %                             NewDS.UpdateTemporalFilter(band);
-                            %                             NewDS.channels_file = full_name;
-                            %                             self.derived_signals{end+1} = NewDS;
                             self.derived_signals{end+1} = CreateNewDS(self,sn{1},spatial_filter, band,full_name);
                             self.derived_signals{end}.signal_type = 'composite';
                             
                             %%set fb
                             
-                            %                             dummy_signal = struct();
-                            %                             dummy_signal.sSignalName = 'Temp';
-                            
-                            %                             channels = cell(length(self.derived_signals{1}.channels),2);
-                            %                             for i = 1:length(channels)
-                            %                                 channels{i,1} = self.derived_signals{1}.channels{i};
-                            %                                 channels{i,2} = 1;
-                            %                             end
-                            %                             dummy_signal.filters = cell(0,0);
-                            %                             dummy_signal.channels = channels;
+                            %
                             temp_derived_signal = CreateNewDS(self,'Temp',spatial_filter, band);
-                            %                             temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+                            %
                             temp_derived_signal.signal_type = 'composite';
-                            %                             temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
-                            %                             temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
-                            %                             temp_derived_signal.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);% = w_ssd(self.derived_signals{1}.channels_indices)';
-                            %                             temp_derived_signal.UpdateTemporalFilter(band);
+                            %
                             N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                             if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
                                 x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
@@ -887,46 +857,19 @@ classdef EEGLSL < handle
                             
                             
                             try
-                                %                                 dummy_signal = struct();
-                                %                                 dummy_signal.sSignalName = sn{1};
-                                %                                 channels =
-                                %                                 cell(length(self.derived_signals{1}.channels),2);
-                                %                                 for i = 1:length(channels)
-                                %                                     channels{i,1} =
-                                %                                     self.derived_signals{1}.channels{i};
-                                %                                     channels{i,2} = 1;
-                                %                                 end dummy_signal.filters = cell(0,0);
-                                %                                 dummy_signal.channels = channels;
-                                %
-                                %%DS to use
-                                %                                 DerivedSignal(1,dummy_signal,
-                                %                                 self.sampling_frequency,
-                                %                                 self.exp_data_length
-                                %                                 ,self.channel_labels,self.plot_length);
-                                %                                 NewDS.ring_buff =
-                                %                                 circVBuf(self.plot_size,1,0);
-                                %                                 NewDS.collect_buff =
-                                %                                 circVBuf(self.exp_data_length,1,0);
-                                %                                 NewDS.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);
-                                %                                 NewDS.UpdateTemporalFilter(band);
-                                %                                 NewDS.channels_file = full_name;
-                                %                                 self.derived_signals{end+1} = NewDS;
+                               
                                 self.derived_signals{end+1} = CreateNewDS(self,sn{1},spatial_filter, band,full_name);
                                 
                                 %%temp derived signal to calculate stats
                                 temp_derived_signal = CreateNewDS(self,sn{1},spatial_filter, band);
-                                %                                 temp_derived_signal = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
-                                %                                 temp_derived_signal.ring_buff = circVBuf(self.plot_size,1,0);
-                                %                                 temp_derived_signal.collect_buff = circVBuf(self.exp_data_length,1,0);
-                                %                                 temp_derived_signal.UpdateSpatialFilter(spatial_filter,self.derived_signals{1},self.bad_channels);% = w_ssd(self.derived_signals{1}.channels_indices)';
-                                %                                 temp_derived_signal.UpdateTemporalFilter(band);
+                               
                                 %%calculating stats
-                                j = 1;
+                                %j = 1;
                                 x = zeros(size(x_raw,1),length(self.derived_signals{1}.spatial_filter));
                                 for i = 1:length(self.derived_signals{1}.spatial_filter)
                                     if self.derived_signals{1}.spatial_filter(i)
-                                        x(:,i) = x_raw(:,j);
-                                        j = j+1;
+                                        x(:,i) = x_raw(:,i);
+                                       % j = j+1;
                                     else
                                         x(:,i) = 0;
                                     end
@@ -955,7 +898,7 @@ classdef EEGLSL < handle
                     % though why do it if we need stats of feedback values, not of the
                     % 'raw' derived signals
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-                    if(N>0)
+                    if(N>0) && length(self.derived_signals) > 1
                         for s = 2:length(self.derived_signals)
                             if self.derived_signals{s}.collect_buff.lst - N+1 < self.derived_signals{s}.collect_buff.fst
                                 values = self.derived_signals{s}.collect_buff.raw(self.derived_signals{s}.collect_buff.fst:self.derived_signals{s}.collect_buff.lst,:);
@@ -965,15 +908,18 @@ classdef EEGLSL < handle
                             self.feedback_manager.average(s-1) = mean(values);
                             self.feedback_manager.standard_deviation(s-1) = std(values);
                         end
+                        
+                        self.fb_statistics_set = 1;
+                        self.SetRawYTicks;
+                        self.SetDSYTicks;
+                        self.yscales_fixed = 1;
+                        self.raw_yscale_fixed = 1;
+                        self.ds_yscale_fixed = 1;
                     end;
+                    
                 end
                 
-                self.fb_statistics_set = 1;
-                self.SetRawYTicks;
-                self.SetDSYTicks;
-                self.yscales_fixed = 1;
-                self.raw_yscale_fixed = 1;
-                self.ds_yscale_fixed = 1;
+                
             end
             
             
@@ -1003,7 +949,9 @@ classdef EEGLSL < handle
                     if self.feedback_protocols{self.current_protocol}.actual_protocol_size + self.current_window_size >= self.feedback_protocols{self.current_protocol}.protocol_size
                         self.protocol_indices(self.current_protocol+1,:) = self.derived_signals{1}.collect_buff.lst -self.derived_signals{1}.collect_buff.fst +1;
                         try
-                            if self.feedback_protocols{self.current_protocol}.to_update_statistics
+                            if self.current_protocol == self.ssd
+                                self.Prepare_CSP();
+                            elseif self.feedback_protocols{self.current_protocol}.to_update_statistics
                                 self.Update_Statistics();
                             end
                             temp_log_str = get(self.log_text,'String');
@@ -1138,7 +1086,7 @@ classdef EEGLSL < handle
             if ~self.from_file
                 for i = 1:length(self.feedback_protocols)
                     if any([strfind(lower(self.feedback_protocols{i}.protocol_name),'ssd'), strfind(lower(self.feedback_protocols{i}.protocol_name),'csp')]);
-                        self.ssd = 1;
+                        self.ssd = i;
                     end
                     
                     
@@ -1342,11 +1290,11 @@ classdef EEGLSL < handle
                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
                                 
                                 if strfind(protocols{pr},'ssd')
-                                    self.ssd = 1;
+                                    self.ssd = pr;
                                     self.feedback_protocols{pr}.to_update_statistics = 1;
                                     self.feedback_protocols{pr}.band = 1;
                                 elseif strfind(protocols{pr},'csp')
-                                    self.ssd = 1;
+                                    self.ssd = pr;
                                     self.feedback_protocols{pr}.to_update_statistics = 1;
                                     self.feedback_protocols{pr}.band = 1;
                                 elseif strcmpi(protocols{pr},'baseline')
@@ -1709,7 +1657,8 @@ classdef EEGLSL < handle
                 set(self.disconnect_button,'String','Disconnect and write');
                 set(self.connect_button, 'String', 'Recording finished');
                 set(self.connect_button,'Callback','');
-                self.PlotErrorBar;
+                self.PlotFB;
+                %self.PlotErrorBar;
             end
             if  ~self.finished
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
@@ -1739,19 +1688,25 @@ classdef EEGLSL < handle
             end
         end
         function PlotErrorBar(self)
-            if ~any([strfind(lower(self.feedback_protocols{1}.protocol_name),'ssd'),strfind(lower(self.feedback_protocols{1}.protocol_name),'csp')])
-                pr = length(self.feedback_protocols);
-                pr_shift = 0;
-                const_shift = 0;
+            protocols = self.ssd+1:length(self.feedback_protocols);
+            if self.ssd
+                const_shift = self.protocol_indices(self.ssd+1,2);
             else
-                pr = length(self.feedback_protocols)-1;
-                pr_shift = 1;
-                const_shift = self.protocol_indices(2,2);
+                const_shift = 0;
             end
-            averages = zeros(pr,1);
-            deviations =  zeros(pr,1);
-            names = cell(pr,1);
-            for i = 1+pr_shift:length(self.feedback_protocols)
+%             if ~any([strfind(lower(self.feedback_protocols{1}.protocol_name),'ssd'),strfind(lower(self.feedback_protocols{1}.protocol_name),'csp')])
+%                 pr = length(self.feedback_protocols);
+%                 pr_shift = 0;
+%                 const_shift = 0;
+%             else
+%                 pr = length(self.feedback_protocols)-1;
+%                 pr_shift = 1;
+%                 const_shift = self.protocol_indices(2,2);
+%             end
+            averages = zeros(length(protocols),1);
+            deviations =  zeros(length(protocols),1);
+            names = cell(length(protocols),1);
+            for i = protocols
                 idx11 = self.protocol_indices(i,1);
                 idx12= self.protocol_indices(i+1,1);
                 idx21 = self.protocol_indices(i,2);
@@ -1762,9 +1717,9 @@ classdef EEGLSL < handle
                     end
                     plot_size = length(self.feedback_protocols)-1;
                 else
-                    names{i-pr_shift} = self.feedback_protocols{i}.protocol_name;
-                    averages(i-pr_shift) = mean(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
-                    deviations(i-pr_shift) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
+                    names{i-self.ssd} = self.feedback_protocols{i}.protocol_name;
+                    averages(i-self.ssd) = mean(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
+                    deviations(i-self.ssd) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
                     plot_size = length(self.feedback_protocols);
                 end
             end
@@ -2444,27 +2399,43 @@ classdef EEGLSL < handle
             self.FitFigure;
             
         end
-        function Prepare_CSP(self)
+        function [baseline_data, data_sets, data_names] = Prepare_CSP(self)
+            %stop the timers
+            self.inlet.close_stream();
+            stop(self.timer_new_data);
+            stop(self.timer_disp);
+            stop(self.timer_fb);
             %%list the previous protocols and allow to checkbox those
             %%that are supposed to be calculated
             csp_figure = figure('Tag','CSP choice');
             max_height = csp_figure.Position(4)-csp_figure.Position(4)*0.1;
-            protocols_to_use = uicontrol('Parent', csp_figure,'Style', 'text', 'Position',[csp_figure.Position(3)*0.12,csp_figure.Position(4)*0.85, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.1],'Tag','protocols_to_select','String','Data to classify','FontSize',11,'HorizontalAlignment','center');
-            set_dataset_names = uicontrol('Parent', csp_figure,'Style', 'text', 'Position',[csp_figure.Position(3)*0.45,csp_figure.Position(4)*0.85, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.1],'Tag','names_of_the_datasets','String','Names of the datasets','FontSize',11,'HorizontalAlignment','center');
+            select_baseline_protocol = uicontrol('Parent', csp_figure,'Style','text','Position',[csp_figure.Position(3)*0.12,csp_figure.Position(4)*0.85, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.1],...
+                'Tag','select_baseline_protocol_text','String','Select Baseline','FontSize',11,'HorizontalAlignment','center'); %#ok<NASGU>
+            select_other_protocols = uicontrol('Parent', csp_figure,'Style','text','Position',[csp_figure.Position(3)*0.62,csp_figure.Position(4)*0.85, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.1],...
+                'Tag','select_baseline_protocol_text','String','Select protocols to CSP','FontSize',11,'HorizontalAlignment','center'); %#ok<NASGU>
+            
+            protocol_rbgroup = uibuttongroup('Parent',csp_figure,'Position',[0.08 0.1 .3 0.76]);
             for pr = 1:self.next_protocol-1
-                bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2);
-                protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.1,max_height-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'Tag','protocols_chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.protocol_name);
-                %protocol_count{p} = uicontrol('Parent',csp_figure,'Style','text','Position', [csp_figure.Position(3)*0.03,max_height-csp_figure.Position(4)*0.05*pr, csp_figure.Position(3)*0.05, csp_figure.Position(4)*0.04],'String', num2str(pr),'HorizontalAlignment','left','Tag','Protocol count','BackgroundColor',bgr); %#ok<NASGU>
-                %protocol_name{pr} = uicontrol('Parent',csp_figure,'Style','text','Position', [csp_figure.Position(3)*0.07,max_height-csp_figure.Position(4)*0.05*pr, csp_figure.Position(3)*0.25, csp_figure.Position(4)*0.04],'String', self.feedback_protocols{pr}.protocol_name,'HorizontalAlignment','left','Tag','Protocol name text','BackgroundColor',bgr); %#ok<NASGU>
-                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.45,max_height-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.protocol_name,'HorizontalAlignment','left','Tag','Edit name text','BackgroundColor',bgr);
+                bgr = ones(1,3) * 0.94; %default background colo
+                %bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2); %background color
+                protocol_rb{pr} = uicontrol(protocol_rbgroup,'Style','radiobutton','String',self.feedback_protocols{pr}.protocol_name,'Position',[csp_figure.Position(3)*0.05,max_height-csp_figure.Position(4)*0.15-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.05],'HandleVisibility','off');
+                protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.45,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'Tag','protocols_chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.protocol_name);
+                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.protocol_name,'HorizontalAlignment','left','Tag','Edit name text');
             end
             okay_button = uicontrol('Parent',csp_figure,'Style','pushbutton','Position', [csp_figure.Position(3)*0.75,csp_figure.Position(4)*0.05, csp_figure.Position(3)*0.09,csp_figure.Position(4)*0.12],'String', 'OK','Tag','okay_button','Callback','uiresume','enable','off'); %#ok<NASGU>
             uiwait();
+            
             data_sets = {};
             data_names = {};
-            %%loop through protocol_chb
-            %%fetch the data
+            %%loop through protocols
             for pr = 1:self.next_protocol-1
+                %fetch baseline data
+                if get(protocol_rb{pr},'Value')
+                    idx1 = self.protocol_indices(pr);
+                    idx2 = self.protocol_indices(pr+1);
+                    baseline_data = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
+                end
+                %fetch csp data
                 if get(protocol_chb{pr},'Value')
                     idx1 = self.protocol_indices(pr);
                     idx2 = self.protocol_indices(pr+1);
@@ -2472,10 +2443,316 @@ classdef EEGLSL < handle
                     data_sets{end+1} = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
                     data_names{end+1} = get(edit_name{pr},'String');
                 end
+                
             end
             delete(csp_figure);
-            %%run csp classificator
-            self.CSPLearning(data_sets,data_names);
+
+            for d = 1:length(data_sets)
+                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d});
+            end
+        end
+        function CalculateCSP(self,baseline_data,csp_data,data_name)
+            global selected
+            
+            if ~isfield(self.csp_settings,'n_comp') || isempty(self.csp_settings.n_comp)
+                Ncomp = 2;
+            else
+                Ncomp = self.csp_settings.n_comp;
+            end
+            
+            if ~isfield(self.csp_settings,'init_band') || isempty(self.csp_settings.init_band)
+                init_band = self.init_band;
+            else
+                self.csp_settings.init_band;
+            end
+            for ib = 1:4
+                band = init_band +ib-1 ;
+                [z, p, k] = cheby1(3,1,band/(0.5*self.sampling_frequency),'bandpass');
+                [b,a] = zp2tf(z,p,k); 
+                filtered_bd = filtfilt(b,a,baseline_data)';
+                filtered_csp_d = filtfilt(b,a,csp_data)';
+                C10 = filtered_bd * filtered_bd'/fix(size(filtered_bd,2));
+                C20 = filtered_csp_d * filtered_csp_d'/fix(size(filtered_csp_d,2));
+                
+                nchan = size(C10,1);
+                
+                %%regularize covariances
+                Lambda = 0.1;%%%%%%%%%%%%%%%%%%%%%%
+                C1 = C10 + Lambda * trace(C10) * eye(nchan) / nchan;
+                C2 = C20 + Lambda * trace(C20) * eye(nchan) / nchan;
+                %%do generalized eigenvalue decomp
+                [V, d] = eig(C1,C2); %#ok<ASGLU>
+                iV = inv(V);
+                M12{ib} = V(:,[1:Ncomp, end-Ncomp+1:end])';
+                G12{ib} = iV([1:Ncomp, end-Ncomp+1:end],:);
+                
+            end
+            %%present the heads
+            hh1 = figure;
+            StandChannels = load('StandardEEGChannelLocations.mat');
+            chan_labels = self.used_ch(:,1)';
+            Nbands = length(G12);
+            PlotIndex = 1;
+            selected = {};
+            
+            for ib = 1:Nbands
+                rearranged_map = rearrange_channels(G12{ib}',chan_labels, StandChannels.channels);
+                Nmaps = size(rearranged_map,2);
+                for tpm=1:Nmaps
+                    sp(PlotIndex) = subplot(Nbands,Nmaps,PlotIndex);
+                    
+                    %                            topoplot(rearranged_map(:,tpm), StandChannels.channels, 'electrodes', 'labelpoint', 'chaninfo', StandChannels.chaninfo);
+                    topoplot(rearranged_map(:,tpm), StandChannels.channels,  'chaninfo', StandChannels.chaninfo);
+                    hold on;
+                    sibs = get(sp(PlotIndex),'Children');
+                    for k = 1:length(sibs)
+                        set(sp(PlotIndex).Children(k), 'ButtonDownFcn', @(src,event)toggleplot(src,event));
+                    end
+                    title(num2str(PlotIndex));
+                    %add legend
+                    PlotIndex = PlotIndex+1;
+                end;
+            end
+            %setting  figure title
+            ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+            text(0.5, 1, data_name,'HorizontalAlignment','center','VerticalAlignment', 'top')
+            
+            okay_btn = uicontrol('Parent',hh1,'Style', 'pushbutton', 'String', 'OK', 'Callback', 'uiresume', 'Position', [230 10 100 35],'Tag','SelectHeadsBtn','enable','off');  %#ok<NASGU>
+            uiwait();
+            
+            MapIndex = cellfun(@str2num,selected);
+            BandNumber = fix((MapIndex-1)/(2*Ncomp))+1;
+            CompNumber = mod(MapIndex-1,(2*Ncomp))+1;
+            close(hh1);
+            w_ssd = zeros(length(MapIndex),length(M12{1}));
+            for bn = 1:length(MapIndex)
+                w_ssd(bn,:) = M12{BandNumber(bn)}(CompNumber(bn),:);
+            end
+            %%if the band is the same for all inputs, a choice is
+            %offered whether to make one combined signal or
+            %several; If the bands are different, no such
+            %choice is offered
+            %determine whether the band is the same
+            signals_added = 0;
+            if isempty(nonzeros(BandNumber - max(BandNumber))) && length(selected) > 1 %if it is empty, then all the bands are the same
+                button = questdlg(['One combined DS or ', num2str(length(MapIndex)), ' different DS?'],'Choose the number of DS', 'One', num2str(length(MapIndex)),'One');
+                if strcmp(button, 'One')
+                    %make one DS with 2-D sp_filter
+                    band = init_band + BandNumber(1)-1;
+                    chan_w = cell(length(self.derived_signals{1}.channels),size(w_ssd,1)+1);
+                    w_ssd = w_ssd';
+                    % 2-d spatial_filter
+                    for i=1:length(w_ssd)
+                        %self.derived_signals{1}: the first DS is ALWAYS RAW signal
+                        chan_w{i,1} = self.derived_signals{1}.channels{i};
+                        for ind = 2:size(w_ssd,2)+1
+                            chan_w{i,ind} = w_ssd(i,ind-1);
+                        end
+                        
+                    end;
+                    clear chs
+                    chs(size(chan_w,1)) = struct();
+                    for ch = 1:size(chan_w,1)
+                        chs(ch).channel_name = chan_w{ch,1};
+                        coeff = '';
+                        for ind = 2:size(w_ssd,2)+1
+                            coeff = [coeff ',' num2str(chan_w{ch,ind})];
+                        end
+                        
+                        chs(ch).coefficient = coeff(2:end);
+                    end
+                    
+                    
+                    
+                    sn = {''};
+                    while isempty(sn{1})
+                        sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat(data_name,'_CombinedDS_',num2str(band(1)),'-',num2str(band(2)))});
+                    end
+                    
+                    %%write spatial_filter to file
+                    if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
+                        mkdir(strcat(self.path,'\',self.subject_record.subject_name));
+                    end
+                    pth = (strcat(self.path,'\',self.subject_record.subject_name));
+                    full_name = [pth '\CSP_' sn{1} '.xml'];
+                    
+                    if exist(full_name,'file')
+                        choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No, use the old one','No, use the old one');
+                        switch choice
+                            case 'Yes'
+                                chan_structure = struct();
+                                chan_structure.channels.channel = chs;
+                                x = struct2xml(chan_structure);
+                                f = fopen(full_name,'w');
+                                fwrite(f,x);
+                                fclose(f);
+                                spatial_filter = chan_w;
+                            case 'No, use the old one'
+                                s = xml2struct(full_name);
+                                channels_coeff = cell(length(s.channels.channel),2);
+                                for i = 1:length(s.channels.channel)
+                                    channels_coeff{i,1} = strtrim(s.channels.channel{i}.channel_name.Text);
+                                    coeffs = str2num(strtrim(s.channels.channel{i}.coefficient.Text)); %#ok<ST2NM>
+                                    for j = 2:length(coeffs)+1
+                                        channels_coeff{i,j} = coeffs(j-1);
+                                    end
+                                end
+                                %convert struct to cell!!
+                                spatial_filter = channels_coeff;
+                        end
+                    else
+                        spatial_filter = chs;
+                        sp_filter_to_write = struct();
+                        sp_filter_to_write.channels = chs;
+                        x = struct2xml(sp_filter_to_write);
+                        f = fopen(full_name,'w');
+                        fwrite(f,x);
+                        fclose(f);
+                    end
+                    
+                    %%create DS
+                    %
+                    self.derived_signals{end+1} = CreateNewDS(self,sn{1},chan_w, band,full_name);
+                    self.derived_signals{end}.signal_type = 'combined';
+                    signals_added = 1;
+                    %%set fb
+                    
+                    %
+                    temp_derived_signal = CreateNewDS(self,'Temp',chan_w, band);
+                    %
+                    temp_derived_signal.signal_type = 'combined';
+                    %
+                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
+                    if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
+                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
+                        self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
+                    else
+                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
+                    end
+                    temp_derived_signal.Apply(x_raw',1);
+                    values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
+                    %calcuate feedback stats
+                    values = abs(values);
+                    self.feedback_manager.average(length(self.derived_signals)-1) = mean(values);
+                    self.feedback_manager.standard_deviation(length(self.derived_signals)-1) = std(values);
+                    
+                    
+                    self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+                    self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
+                    self.fb_manager_set = 1;
+                    
+                end
+            end
+            
+            %if no signals were added so far
+            if ~signals_added
+            for ind = 1:length(MapIndex)
+                band = init_band + BandNumber(ind)-1;
+                for i=1:length(w_ssd)
+                    %self.derived_signals{1}: the first DS is ALWAYS RAW signal
+                    chan_w{i,1} = self.derived_signals{1}.channels{i};
+                    chan_w{i,2} = w_ssd(ind,i);
+                end;
+                
+                %write to file
+                try %write
+                    %convert cell chan_w to structure
+                    clear chs
+                    chs(size(chan_w,1)) = struct();
+                    for ch = 1:size(chan_w,1)
+                        chs(ch).channel_name = chan_w{ch,1};
+                        chs(ch).coefficient = chan_w{ch,2};
+                    end
+                    chan_structure = struct();
+                    chan_structure.channels.channel = chs;
+                    x = struct2xml(chan_structure);
+                    
+                    
+                    sn = {''};
+                    if CompNumber(ind) <= Nmaps/2
+                        n = CompNumber(ind);
+                    else
+                        n = CompNumber(ind)-Nmaps-1;
+                    end
+                    while isempty(sn{1})
+                        sn = inputdlg('Enter derived signal name','Derived signal name',1,{strcat(data_name,'_DS_', num2str(band(1)),'-',num2str(band(2)),'_',num2str(n))});
+                    end
+                    
+                    if ~isdir(strcat(self.path,'\',self.subject_record.subject_name))
+                        mkdir(strcat(self.path,'\',self.subject_record.subject_name));
+                    end
+                    pth = (strcat(self.path,'\',self.subject_record.subject_name));
+                    full_name = [pth '\CSP_' sn{1} '.xml'];
+                    if exist(full_name,'file')
+                        choice = questdlg('The spatial filter for this person already exists. Rewrite the filter?','Rewrite?','Yes','No, use the old one','No, use the old one');
+                        switch choice
+                            case 'Yes'
+                                f = fopen(full_name,'w');
+                                fwrite(f,x);
+                                fclose(f);
+                                spatial_filter = chan_w;
+                            case 'No, use the old one'
+                                
+                                s = xml2struct(full_name);
+                                channels_coeff = cell(length(s.channels.channel),2);
+                                for i = 1:length(s.channels.channel)
+                                    channels_coeff{i,1} = strtrim(s.channels.channel{i}.channel_name.Text);
+                                    channels_coeff{i,2} = str2double(strtrim(s.channels.channel{i}.coefficient.Text));
+                                end
+                                spatial_filter = channels_coeff;
+                        end
+                    else
+                        spatial_filter = chan_w;
+                        f = fopen(full_name,'w');
+                        fwrite(f,x);
+                        fclose(f);
+                    end
+                    
+                    
+                catch
+                    'Error while writing to file, function UpdateStatistics' %#ok<NOPRT>
+                end
+                
+                
+                try
+                    
+                    %
+                    
+                    self.derived_signals{end+1} = CreateNewDS(self,sn{1},spatial_filter, band,full_name);
+                    
+                    %%temp derived signal to calculate stats
+                    temp_derived_signal = CreateNewDS(self,sn{1},spatial_filter, band);
+                    
+                    %%calculating stats
+                    %j = 1;
+                    x = zeros(size(filtered_bd,2),length(self.derived_signals{1}.spatial_filter));
+                    for i = 1:length(self.derived_signals{1}.spatial_filter)
+                        if self.derived_signals{1}.spatial_filter(i)
+                            x(:,i) = filtered_bd(i,:);
+                            %j = j+1;
+                        else
+                            x(:,i) = 0;
+                        end
+                    end
+                    temp_derived_signal.Apply(x',1);
+                    values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
+                    self.feedback_manager.average(length(self.derived_signals)-1) = mean(values);
+                    self.feedback_manager.standard_deviation(length(self.derived_signals)-1) = std(values);
+                    
+                    
+                catch
+                    'Error while creating a new derived signal, function CalculateCSP' %#ok<NOPRT>
+                end
+                
+            end
+            
+            
+            
+            self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+            self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
+            self.fb_manager_set = 1;
+            end
+            
         end
         function CheckIfSelected(self,src,event)  %#ok<INUSD>
             
@@ -2488,14 +2765,8 @@ classdef EEGLSL < handle
                     selected = selected + 1;
                 end
             end
-            if strcmpi(okay_button.Parent.Tag,'recalculate_protocol_choice')
-                min_selected = 1;
-            elseif strcmpi(okay_button.Parent.Tag,'CSP choice')
-                min_selected = 2;
-            else 
-                min_selected = 1;
-            end
-            if selected < min_selected
+            
+            if selected < 1
                 set(okay_button,'enable','off');
             else
                 set(okay_button,'enable','on');
@@ -2701,7 +2972,12 @@ classdef EEGLSL < handle
                 f = figure('Tag', 'recalculate_protocol_choice');
                 protocols_to_use = uicontrol('Parent', f,'Style', 'text', 'Position',[f.Position(3)*0.12,f.Position(4)*0.85, f.Position(3)*0.2, f.Position(4)*0.1],'Tag','protocols_to_select','String','Data to calculate','FontSize',11,'HorizontalAlignment','center'); %#ok<NASGU>
                 max_height = f.Position(4) - f.Position(4)*0.1;
-                for pr = 1:self.next_protocol-1
+                if self.next_protocol > length(self.feedback_protocols)
+                    finish = length(self.feedback_protocols);
+                else
+                    finish = self.next_protocol-1;
+                end
+                for pr = 1:finish
                     
                     bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2);
                     protocol_chb{pr} = uicontrol('Parent',f,'Style','checkbox','Position',[f.Position(3)*0.1,max_height-f.Position(4)*0.05*pr, f.Position(3)*0.3, f.Position(4)*0.03],'Tag','protocols_chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.protocol_name);
@@ -2718,11 +2994,12 @@ classdef EEGLSL < handle
                 data_names = {};
                 window_sizes = {};
                 used_pr = 0;
-                for pr = 1:self.next_protocol-1
+                
+                for pr = 1:finish
                     if get(protocol_chb{pr},'Value')
                         used_pr = used_pr + 1;
-                        idx1 = self.protocol_indices(pr,2)-self.protocol_indices(2,2);
-                        idx2 = self.protocol_indices(pr+1,2)-self.protocol_indices(2,2);
+                        idx1 = self.protocol_indices(pr,2)-self.protocol_indices(self.ssd+1,2);
+                        idx2 = self.protocol_indices(pr+1,2)-self.protocol_indices(self.ssd+1,2);
                         %check data length
                         %test whether idx are correct
                         if idx1 > self.derived_signals{2}.collect_buff.lst ||idx2 > self.derived_signals{2}.collect_buff.lst
@@ -2786,7 +3063,10 @@ classdef EEGLSL < handle
                     val = sum(abs(dat))/window;
                     results(i-window+1:i) = (val-av)/stddev;
                 end
-                
+                if nargout > 1
+                    
+                    data_names = {};
+                end
                 %takes ds_data, window_size, and recalculates feedback using
                 %the same algorithm as in RefreshFb function
             end
@@ -2794,7 +3074,7 @@ classdef EEGLSL < handle
         function PlotFB(self)
             [results,protocol_names] = self.Recalculate;
             for pr = 1:size(results,1)
-                f_pr(pr) = figure;
+                f_pr(pr) = figure; %#ok<NASGU>
                 legend_str = {};
                 for ds = 1:size(results,2)
                     plot( 1:length(results{pr,ds}), results{pr,ds});

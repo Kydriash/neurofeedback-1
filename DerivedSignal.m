@@ -384,7 +384,7 @@ classdef DerivedSignal < handle
                 if recording
                     self.collect_buff.append(self.data');
                 end
-            elseif strfind(lower(self.signal_type), 'composite')
+            elseif strfind(lower(self.signal_type), 'combined')
                  sz = zeros(size(self.spatial_filter,2),size(newdata,2));
                 for i =1:size(self.spatial_filter,2)
                     sz(i,:) = (self.spatial_filter(:,i)' * newdata); %.^2;
