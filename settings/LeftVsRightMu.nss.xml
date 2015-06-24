@@ -152,7 +152,7 @@
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<bUpdateStatistics>0</bUpdateStatistics>
 			<fDuration>2</fDuration>
-			<bStopAfter>1</bStopAfter>
+			<bStopAfter>0</bStopAfter>
 			<cString> 	 </cString>
 		</FeedbackProtocol>
 <FeedbackProtocol>
@@ -169,13 +169,18 @@
 	<vPSequence>
 <loop count = '1'>
 <s>Baseline</s>
-<s>CSP</s>
-<s>CSP</s>
-<s>CSP</s>
-<s>Rest</s>
 </loop>
 
-<loop count = '4'>
+<loop count = '1'>
+<s show_as = 'CSP_left'>CSP</s>
+<s show_as = 'CSP_right'>CSP</s>
+<s show_as = 'CSP_both'>CSP</s>
+</loop>
+
+<loop count = '5'>
+
+
+<s>Rest</s>
 <s>Feedback_color</s>
 </loop>
 <loop count = '1'>
@@ -184,5 +189,9 @@
 	</vPSequence>
 
 
+<CSPSettings>
+	<iNComp>2</iNComp>
+	<dInitBand>16 18</dInitBand>
+</CSPSettings>
 
 </NeurofeedbackSignalSpecs>

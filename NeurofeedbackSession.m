@@ -18,7 +18,7 @@ classdef NeurofeedbackSession < handle
             
             nfs = xml2struct(fname);
             [folder, fn, ext] = fileparts(fname); %#ok<ASGLU>
-            %% derived signals
+            %%derived signals
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
             for i = 1:length(ds)
                 if isstruct(ds)
@@ -79,7 +79,7 @@ classdef NeurofeedbackSession < handle
                 
                 self.derived_signals{end+1} = d;
             end
-            %% protocols
+            %%protocols
             self.protocol_types = nfs.NeurofeedbackSignalSpecs.vProtocols.FeedbackProtocol;
             for i = 1:length(self.protocol_types)
                 fields = fieldnames(self.protocol_types{i});
@@ -108,7 +108,7 @@ classdef NeurofeedbackSession < handle
                 end
                 self.protocol_types{i} = pr;
             end
-            %% protocol_sequence
+            %%protocol_sequence
             %%% upd on 2015-05-13
             show_as = {};
             try
@@ -119,6 +119,11 @@ classdef NeurofeedbackSession < handle
                 else
                     for s = 1:length(seq)
                         self.protocol_sequence{end+1} = seq{s}.Text;
+                        if isfield(seq{s},'Attributes')
+                            show_as{end+1} = seq{s}.Attributes.show_as;
+                        else
+                            show_as{end+1} = seq{s}.Text;
+                        end
                     end
                 end
                 
@@ -131,8 +136,20 @@ classdef NeurofeedbackSession < handle
                             for p = 1:length(seq{ss}.s)
                                 if length(seq{ss}.s) == 1
                                     self.protocol_sequence{end+1} = seq{ss}.s(p).Text;
+                                    if isfield(seq{ss}.s(p), 'Attributes')
+                                        show_as{end+1} = seq{ss}.s(p).Attributes.show_as;
+                                    else
+                                        show_as{end+1} = seq{ss}.s(p).Text;
+                                    end
+                                    
                                 else
                                     self.protocol_sequence{end+1} = seq{ss}.s{p}.Text;
+                                    if isfield(seq{ss}.s{p}, 'Attributes')
+                                        show_as{end+1} = seq{ss}.s{p}.Attributes.show_as;
+                                    else
+                                        show_as{end+1} = seq{ss}.s{p}.Text;
+                                    end
+                                   
                                 end
                             end
                         end
@@ -149,13 +166,15 @@ classdef NeurofeedbackSession < handle
                 for i = 1:length(self.protocol_types)
                     if strcmp(self.protocol_sequence{j},self.protocol_types{i}.sProtocolName)
                         rtp = RealtimeProtocol(1,self.protocol_types{i});
+                        rtp.show_as = show_as{j};
                         self.feedback_protocols{end+1} = rtp;
+                        
                         %rtp.set_ds_index(self.protocol_sequence);
                     end
                 end
             end
             try
-                csp = nfs.NeurofeedbackSignalSpecs.CSP_settings;
+                csp = nfs.NeurofeedbackSignalSpecs.CSPSettings;
                 
                 fields = fieldnames(csp);
                 if length(fields) == 1 && strcmp(fields,'Text')

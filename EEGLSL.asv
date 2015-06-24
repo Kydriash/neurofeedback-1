@@ -1478,31 +1478,31 @@ classdef EEGLSL < handle
                             strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
                             ]);
                     else
-                        self.curr_protocol_text.String = [strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.protocol_name),...
+                        self.curr_protocol_text.String = {strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.protocol_name),...
                             strcat('Samples acquired', num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
                             strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
                             strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
                             strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
                             strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
                             strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
-                            ];
+                            };
                     end
                 else %zero protocol
                     if verLessThan('matlab','8.4.0')
-                        set(self.curr_protocol_text, 'String', ['Current protocol: idle, ',...
+                        set(self.curr_protocol_text, 'String', {'Current protocol: idle, ',...
                             strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
                             strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
                             strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
                             strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
                             strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
-                            ]);
+                            });
                     else
-                        self.curr_protocol_text.String = ['Current protocol: idle, ',...
+                        self.curr_protocol_text.String = {'Current protocol: idle, ',...
                             strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
                             strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
                             strcat('feedback vector', num2str(self.feedback_manager.feedback_vector(self.signal_to_feedback-1))),...
                             strcat('Receiving samples every ', num2str(self.data_receive_rate), ' s'),...
-                            strcat('Updating plots every ', num2str(self.plot_refresh_rate)), ' s'];
+                            strcat('Updating plots every ', num2str(self.plot_refresh_rate)), ' s'};
                     end
                 end
             catch
@@ -1657,8 +1657,8 @@ classdef EEGLSL < handle
                 set(self.disconnect_button,'String','Disconnect and write');
                 set(self.connect_button, 'String', 'Recording finished');
                 set(self.connect_button,'Callback','');
-                %self.PlotFB;
-                self.PlotErrorBar;
+                self.PlotFB;
+                %self.PlotErrorBar;
             end
             if  ~self.finished
                 if self.feedback_protocols{self.current_protocol}.actual_protocol_size*1.1 < self.feedback_protocols{self.current_protocol}.protocol_size
@@ -1725,8 +1725,8 @@ classdef EEGLSL < handle
                 else
                     names{i-self.ssd} = self.feedback_protocols{i}.show_as;
                     for ds = 2:length(self.derived_signals)
-                        dat = self.derived_signals{ds}.collect_buff.raw(self.derived_signals{ds}.collect_buff.fst+idx21-const_shift: self.derived_signals{ds}.collect_buff.fst+idx22-1-const_shift);
-                        fb = self.Recalculate(dat,self.feedback_protocols{i}.window_size, self.feedback_manager.average(ds-1), self.feedback_manager.standard_deviation(ds-1));
+                        dat = self.derived_signals.collect_buff.raw(self.derived_signals.collect_buff.fst+idx21-const_shift: self.derived_signals.collect_buff.fst+idx22-1-const_shift);
+                        fb = self.Recalculate(dat,self.feedback_protocols{i}.window_size, self.feedback_manager.average{ds-1}, self.feedback_manager.standard_deviation{ds-1});
                         averages(i-self.ssd,ds-1) = mean(fb);
                         deviations(i-self.ssd,ds-1) = std(fb);
                     end
@@ -1758,19 +1758,15 @@ classdef EEGLSL < handle
             fclose(f);
             %show plot
             names = [names' ' '];
-            legend_str = {};
-            
             f = figure; %#ok<NASGU>
             for ds = 1:length(self.derived_signals)-1
                 e = errorbar(averages(:,ds), deviations(:,ds)); %#ok<NASGU>
                 hold on;
-                legend_str{end+1} = self.derived_signals{ds+1}.signal_name;
             end
             set(gca,'XTick',1:plot_size);
             set(gca,'XTickLabel',names);
             xlabel('Protocols');
-            ylabel('Normalized values of calculated feedback (Mean +/- std)');
-            legend(legend_str);
+            ylabel('Mean values of feedback +/- standard_deviation');
             
         end
         function WriteToFile(self)
@@ -1987,7 +1983,7 @@ classdef EEGLSL < handle
             set(rss,'Position',[0.93*fp(3),0.60*fp(4) , 0.02*fp(3), 0.3*fp(4)]);
             set(lt,'Position',[0 0.6*fp(4) 0.1*fp(3), 0.4*fp(4)]);
             set(st,'Position', [0 0.49*fp(4), 0.3*fp(3), 0.05*fp(4)]);
-            set(cpt, 'Position',[0.2*fp(3) 0.49*fp(4), 0.7*fp(3), 0.05*fp(4)]);
+            set(cpt, 'Position',[0.2*fp(3) 0.49*fp(4), 0.4*fp(3), 0.05*fp(4)]);
             set(dm,'Position', [0.45*fp(3), 0.015*fp(4),0.12*fp(3),0.04*fp(4)]);
             set(rl,'Position', [0.8 * fp(3), 0.62 *fp(4), 0.05*fp(3), 0.02*fp(4)]);
             set(dsl,'Position', [0.8 * fp(3), 0.15 *fp(4), 0.05*fp(3), 0.02*fp(4)]);

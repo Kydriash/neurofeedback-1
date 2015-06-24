@@ -14,6 +14,7 @@ classdef RealtimeProtocol < handle
         band %range to calculate spatial filter
         n_comp
         init_band
+        show_as
         
         
     end 
