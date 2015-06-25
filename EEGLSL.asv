@@ -1228,11 +1228,11 @@ classdef EEGLSL < handle
             self.subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[170 320 100 20],'String',subjects,'Callback',@self.SetSubject);
             sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Choose/Enter subject name', 'Position',[20 315 140 20],'HorizontalAlignment','left'); %#ok<NASGU>
             subj_folder_button = uicontrol('Parent', self.fig_interface,'Style','pushbutton','Position',[285 320 150 20],'String','Or select subject folder','Callback',@self.SetSubjectFolder); %#ok<NASGU>
-            from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 20 20],'Tag','from_file_chb','String','From file');
+            from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 200 20],'Tag','from_file_chb','String','From file');
             %from_file_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[285 270 50 20],'String','From file'); %#ok<NASGU>
-            loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 20 20],'Tag','From_file_loop','String','Loop the recording?');
+            loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 200 20],'Tag','From_file_loop','String','Loop the recording?');
             %loop_replay_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[220 250 120 20],'String','Loop the recording?'); %#ok<NASGU>
-            use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 20 20],'Value',1,'Tag','Protocols from files','String','Use protocols from files?');
+            use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 200 20],'Value',1,'Tag','Protocols from files','String','Use protocols from files?');
             %use_protocols_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[200 230 140 20],'String','Use protocols from files?'); %#ok<NASGU>
             uiwait();
             if ishandle(self.fig_interface) %if the window is not closed
@@ -2294,7 +2294,10 @@ classdef EEGLSL < handle
             self.exp_design = struct();
             vSignals = struct();
             for ds = 1:length(self.derived_signals)
-                
+                if ds > 1
+                    vSignals.DerivedSignal(ds).fAverage = self.feedback_manager.average(ds-1);
+                    vSignals.DerivedSignal(ds).fStdDev = self.feedback_manager.standard_deviation(ds-1);
+                end
                 vSignals.DerivedSignal(ds).sSignalName = self.derived_signals{ds}.signal_name;
                 
                 try %#ok<TRYNC>
@@ -2457,7 +2460,7 @@ classdef EEGLSL < handle
                 %bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2); %background color
                 protocol_rb{pr} = uicontrol(protocol_rbgroup,'Style','radiobutton','String',self.feedback_protocols{pr}.show_as,'Position',[csp_figure.Position(3)*0.05,max_height-csp_figure.Position(4)*0.15-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.05],'HandleVisibility','off');
                 protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.45,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'Tag','protocols_chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.show_as);
-                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.show_as,'HorizontalAlignment','left','Tag','Edit name text');
+                %edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.show_as,'HorizontalAlignment','left','Tag','Edit name text');
             end
             okay_button = uicontrol('Parent',csp_figure,'Style','pushbutton','Position', [csp_figure.Position(3)*0.75,csp_figure.Position(4)*0.05, csp_figure.Position(3)*0.09,csp_figure.Position(4)*0.12],'String', 'OK','Tag','okay_button','Callback','uiresume','enable','off'); %#ok<NASGU>
             uiwait();
@@ -2478,14 +2481,14 @@ classdef EEGLSL < handle
                     idx2 = self.protocol_indices(pr+1);
                     %check data length
                     data_sets{end+1} = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
-                    data_names{end+1} = get(edit_name{pr},'String');
+                    data_names{end+1} = get(protocol_chb{pr},'String');
                 end
                 
             end
             delete(csp_figure);
 
             for d = 1:length(data_sets)
-                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d});
+                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d}, );
             end
         end
         function CalculateCSP(self,baseline_data,csp_data,data_name)
@@ -2659,6 +2662,14 @@ classdef EEGLSL < handle
                     %
                     temp_derived_signal.signal_type = 'combined';
                     %
+                    %determine protocol
+                    protocol = 0;
+                    for pr = 1:length(self.feedback_protocols)
+                        if strcmpi(data_name,self.feedback_protocols{pr}.show_as)
+                            
+                        end
+                    end
+                    
                     N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
                     if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);

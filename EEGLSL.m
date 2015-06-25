@@ -2294,7 +2294,10 @@ classdef EEGLSL < handle
             self.exp_design = struct();
             vSignals = struct();
             for ds = 1:length(self.derived_signals)
-                
+                if ds > 1
+                    vSignals.DerivedSignal(ds).fAverage = self.feedback_manager.average(ds-1);
+                    vSignals.DerivedSignal(ds).fStdDev = self.feedback_manager.standard_deviation(ds-1);
+                end
                 vSignals.DerivedSignal(ds).sSignalName = self.derived_signals{ds}.signal_name;
                 
                 try %#ok<TRYNC>
@@ -2436,7 +2439,7 @@ classdef EEGLSL < handle
             self.FitFigure;
             
         end
-        function [baseline_data, data_sets, data_names] = Prepare_CSP(self)
+        function [baseline_data, data_sets, data_names,pr_indices] = Prepare_CSP(self)
             %stop the timers
             self.inlet.close_stream();
             stop(self.timer_new_data);
@@ -2457,13 +2460,14 @@ classdef EEGLSL < handle
                 %bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2); %background color
                 protocol_rb{pr} = uicontrol(protocol_rbgroup,'Style','radiobutton','String',self.feedback_protocols{pr}.show_as,'Position',[csp_figure.Position(3)*0.05,max_height-csp_figure.Position(4)*0.15-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.05],'HandleVisibility','off');
                 protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.45,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'Tag','protocols_chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.show_as);
-                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.show_as,'HorizontalAlignment','left','Tag','Edit name text');
+                %edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.show_as,'HorizontalAlignment','left','Tag','Edit name text');
             end
             okay_button = uicontrol('Parent',csp_figure,'Style','pushbutton','Position', [csp_figure.Position(3)*0.75,csp_figure.Position(4)*0.05, csp_figure.Position(3)*0.09,csp_figure.Position(4)*0.12],'String', 'OK','Tag','okay_button','Callback','uiresume','enable','off'); %#ok<NASGU>
             uiwait();
             
             data_sets = {};
             data_names = {};
+            pr_indices = {};
             %%loop through protocols
             for pr = 1:self.next_protocol-1
                 %fetch baseline data
@@ -2478,17 +2482,18 @@ classdef EEGLSL < handle
                     idx2 = self.protocol_indices(pr+1);
                     %check data length
                     data_sets{end+1} = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
-                    data_names{end+1} = get(edit_name{pr},'String');
+                    data_names{end+1} = get(protocol_chb{pr},'String');
+                    pr_indices{end+1} = pr;
                 end
                 
             end
             delete(csp_figure);
 
             for d = 1:length(data_sets)
-                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d});
+                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d}, pr_indices{d});
             end
         end
-        function CalculateCSP(self,baseline_data,csp_data,data_name)
+        function CalculateCSP(self,baseline_data,csp_data,data_name,protocol_index)
             global selected
             
             if ~isfield(self.csp_settings,'iNComp') || isempty(self.csp_settings.iNComp)
@@ -2659,14 +2664,19 @@ classdef EEGLSL < handle
                     %
                     temp_derived_signal.signal_type = 'combined';
                     %
-                    N = self.feedback_protocols{self.current_protocol}.actual_protocol_size;
-                    if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
-                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
-                        self.feedback_protocols{self.current_protocol}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
-                    else
-                        x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.lst - N+1:self.derived_signals{1}.collect_buff.lst,:);
-                    end
-                    temp_derived_signal.Apply(x_raw',1);
+                    %determine protocol
+                   
+                    
+%                     N = self.feedback_protocols{protocol_index}.actual_protocol_size;
+%                     idx1 = self.protocol_indices{protocol_index,1};
+%                     idx2 = self.protocol_indices{protocol_index,2};
+%                     if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
+%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
+%                         self.feedback_protocols{protocol_index}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
+%                     else
+%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst + idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
+%                     end
+                    temp_derived_signal.Apply(csp_data',1);
                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
                     %calcuate feedback stats
                     values = abs(values);
