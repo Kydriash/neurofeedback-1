@@ -2467,7 +2467,7 @@ classdef EEGLSL < handle
             
             data_sets = {};
             data_names = {};
-            pr_indices = {};
+            
             %%loop through protocols
             for pr = 1:self.next_protocol-1
                 %fetch baseline data
@@ -2483,14 +2483,14 @@ classdef EEGLSL < handle
                     %check data length
                     data_sets{end+1} = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
                     data_names{end+1} = get(protocol_chb{pr},'String');
-                    pr_indices{end+1} = pr;
+                    
                 end
                 
             end
             delete(csp_figure);
 
             for d = 1:length(data_sets)
-                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d}, pr_indices{d});
+                self.CalculateCSP(baseline_data,data_sets{d}, data_names{d});
             end
         end
         function CalculateCSP(self,baseline_data,csp_data,data_name)
@@ -2665,7 +2665,7 @@ classdef EEGLSL < handle
                     temp_derived_signal.signal_type = 'combined';
                     %
 
-                    temp_derived_signal.Apply(csp_data',1);
+                    temp_derived_signal.Apply(baseline_data',1);
                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
                     %calcuate feedback stats
                     values = abs(values);
@@ -2761,10 +2761,10 @@ classdef EEGLSL < handle
                     
                     %%calculating stats
                     %j = 1;
-                    x = zeros(size(filtered_bd,2),length(self.derived_signals{1}.spatial_filter));
+                    x = zeros(size(baseline_data,2),length(self.derived_signals{1}.spatial_filter));
                     for i = 1:length(self.derived_signals{1}.spatial_filter)
                         if self.derived_signals{1}.spatial_filter(i)
-                            x(:,i) = filtered_bd(i,:);
+                            x(:,i) = baseline_data(i,:);
                             %j = j+1;
                         else
                             x(:,i) = 0;
