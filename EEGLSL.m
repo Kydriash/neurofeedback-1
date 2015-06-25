@@ -2460,7 +2460,7 @@ classdef EEGLSL < handle
                 %bgr = 0.94-[0.1 0.1 0.1] * mod(pr-1,2); %background color
                 protocol_rb{pr} = uicontrol(protocol_rbgroup,'Style','radiobutton','String',self.feedback_protocols{pr}.show_as,'Position',[csp_figure.Position(3)*0.05,max_height-csp_figure.Position(4)*0.15-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.2, csp_figure.Position(4)*0.05],'HandleVisibility','off');
                 protocol_chb{pr} = uicontrol('Parent',csp_figure,'Style','checkbox','Position',[csp_figure.Position(3)*0.45,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'Tag','protocols_chb','BackgroundColor',bgr,'Callback',@self.CheckIfSelected,'String',self.feedback_protocols{pr}.show_as);
-                %edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.show_as,'HorizontalAlignment','left','Tag','Edit name text');
+                edit_name{pr} = uicontrol('Parent',csp_figure,'Style','edit','Position', [csp_figure.Position(3)*0.65,max_height-csp_figure.Position(4)*0.04-csp_figure.Position(4)*0.09*pr, csp_figure.Position(3)*0.3, csp_figure.Position(4)*0.05],'String', self.feedback_protocols{pr}.show_as,'HorizontalAlignment','left','Tag','Edit name text');
             end
             okay_button = uicontrol('Parent',csp_figure,'Style','pushbutton','Position', [csp_figure.Position(3)*0.75,csp_figure.Position(4)*0.05, csp_figure.Position(3)*0.09,csp_figure.Position(4)*0.12],'String', 'OK','Tag','okay_button','Callback','uiresume','enable','off'); %#ok<NASGU>
             uiwait();
@@ -2482,7 +2482,7 @@ classdef EEGLSL < handle
                     idx2 = self.protocol_indices(pr+1);
                     %check data length
                     data_sets{end+1} = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst+idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
-                    data_names{end+1} = get(protocol_chb{pr},'String');
+                    data_names{end+1} = get(edit_name{pr},'String');
                     
                 end
                 
