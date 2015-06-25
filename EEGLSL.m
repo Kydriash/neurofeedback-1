@@ -2439,7 +2439,7 @@ classdef EEGLSL < handle
             self.FitFigure;
             
         end
-        function [baseline_data, data_sets, data_names,pr_indices] = Prepare_CSP(self)
+        function [baseline_data, data_sets, data_names] = Prepare_CSP(self)
             %stop the timers
             self.inlet.close_stream();
             stop(self.timer_new_data);
@@ -2493,7 +2493,7 @@ classdef EEGLSL < handle
                 self.CalculateCSP(baseline_data,data_sets{d}, data_names{d}, pr_indices{d});
             end
         end
-        function CalculateCSP(self,baseline_data,csp_data,data_name,protocol_index)
+        function CalculateCSP(self,baseline_data,csp_data,data_name)
             global selected
             
             if ~isfield(self.csp_settings,'iNComp') || isempty(self.csp_settings.iNComp)
@@ -2664,18 +2664,7 @@ classdef EEGLSL < handle
                     %
                     temp_derived_signal.signal_type = 'combined';
                     %
-                    %determine protocol
-                   
-                    
-%                     N = self.feedback_protocols{protocol_index}.actual_protocol_size;
-%                     idx1 = self.protocol_indices{protocol_index,1};
-%                     idx2 = self.protocol_indices{protocol_index,2};
-%                     if N > self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1
-%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst:self.derived_signals{1}.collect_buff.lst,:);
-%                         self.feedback_protocols{protocol_index}.actual_protocol_size = self.derived_signals{1}.collect_buff.lst - self.derived_signals{1}.collect_buff.fst + 1;
-%                     else
-%                         x_raw = self.derived_signals{1}.collect_buff.raw(self.derived_signals{1}.collect_buff.fst + idx1:self.derived_signals{1}.collect_buff.fst+idx2-1,:);
-%                     end
+
                     temp_derived_signal.Apply(csp_data',1);
                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
                     %calcuate feedback stats
