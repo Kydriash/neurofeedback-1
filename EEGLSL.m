@@ -298,17 +298,7 @@ classdef EEGLSL < handle
                     self.fb_manager_set=1;
                 end
                 
-                %                 if self.current_protocol >0 && self.current_protocol <= length(self.feedback_protocols)
-                %                     if self.current_protocol <= length(self.feedback_manager.window_size)
-                %                         n = self.feedback_manager.window_size(self.current_protocol);
-                %                     else
-                %                         n = self.default_window_size;
-                %                     end
-                %                 elseif self.default_window_size == 0 %zero protocol at the beginning
-                %                     n = self.feedback_manager.window_size(1);
-                %                 else
-                %                     n = self.default_window_size;
-                %                 end
+               
                 
                 for s = 2:length(self.derived_signals)
                     dat = self.derived_signals{s}.ring_buff.raw(self.derived_signals{s}.ring_buff.lst-self.current_window_size+1:self.derived_signals{s}.ring_buff.lst);
@@ -1696,6 +1686,7 @@ classdef EEGLSL < handle
         function Disconnect(self, obj,event) %#ok<INUSD>
             stop(self.timer_new_data);
             stop(self.timer_disp);
+            stop(self.timer_fb);
             set(self.fb_stub,'Visible','off');
             set(self.status_text, 'String', 'Status: disconnected');
             set(self.connect_button, 'String', 'Resume recording');
@@ -2669,8 +2660,16 @@ classdef EEGLSL < handle
                     %
                     temp_derived_signal.signal_type = 'combined';
                     %
+                    for i = 1:length(self.derived_signals{1}.spatial_filter)
+                        if self.derived_signals{1}.spatial_filter(i)
+                            x(:,i) = baseline_data(i,:);
+                            %j = j+1;
+                        else
+                            x(:,i) = 0;
+                        end
+                    end
 
-                    temp_derived_signal.Apply(baseline_data',1);
+                    temp_derived_signal.Apply(x',1);
                     values = temp_derived_signal.collect_buff.raw(temp_derived_signal.collect_buff.fst:temp_derived_signal.collect_buff.lst,:);
                     %calcuate feedback stats
                     values = abs(values);
@@ -2751,7 +2750,7 @@ classdef EEGLSL < handle
                     
                     
                 catch
-                    'Error while writing to file, function UpdateStatistics' %#ok<NOPRT>
+                    'Error while writing to file, function Calculate CSP' %#ok<NOPRT>
                 end
                 
                 
@@ -3148,35 +3147,35 @@ classdef EEGLSL < handle
                 end
             end
         end
-        function DeriveSettingsFromFile(self)
-            [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
-            %                     if any([self.fnames, self.files_pathname, filterindex] )
-            %                         %subject_folder = self.streams{1}.source_id;
-            %                         [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
-            %                         self.channel_labels = channels;
-            %                         if self.run_protocols
-            %                             self.protocol_sequence = protocols;
-            %                             for pr = 1:length(protocols)
-            %
-            %                                 self.feedback_protocols{pr} = RealtimeProtocol;
-            %                                 self.feedback_protocols{pr}.protocol_name = protocols{pr};
-            %                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
-            %
-            %                                 if strfind(protocols{pr},'ssd')
-            %                                     self.ssd = 1;
-            %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
-            %                                     self.feedback_protocols{pr}.band = 1;
-            %                                 elseif strfind(protocols{pr},'csp')
-            %                                     self.ssd = 1;
-            %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
-            %                                     self.feedback_protocols{pr}.band = 1;
-            %                                 elseif strcmpi(protocols{pr},'baseline')
-            %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
-            %                                 elseif strfind(lower(protocols{pr}),'feedback')
-            %                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
-            %                                 end
-            %                             end
-        end
+%         function DeriveSettingsFromFile(self)
+%             [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
+%             %                     if any([self.fnames, self.files_pathname, filterindex] )
+%             %                         %subject_folder = self.streams{1}.source_id;
+%             %                         [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
+%             %                         self.channel_labels = channels;
+%             %                         if self.run_protocols
+%             %                             self.protocol_sequence = protocols;
+%             %                             for pr = 1:length(protocols)
+%             %
+%             %                                 self.feedback_protocols{pr} = RealtimeProtocol;
+%             %                                 self.feedback_protocols{pr}.protocol_name = protocols{pr};
+%             %                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
+%             %
+%             %                                 if strfind(protocols{pr},'ssd')
+%             %                                     self.ssd = 1;
+%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%             %                                     self.feedback_protocols{pr}.band = 1;
+%             %                                 elseif strfind(protocols{pr},'csp')
+%             %                                     self.ssd = 1;
+%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%             %                                     self.feedback_protocols{pr}.band = 1;
+%             %                                 elseif strcmpi(protocols{pr},'baseline')
+%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%             %                                 elseif strfind(lower(protocols{pr}),'feedback')
+%             %                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
+%             %                                 end
+%             %                             end
+%         end
     end
 end
 

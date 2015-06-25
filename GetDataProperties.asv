@@ -31,11 +31,11 @@ else
         end
         if length(s) > 1
         protocols{end+1} = s{2};
-        try %#ok<TRYNC>
+        try
         protocols_show_as{end+1} = s{3};
         end
         durations(end+1) = str2double(s{end});
-        end
+        
     end
 end
 
