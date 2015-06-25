@@ -1,5 +1,5 @@
 
-function RecordedStudyToLSL(fnames,pathname,looped)
+function RecordedStudyToLSL(fnames,pathname,looped,s_frequency)
 global pushed
 global is_transmitting
 global connected
@@ -11,7 +11,11 @@ global connected
 [protocols,protocols_show_as, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
 
 %create lsl
-sampling_frequency = 500;
+if nargin > 3
+    sampling_frequency = s_frequency;
+else
+    sampling_frequency = 500;
+end
 source_id = pathname;
 lsllib = lsl_loadlib();
 

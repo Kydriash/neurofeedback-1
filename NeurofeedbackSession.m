@@ -5,6 +5,7 @@ classdef NeurofeedbackSession < handle
         protocol_sequence
         protocol_types
         csp_settings
+        sampling_frequency
     end
     
     methods
@@ -18,7 +19,12 @@ classdef NeurofeedbackSession < handle
             
             nfs = xml2struct(fname);
             [folder, fn, ext] = fileparts(fname); %#ok<ASGLU>
+            try %#ok<TRYNC>
+            %sampling frequency
+            self.sampling_frequency = nfs.NeurofeedbackSignalSpecs.vSignals.fSamplingFrequency;
+            end
             %%derived signals
+            
             ds = nfs.NeurofeedbackSignalSpecs.vSignals.DerivedSignal;
             for i = 1:length(ds)
                 if isstruct(ds)

@@ -34,7 +34,7 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
 			<nMSecondsPerWindow>50</nMSecondsPerWindow>
-			<fDuration>3</fDuration>
+			<fDuration>10</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>

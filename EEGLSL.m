@@ -999,7 +999,7 @@ classdef EEGLSL < handle
         end
         function Connect(self,predicate, value)
             if self.from_file && any([~isempty(self.fnames),~isempty(self.files_pathname)])
-                RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
+                RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped,self.sampling_frequency);
             elseif self.from_file
                 warning('No files selected')
                 return;
@@ -1111,15 +1111,6 @@ classdef EEGLSL < handle
             end
             %set ds
             if self.from_file
-                %                 dummy_signal = struct();
-                %                 dummy_signal.sSignalName = 'Raw';
-                %                 channels = cell(size(self.channel_labels,2));
-                %                 for ch = 1:length(channels)
-                %                     channels{ch,1} = self.channel_labels{ch};
-                %                     channels{ch,2} = 1;
-                %                 end
-                %                 dummy_signal.channels = channels;
-                %                 dummy_signal.filters = [];
                 
                 if self.ssd
                     self.derived_signals{1} = self.CreateNewDS('Raw',ones(length(self.channel_labels),1));
@@ -1332,6 +1323,7 @@ classdef EEGLSL < handle
                             %self.feedback_protocols = nfs.feedback_protocols;
                             self.csp_settings = nfs.csp_settings;
                             self.signals = nfs.derived_signals;
+                            self.sampling_frequency = nfs.sampling_frequency;
                             
                         end
                     end
@@ -2357,6 +2349,7 @@ classdef EEGLSL < handle
             self.exp_design.NeurofeedbackSignalSpecs.vSignals = vSignals;
             self.exp_design.NeurofeedbackSignalSpecs.vProtocols = vProtocols;
             self.exp_design.NeurofeedbackSignalSpecs.vPSequence = vPSequence;
+            self.exp_design.NeurofeedbackSignalSpecs.fSamplingFrequency = self.sampling_frequency;
             % necessary for formatting xml structures
             a = struct2xml(self.exp_design);
             
