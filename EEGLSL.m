@@ -1346,7 +1346,7 @@ classdef EEGLSL < handle
                 set(self.fig_feedback, 'OuterPosition', [-1280 0 1280 1024]);
                 self.feedback_axis_handle = axes;
                 self.fb_stub = uicontrol('Parent', self.fig_feedback, 'String', 'Baseline acquisition', 'Style', 'text', 'ForegroundColor',[0 1 0],'Position', [200 500 900 250], 'FontSize', 75, 'BackgroundColor',[1 1 1], 'FontName', 'Courier New', 'Visible', 'off' );
-                self.fbplot_handle = bar(self.feedback_axis_handle,[0 1 0],'FaceColor',[1 1 1]);
+                self.fbplot_handle = bar(self.feedback_axis_handle,[0 0 0],'FaceColor',[1 1 1]);
                 self.Connect(predicate,value);
             end
         end
@@ -1357,6 +1357,9 @@ classdef EEGLSL < handle
                 set(self.raw_and_ds_figure,'ResizeFcn',@self.FitFigure);
                 self.connect_button =  uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [10 10 150 20], ...
                     'String', 'Start recording','Tag','connect_button');
+                if self.from_file
+                    self.connect_button.Enable = 'off';
+                end
                 self.disconnect_button = uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [420 10 130 20], ...
                     'String', 'Disconnect', 'Callback', @self.Disconnect,'Tag','disconnect_button');
                 self.log_text = uicontrol('Parent', self.raw_and_ds_figure  ,'Style', 'Text','String', {'Log'}, 'Position', [0 300 50 100],'Tag','log_text');
