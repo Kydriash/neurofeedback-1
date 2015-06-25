@@ -1,5 +1,6 @@
-function [protocols, durations, channels] = GetDataProperties(pathname,fnames)
+function [protocols, protocols_show_as,durations, channels,settings_file] = GetDataProperties(pathname,fnames)
 protocols = {};
+protocols_show_as = {};
 durations = [];
 channels = {};
 
@@ -11,6 +12,9 @@ if ischar(fnames)
         s = strsplit(b);
     end
     protocols{end+1} = s{2};
+    try
+    protocols_show_as{end+1} = s{3};
+    end
     durations(end+1) = str2double(s{end});
 else
     for f = fnames
@@ -23,6 +27,9 @@ else
             s = strsplit(b);
         end
         protocols{end+1} = s{2};
+        try
+        protocols_show_as{end+1} = s{3};
+        end
         durations(end+1) = str2double(s{end});
     end
 end
@@ -31,12 +38,15 @@ all_fs = dir(pathname);
 for n = 1:length(all_fs)
     if strcmp(all_fs(n).name,'ssd_exp_info.hdr') || strcmp(all_fs(n).name,'csp_exp_info.hdr')
         sh = fopen(strcat(pathname,'\',all_fs(n).name),'r');
+        ch_str = fscanf(sh,'%c');
         if verLessThan('matlab','8.1')
-            channels = regexp(fscanf(sh,'%c'),',','split');
+            channels = regexp(ch_str,',','split');
         else
-            channels = strsplit(fscanf(sh,'%c'),',');
+            channels = strsplit(ch_str,',');
         end
         fclose(sh);
+    elseif strcmp(all_fs(n).name,'Exp_design.xml')
+        settings_file = strcat(pathname,'\',all_fs(n).name);
     end
 end
 

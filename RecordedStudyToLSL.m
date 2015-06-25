@@ -8,7 +8,7 @@ global connected
 
 %check if fnames ets exist
 
-[protocols, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
+[protocols,protocols_show_as, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
 
 %create lsl
 sampling_frequency = 500;
@@ -34,8 +34,11 @@ end
 data = [];
 for fn = filenames
     protocol_data = ReadEEGData(fn{1});
-    protocol_data = protocol_data(:,1:length(channels))';
-    data = [data protocol_data];
+    %size(protocol_data)
+    if size(protocol_data,1)
+    temp_protocol_data = protocol_data(:,1:length(channels))';
+    data = [data temp_protocol_data];
+    end
 end
 
 

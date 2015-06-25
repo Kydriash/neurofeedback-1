@@ -998,7 +998,7 @@ classdef EEGLSL < handle
             
         end
         function Connect(self,predicate, value)
-            if self.from_file && any([self.fnames,self.files_pathname])
+            if self.from_file && any([~isempty(self.fnames),~isempty(self.files_pathname)])
                 RecordedStudyToLSL(self.fnames,self.files_pathname,self.looped);
             elseif self.from_file
                 warning('No files selected')
@@ -1120,7 +1120,20 @@ classdef EEGLSL < handle
                 %                 end
                 %                 dummy_signal.channels = channels;
                 %                 dummy_signal.filters = [];
-                self.derived_signals{1} = self.CreateNewDS('Raw',ones(length(self.channel_labels),1));
+                
+                if self.ssd
+                    self.derived_signals{1} = self.CreateNewDS('Raw',ones(length(self.channel_labels),1));
+                else
+                     for i = 1: length(self.signals)
+                    
+                    self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
+                    
+                    self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels,self.derived_signals{1},self.bad_channels);
+                    if ~isempty(self.signals{i}.filters)
+                    self.derived_signals{i}.UpdateTemporalFilter(size(self.signals{i}.channels,2)-1,self.signals{i}.filters.range,self.signals{i}.filters.order,self.signals{i}.filters.mode);
+                    end
+                     end
+                end
                 %self.derived_signals{1} = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
                 %self.derived_signals{1}.UpdateSpatialFilter(ones(length(self.channel_labels),1),self.channel_labels);
             else
@@ -1276,11 +1289,12 @@ classdef EEGLSL < handle
                     %self.channel_labels = get_channel_labels(self.inlet);
                     
                     [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
-                    if any([self.fnames, self.files_pathname, filterindex] )
+                    if any([~isempty(self.fnames), ~isempty(self.files_pathname), filterindex] )
                         %subject_folder = self.streams{1}.source_id;
-                        [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
+                        [protocols, protocols_show_as, durations, channels,settings_file] = GetDataProperties(self.files_pathname,self.fnames);
                         self.channel_labels = channels;
                         if self.run_protocols
+                            self.settings_file = settings_file;
                             self.protocol_sequence = protocols;
                             self.feedback_protocols = [];
                             for pr = 1:length(protocols)
@@ -1288,14 +1302,16 @@ classdef EEGLSL < handle
                                 self.feedback_protocols{pr} = RealtimeProtocol;
                                 self.feedback_protocols{pr}.protocol_name = protocols{pr};
                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
-                                
-                                if strfind(protocols{pr},'ssd')
+                                if ~isempty(protocols_show_as)
+                                    self.feedback_protocols{pr}.show_as = protocols_show_as{pr};
+                                else
+                                    self.feedback_protocols{pr}.show_as = protocols{pr};
+                                end
+                                if strfind(lower(protocols{pr}),'ssd')
                                     self.ssd = pr;
-                                    self.feedback_protocols{pr}.to_update_statistics = 1;
                                     self.feedback_protocols{pr}.band = 1;
-                                elseif strfind(protocols{pr},'csp')
+                                elseif strfind(lower(protocols{pr}),'csp')
                                     self.ssd = pr;
-                                    self.feedback_protocols{pr}.to_update_statistics = 1;
                                     self.feedback_protocols{pr}.band = 1;
                                 elseif strcmpi(protocols{pr},'baseline')
                                     self.feedback_protocols{pr}.to_update_statistics = 1;
@@ -1308,6 +1324,7 @@ classdef EEGLSL < handle
                             self.protocol_types = nfs.protocol_types;
                             %self.feedback_protocols = nfs.feedback_protocols;
                             self.csp_settings = nfs.csp_settings;
+                            self.signals = nfs.derived_signals;
                             
                         end
                     end
@@ -1469,7 +1486,7 @@ classdef EEGLSL < handle
             try
                 if(self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols)) %non-zero protocol
                     if verLessThan('matlab','8.4.0')
-                        set(self.curr_protocol_text, 'String', [strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.protocol_name),...
+                        set(self.curr_protocol_text, 'String', [strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.show_as),...
                             strcat('Samples acquired', num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
                             strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
                             strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
@@ -1478,7 +1495,7 @@ classdef EEGLSL < handle
                             strcat('Updating plots every ', num2str(self.plot_refresh_rate), ' s')
                             ]);
                     else
-                        self.curr_protocol_text.String = [strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.protocol_name),...
+                        self.curr_protocol_text.String = [strcat('Current protocol: ',self.feedback_protocols{self.current_protocol}.show_as),...
                             strcat('Samples acquired', num2str(self.feedback_protocols{self.current_protocol}.actual_protocol_size),'/', num2str(self.feedback_protocols{self.current_protocol}.protocol_size)),...
                             strcat(' avg ', num2str(self.feedback_manager.average(self.signal_to_feedback-1))),...
                             strcat(' std ',num2str(self.feedback_manager.standard_deviation(self.signal_to_feedback-1))),...
@@ -1833,7 +1850,7 @@ classdef EEGLSL < handle
                     
                 end
                 
-                filename = [num2str(i) ' ' self.feedback_protocols{i}.protocol_name ' ' num2str(self.feedback_protocols{i}.actual_protocol_size/self.sampling_frequency) '.bin'];
+                filename = [num2str(i) ' ' self.feedback_protocols{i}.protocol_name ' ' self.feedback_protocols{i}.show_as ' ' num2str(self.feedback_protocols{i}.actual_protocol_size/self.sampling_frequency) '.bin'];
                 %write data
                 f = fopen(filename,'w');
                 fwrite(f,size(whole_data),'int');
@@ -1886,10 +1903,10 @@ classdef EEGLSL < handle
                 elseif self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
                     set(self.status_text, 'String','Status: receiving');
                 else
-                    set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
+                    set(self.status_text,'String',strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.show_as, ' : ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration)));
                 end
                 if self.paused
-                    set(self.status_text,'String', ['Protocol ' self.feedback_protocols{self.next_protocol}.protocol_name ' paused.'...
+                    set(self.status_text,'String', ['Protocol ' self.feedback_protocols{self.next_protocol}.show_as ' paused.'...
                         num2str(round(self.feedback_protocols{self.next_protocol}.actual_protocol_size/self.sampling_frequency)) '/'...
                         num2str(self.feedback_protocols{self.next_protocol}.protocol_duration)]);
                 end
@@ -1900,10 +1917,10 @@ classdef EEGLSL < handle
                 elseif self.current_protocol == 0 || self.current_protocol > length(self.feedback_protocols)
                     self.status_text.String = 'Status: receiving';
                 else
-                    self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.protocol_name, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));
+                    self.status_text.String = strcat('Status: Recording  ', self.feedback_protocols{self.current_protocol}.show_as, ': ',num2str(round(self.feedback_protocols{self.current_protocol}.actual_protocol_size/self.sampling_frequency)), '/',num2str(self.feedback_protocols{self.current_protocol}.protocol_duration));
                 end
                 if self.paused
-                    set(self.status_text,'String',['Protocol ' self.feedback_protocols{self.next_protocol}.protocol_name ' paused.'...
+                    set(self.status_text,'String',['Protocol ' self.feedback_protocols{self.next_protocol}.show_as ' paused.'...
                         num2str(round(self.feedback_protocols{self.next_protocol}.actual_protocol_size/self.sampling_frequency)) '/'...
                         num2str(self.feedback_protocols{self.next_protocol}.protocol_duration)]);
                 end
@@ -3036,7 +3053,11 @@ classdef EEGLSL < handle
                                 
                                 window_sizes{end+1} = self.feedback_protocols{pr}.window_size;
                             else
+                                if isempty(window_sizes)
+                                    window_sizes{end+1} = 20;
+                                else
                                 window_sizes{end+1} = window_sizes{end};
+                                end
                             end
                         end
                     end
@@ -3068,7 +3089,7 @@ classdef EEGLSL < handle
                 end
                 
             elseif isnumeric(data_sets)
-                if nargin < 3
+                if nargin < 3 || isempty(window)
                     window = self.current_window_size;
                 end
                 if nargin < 4
