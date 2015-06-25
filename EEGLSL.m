@@ -1132,6 +1132,13 @@ classdef EEGLSL < handle
                     if ~isempty(self.signals{i}.filters)
                     self.derived_signals{i}.UpdateTemporalFilter(size(self.signals{i}.channels,2)-1,self.signals{i}.filters.range,self.signals{i}.filters.order,self.signals{i}.filters.mode);
                     end
+                    if i > 1 && isfield(self.signals{i},'fAverage')
+                        self.feedback_manager.average(i-1) = self.signals{i}.fAverage;
+                        self.feedback_manager.standard_deviation(i-1) = self.signals{i}.fStdDev;
+                        self.fb_manager_set = 1;
+                        self.feedback_manager.feedback_vector = zeros(1,length(self.derived_signals)-1);
+                        self.feedback_manager.feedback_records = circVBuf(self.exp_data_length, 6,0);
+                    end
                      end
                 end
                 %self.derived_signals{1} = DerivedSignal(1,dummy_signal, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
@@ -1896,7 +1903,9 @@ classdef EEGLSL < handle
             fwrite(f, notes,'char');
             fclose(f);
             close(self.add_notes_window);
+            if ishandle(self.raw_and_ds_figure)
             close(self.raw_and_ds_figure);
+            end
         end
         function SetRecordingStatus(self)
             if verLessThan('matlab','8.4.0')

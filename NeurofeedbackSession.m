@@ -166,7 +166,9 @@ classdef NeurofeedbackSession < handle
                 for i = 1:length(self.protocol_types)
                     if strcmp(self.protocol_sequence{j},self.protocol_types{i}.sProtocolName)
                         rtp = RealtimeProtocol(1,self.protocol_types{i});
+                        if ~isempty(show_as)
                         rtp.show_as = show_as{j};
+                        end
                         self.feedback_protocols{end+1} = rtp;
                         
                         %rtp.set_ds_index(self.protocol_sequence);
