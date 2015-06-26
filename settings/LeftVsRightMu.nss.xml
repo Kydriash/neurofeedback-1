@@ -34,7 +34,7 @@
 			<sSignalComposition>Simple</sSignalComposition>
 			<bUpdateStatistics>1</bUpdateStatistics>
 			<nMSecondsPerWindow>50</nMSecondsPerWindow>
-			<fDuration>10</fDuration>
+			<fDuration>2</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString>Baseline acquisition</cString>
 		</FeedbackProtocol>
@@ -55,7 +55,7 @@
 			<nMSecondsPerWindow>20</nMSecondsPerWindow>
 			<fDuration>3</fDuration>
 			<bStopAfter>0</bStopAfter>
-			<cString>Baseline acquisition</cString>
+			<cString></cString>
 <iNComp>2</iNComp>
 <dInitBand>7 9</dInitBand>
 <dBand>1</dBand>
@@ -88,7 +88,7 @@
 			<nMSecondsPerWindow>100</nMSecondsPerWindow>
 <sFb_type>Color intensity</sFb_type>
 			<bUpdateStatistics>0</bUpdateStatistics>
-			<fDuration>2</fDuration>
+			<fDuration>3</fDuration>
 			<bStopAfter>0</bStopAfter>
 			<cString></cString>
 		</FeedbackProtocol>
@@ -167,25 +167,12 @@
 		</FeedbackProtocol>
 			</vProtocols>
 	<vPSequence>
-<loop count = '1'>
+
 <s>Baseline</s>
-</loop>
-
-<loop count = '1'>
-<s show_as = 'CSP_left'>CSP</s>
-<s show_as = 'CSP_right'>CSP</s>
-<s show_as = 'CSP_both'>CSP</s>
-</loop>
-
-<loop count = '5'>
-
-
+<s show_as = 'CSP_left' string = 'Move left hand'>CSP</s>
 <s>Rest</s>
 <s>Feedback_color</s>
-</loop>
-<loop count = '1'>
-<s>Baseline</s>
-</loop>
+
 	</vPSequence>
 
 

@@ -4,9 +4,9 @@ protocols_show_as = {};
 durations = [];
 channels = {};
 
-if nargin < 2
-    fnames = 
-end
+% if nargin < 2
+%     fnames = 
+% end
 if ischar(fnames)
     [a, b, c]= fileparts(strcat(pathname,fnames)); %#ok<ASGLU>
     if verLessThan('matlab','8.1')

@@ -22,7 +22,7 @@ classdef RealtimeProtocol < handle
     methods
         function self = RealtimeProtocol(self,protocol_type,sampling_frequency)  %#ok<INUSL>
             
-            if nargin == 1
+            if nargin < 2
                 self.protocol_name           = '';
                 self.to_update_statistics    = false;
                 self.window_duration         = 0;

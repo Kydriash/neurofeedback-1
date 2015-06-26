@@ -63,8 +63,8 @@ classdef EEGLSL < handle
     %
     % 0.0436
     %
-    % >> self.derived_signals{3} = self.CreateNewDS('composite', repmat(ones(1,6),3,1),[10 15]);
-    % >> self.derived_signals{3}.signal_type = 'Composite';
+    % >> self.derived_signals{3} = self.CreateNewDS('combined', repmat(ones(1,6),3,1),[10 15]);
+    % >> self.derived_signals{3}.signal_type = 'combined';
     % >> self.derived_signals{3}.Apply(ones(6,16),1);
     % >> self.derived_signals{3}.ring_buff.raw(self.derived_signals{2}.ring_buff.fst:self.derived_signals{2}.ring_buff.lst)
     %
@@ -941,7 +941,7 @@ classdef EEGLSL < handle
                         try
                             if self.current_protocol == self.ssd
                                 self.Prepare_CSP();
-                            elseif self.feedback_protocols{self.current_protocol}.to_update_statistics
+                            elseif self.feedback_protocols{self.current_protocol}.to_update_statistics && isempty(strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name),'csp'))
                                 self.Update_Statistics();
                             end
                             temp_log_str = get(self.log_text,'String');
@@ -1285,6 +1285,13 @@ classdef EEGLSL < handle
                             self.settings_file = settings_file;
                             self.protocol_sequence = protocols;
                             self.feedback_protocols = [];
+                            nfs = NeurofeedbackSession;
+                            nfs.LoadFromFile(self.settings_file);
+                            self.protocol_types = nfs.protocol_types;
+                            %self.feedback_protocols = nfs.feedback_protocols;
+                            self.csp_settings = nfs.csp_settings;
+                            self.signals = nfs.derived_signals;
+                            self.sampling_frequency = nfs.sampling_frequency;
                             for pr = 1:length(protocols)
                                 
                                 self.feedback_protocols{pr} = RealtimeProtocol;
@@ -1306,14 +1313,18 @@ classdef EEGLSL < handle
                                 elseif strfind(lower(protocols{pr}),'feedback')
                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
                                 end
+                                for type = 1:length(self.protocol_types)
+                                    if strcmp(self.protocol_types{type}.sProtocolName, self.feedback_protocols{pr}.protocol_name)
+                                        self.feedback_protocols{pr}.window_duration = self.protocol_types{type}.nMSecondsPerWindow;
+                                        self.feedback_protocols{pr}.to_update_statistics = self.protocol_types{type}.bUpdateStatistics;
+                                        try %#ok<TRYNC>
+                                            self.feedback_protocols{pr}.band = self.protocol_types{type}.dBand;
+                                        end
+                                        
+                                    end
+                                end
                             end
-                            nfs = NeurofeedbackSession;
-                            nfs.LoadFromFile(self.settings_file);
-                            self.protocol_types = nfs.protocol_types;
-                            %self.feedback_protocols = nfs.feedback_protocols;
-                            self.csp_settings = nfs.csp_settings;
-                            self.signals = nfs.derived_signals;
-                            self.sampling_frequency = nfs.sampling_frequency;
+                            
                             
                         end
                     end
@@ -1537,7 +1548,12 @@ classdef EEGLSL < handle
                 try
                     if (self.current_protocol> 0 && self.current_protocol<=length(self.feedback_protocols))
                         set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
-                        if isempty(get(self.fb_stub,'String')) && self.show_fb %feedback
+                        if strcmp(self.feedback_protocols{self.current_protocol}.protocol_name,'Rest')
+                            set(self.fig_feedback,'Color',[0.94 0.94 0.94]);
+                            set(self.fb_stub, 'Visible', 'off'); %string
+                            set(self.fbplot_handle,'Visible','off');
+                        elseif isempty(get(self.fb_stub,'String')) && self.show_fb %feedback
+                        %if strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name), 'feedback') && self.show_fb
                             set(self.fb_stub, 'Visible', 'off'); %string
                             if strfind(lower(self.fb_type),'bar')
                                 set(self.fbplot_handle,'Visible','on'); %feedback if bar
@@ -1562,10 +1578,7 @@ classdef EEGLSL < handle
                                     set(self.fig_feedback,'Color',[1 1-(1/16+1/16*mock_feedback) 1-(1/16+1/16*mock_feedback)]);
                                 end
                             end
-                        elseif strcmp(self.feedback_protocols{self.current_protocol}.protocol_name,'Rest')
-                            set(self.fig_feedback,'Color',[0.94 0.94 0.94]);
-                            set(self.fb_stub, 'Visible', 'off'); %string
-                            set(self.fbplot_handle,'Visible','off');
+                        
                             
                         else %strings must be visible
                             set(self.fig_feedback,'Color',[0.94 0.94 0.94]);
@@ -1609,7 +1622,8 @@ classdef EEGLSL < handle
                     1/self.fb_sigmas+1/self.fb_sigmas*self.feedback_manager.feedback_vector(self.signal_to_feedback-1) %#ok<NOPRT>
                 end
             elseif self.current_protocol
-                if strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name),'ssd')
+                if ~cellfun('isempty',strfind({lower(self.feedback_protocols{self.current_protocol}.protocol_name)},'ssd')) ||~cellfun('isempty',strfind({lower(self.feedback_protocols{self.current_protocol}.protocol_name)},'csp'))||~cellfun('isempty',strfind({lower(self.feedback_protocols{self.current_protocol}.protocol_name)},'baseline'))
+                %if strfind(lower(self.feedback_protocols{self.current_protocol}.protocol_name),'ssd')
                     set(self.fb_stub,'String',self.feedback_protocols{self.current_protocol}.string_to_show);
                     set(self.fb_stub,'Visible','on');
                     set(self.feedback_axis_handle,'Visible','off');
@@ -1722,6 +1736,7 @@ classdef EEGLSL < handle
             deviations =  zeros(length(protocols),length(self.derived_signals)-1);
             names = cell(length(protocols),1);
             plot_size = length(protocols);
+            head_str = 'Protocol';
             for i = protocols
                 idx11 = self.protocol_indices(i,1);
                 idx12= self.protocol_indices(i+1,1);
@@ -1739,12 +1754,16 @@ classdef EEGLSL < handle
                         fb = self.Recalculate(dat,self.feedback_protocols{i}.window_size, self.feedback_manager.average(ds-1), self.feedback_manager.standard_deviation(ds-1));
                         averages(i-self.ssd,ds-1) = mean(fb);
                         deviations(i-self.ssd,ds-1) = std(fb);
+                        
                     end
                     
                     %averages(i-self.ssd) = mean(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
                     %deviations(i-self.ssd) = std(self.feedback_manager.feedback_records.raw(self.feedback_manager.feedback_records.fst+idx21-const_shift:self.feedback_manager.feedback_records.fst+idx22-1-const_shift,2));
                     
                 end
+            end
+            for ds = 2:length(self.derived_signals)
+                head_str = [head_str ', ' self.derived_signals{ds}.signal_name ' av, ' self.derived_signals{ds}.signal_name ' std'];
             end
             %write to file
             curr_date = datestr(date,29);
@@ -1759,11 +1778,17 @@ classdef EEGLSL < handle
             end
             filename = strcat(self.path,'\',self.subject_record.subject_name,'\',curr_date,'\',self.subject_record.time_start,'\','stats.txt');
             f = fopen(filename,'w');
-            fprintf(f, self.derived_signals{self.signal_to_feedback}.signal_name);
+            fprintf(f, head_str);
             fprintf(f,'\n');
-            fprintf(f,'Protocol average stddev\n');
             for i = 1:length(names)
-                fprintf(f, [names{i} ' ' num2str(averages(i)) ' ' num2str(deviations(i)) '\n']);
+                s = names{i};
+                for ds = 2:length(self.derived_signals)
+                    s = [s ' ' num2str(averages(i,ds-1)) ' ' num2str(deviations(i,ds-1))];
+                    
+                    
+                end
+                s = [s '\n'];
+                fprintf(f,s);
             end
             fclose(f);
             %show plot
@@ -2503,12 +2528,40 @@ classdef EEGLSL < handle
             else
                 init_band = self.csp_settings.dInitBand;
             end
+            %remove outliers
+            bl_edited = baseline_data;
+            csp_edited = csp_data;
+            
+            data_pwr = sqrt(sum((bl_edited.^2),2));
+            for n = 1 : 7
+                Xmean = mean(data_pwr);
+                Xstd = std(data_pwr);
+                mask = (abs(data_pwr-Xmean) < 2.5 * Xstd);
+                idx = find(mask);
+                bl_edited = bl_edited(idx,:);
+                data_pwr = data_pwr(idx,:);
+                %length(idx)
+            end
+            
+            data_pwr = sqrt(sum((csp_edited.^2),2));
+            for n = 1 : 7
+                Xmean = mean(data_pwr);
+                Xstd = std(data_pwr);
+                mask = (abs(data_pwr-Xmean) < 2.5 * Xstd);
+                idx = find(mask);
+                csp_edited = csp_edited(idx,:);
+                data_pwr = data_pwr(idx,:);
+                %length(idx)
+            end
+
+            
+            
             for ib = 1:4
                 band = init_band +ib-1 ;
                 [z, p, k] = cheby1(3,1,band/(0.5*self.sampling_frequency),'bandpass');
                 [b,a] = zp2tf(z,p,k); 
-                filtered_bd = filtfilt(b,a,baseline_data)';
-                filtered_csp_d = filtfilt(b,a,csp_data)';
+                filtered_bd = filtfilt(b,a,bl_edited)';
+                filtered_csp_d = filtfilt(b,a,csp_edited)';
                 C10 = filtered_bd * filtered_bd'/fix(size(filtered_bd,2));
                 C20 = filtered_csp_d * filtered_csp_d'/fix(size(filtered_csp_d,2));
                 
@@ -2660,9 +2713,10 @@ classdef EEGLSL < handle
                     %
                     temp_derived_signal.signal_type = 'combined';
                     %
+                     x = zeros(size(baseline_data,1),length(self.derived_signals{1}.spatial_filter));
                     for i = 1:length(self.derived_signals{1}.spatial_filter)
                         if self.derived_signals{1}.spatial_filter(i)
-                            x(:,i) = baseline_data(i,:);
+                            x(:,i) = baseline_data(:,i);
                             %j = j+1;
                         else
                             x(:,i) = 0;
@@ -2765,10 +2819,10 @@ classdef EEGLSL < handle
                     
                     %%calculating stats
                     %j = 1;
-                    x = zeros(size(baseline_data,2),length(self.derived_signals{1}.spatial_filter));
+                    x = zeros(size(baseline_data,1),length(self.derived_signals{1}.spatial_filter));
                     for i = 1:length(self.derived_signals{1}.spatial_filter)
                         if self.derived_signals{1}.spatial_filter(i)
-                            x(:,i) = baseline_data(i,:);
+                            x(:,i) = baseline_data(:,i);
                             %j = j+1;
                         else
                             x(:,i) = 0;

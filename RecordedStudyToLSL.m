@@ -10,12 +10,38 @@ global connected
 
 [protocols,protocols_show_as, durations, channels]  = GetDataProperties(pathname,fnames); %#ok<ASGLU>
 
+
+%get data and calculate sampling_frequency
+filenames ={};
+if ischar(fnames)
+    filenames{end+1} = strcat(pathname,fnames);
+else
+    for f = fnames
+        filenames{end+1} = strcat(pathname,f{1});
+    end
+end
+data_length = 0;
+duration = sum(durations);
+data = [];
+for fn = filenames
+    protocol_data = ReadEEGData(fn{1});
+    %size(protocol_data)
+    if size(protocol_data,1)
+    temp_protocol_data = protocol_data(:,1:length(channels))';
+    data = [data temp_protocol_data];
+    
+    end
+    data_length = data_length + size(protocol_data,1);
+end
+
 %create lsl
-if nargin > 3
+if nargin > 3 && s_frequency > 0
     sampling_frequency = s_frequency;
 else
-    sampling_frequency = 500;
+    sampling_frequency = round(data_length/duration);
+    %sampling_frequency = 500;
 end
+%sampling_frequency = 500;
 source_id = pathname;
 lsllib = lsl_loadlib();
 
@@ -27,23 +53,8 @@ for label = channels
     ch.append_child_value('label',label{1});
 end
 outlet = lsl_outlet(eeg_info);
-filenames ={};
-if ischar(fnames)
-    filenames{end+1} = strcat(pathname,fnames);
-else
-    for f = fnames
-        filenames{end+1} = strcat(pathname,f{1});
-    end
-end
-data = [];
-for fn = filenames
-    protocol_data = ReadEEGData(fn{1});
-    %size(protocol_data)
-    if size(protocol_data,1)
-    temp_protocol_data = protocol_data(:,1:length(channels))';
-    data = [data temp_protocol_data];
-    end
-end
+
+
 
 
 pushed = 1;
