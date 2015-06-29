@@ -1216,12 +1216,10 @@ classdef EEGLSL < handle
             self.subjects_dropmenu = uicontrol('Parent', self.fig_interface,'Style','popupmenu','Position',[170 320 100 20],'String',subjects,'Callback',@self.SetSubject);
             sn_text = uicontrol('Parent', self.fig_interface, 'Style', 'text', 'String', 'Choose/Enter subject name', 'Position',[20 315 140 20],'HorizontalAlignment','left'); %#ok<NASGU>
             subj_folder_button = uicontrol('Parent', self.fig_interface,'Style','pushbutton','Position',[285 320 150 20],'String','Or select subject folder','Callback',@self.SetSubjectFolder); %#ok<NASGU>
-            from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 200 20],'Tag','from_file_chb','String','From file');
-            %from_file_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[285 270 50 20],'String','From file'); %#ok<NASGU>
-            loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 200 20],'Tag','From_file_loop','String','Loop the recording?');
-            %loop_replay_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[220 250 120 20],'String','Loop the recording?'); %#ok<NASGU>
-            use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 200 20],'Value',1,'Tag','Protocols from files','String','Use protocols from files?');
-            %use_protocols_text = uicontrol('Parent', self.fig_interface,'Style','text','Position',[200 230 140 20],'String','Use protocols from files?'); %#ok<NASGU>
+            %%uncomment this if you want to be able to run from file 
+            %from_file_chb =  uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 273 200 20],'Tag','from_file_chb','String','From file');
+            %loop_replay_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 253 200 20],'Tag','From_file_loop','String','Loop the recording?');
+            %use_protocols_chb = uicontrol('Parent', self.fig_interface,'Style','checkbox','Position',[340 233 200 20],'Value',1,'Tag','Protocols from files','String','Use protocols from files?');
             uiwait();
             if ishandle(self.fig_interface) %if the window is not closed
                 if verLessThan('matlab','8.4.0')
@@ -1244,7 +1242,7 @@ classdef EEGLSL < handle
                     self.fb_refresh_rate = str2double(frr.String);
                     set(self.fig_interface,'Visible','off');
                     self.show_fb = get(show_fb_check,'Value');
-                    self.from_file = get(from_file_chb,'Value');
+                   % self.from_file = get(from_file_chb,'Value');
                     if self.from_file
                         self.looped = loop_replay_chb.Value;
                         self.run_protocols = use_protocols_chb.Value;
@@ -1277,7 +1275,7 @@ classdef EEGLSL < handle
                     %self.channel_labels = get_channel_labels(self.inlet);
                     
                     [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
-                    if any([~isempty(self.fnames), ~isempty(self.files_pathname), filterindex] )
+                    if any([ischar(self.fnames), iscell(self.fnames)])
                         %subject_folder = self.streams{1}.source_id;
                         [protocols, protocols_show_as, durations, channels,settings_file] = GetDataProperties(self.files_pathname,self.fnames);
                         self.channel_labels = channels;
@@ -1354,7 +1352,7 @@ classdef EEGLSL < handle
             
             if ~self.connected
                 self.raw_and_ds_figure = figure('Tag','raw_and_ds_figure'); %add Tag
-                set(self.raw_and_ds_figure,'ResizeFcn',@self.FitFigure);
+                set(self.raw_and_ds_figure,'ResizeFcn',@self.FitFigure,'CloseRequestFcn',@self.DoNothing);
                 self.connect_button =  uicontrol('Parent',self.raw_and_ds_figure,'style','pushbutton','Position', [10 10 150 20], ...
                     'String', 'Start recording','Tag','connect_button');
                 if self.from_file
@@ -2378,6 +2376,12 @@ classdef EEGLSL < handle
             %do nothing and destroy the window
             if strcmp(get(obj,'Tag'),'cancel_button')
                 delete(obj.Parent);
+            elseif strcmp(get(obj,'Tag'),'raw_and_ds_figure')
+                self.inlet = [];
+                stop(self.timer_new_data);
+                stop(self.timer_disp);
+                stop(self.timer_fb);
+                delete(obj);
             else
                 delete(obj);
             end
@@ -3201,41 +3205,8 @@ classdef EEGLSL < handle
                 end
             end
         end
-%         function DeriveSettingsFromFile(self)
-%             [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
-%             %                     if any([self.fnames, self.files_pathname, filterindex] )
-%             %                         %subject_folder = self.streams{1}.source_id;
-%             %                         [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
-%             %                         self.channel_labels = channels;
-%             %                         if self.run_protocols
-%             %                             self.protocol_sequence = protocols;
-%             %                             for pr = 1:length(protocols)
-%             %
-%             %                                 self.feedback_protocols{pr} = RealtimeProtocol;
-%             %                                 self.feedback_protocols{pr}.protocol_name = protocols{pr};
-%             %                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
-%             %
-%             %                                 if strfind(protocols{pr},'ssd')
-%             %                                     self.ssd = 1;
-%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
-%             %                                     self.feedback_protocols{pr}.band = 1;
-%             %                                 elseif strfind(protocols{pr},'csp')
-%             %                                     self.ssd = 1;
-%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
-%             %                                     self.feedback_protocols{pr}.band = 1;
-%             %                                 elseif strcmpi(protocols{pr},'baseline')
-%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
-%             %                                 elseif strfind(lower(protocols{pr}),'feedback')
-%             %                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
-%             %                                 end
-%             %                             end
-%         end
     end
 end
-
-
-
-
 
 
 function channels = read_montage_file(fname) %#ok<DEFNU>
@@ -3245,10 +3216,6 @@ for i = 1:length(montage.neorec.transmission.clogicals.clogical)
     channels{end+1} = montage.neorec.transmission.clogicals.clogical{i}.name.Text;
 end
 end
-
-
-
-
 function channels = get_channel_labels(input) %#ok<DEFNU> %input = inlet obj
 ChS = input.info.desc.child('channels');
 ch = ChS.first_child;
@@ -3308,6 +3275,7 @@ else
 end
 
 end
+
 %         function Run(self)
 %             %draw self.raw_and_ds_figure
 %              self.raw_and_ds_figure = figure('Tag','raw_and_ds_figure'); %add Tag
@@ -3343,4 +3311,34 @@ end
 %         end
 %         function ObtainSettings(self,obj,event)
 
+%         end
+
+%         function DeriveSettingsFromFile(self)
+%             [self.fnames, self.files_pathname, filterindex] = uigetfile('.bin','Select files to play','MultiSelect','on');
+%             %                     if any([self.fnames, self.files_pathname, filterindex] )
+%             %                         %subject_folder = self.streams{1}.source_id;
+%             %                         [protocols, durations, channels] = GetDataProperties(self.files_pathname,self.fnames);
+%             %                         self.channel_labels = channels;
+%             %                         if self.run_protocols
+%             %                             self.protocol_sequence = protocols;
+%             %                             for pr = 1:length(protocols)
+%             %
+%             %                                 self.feedback_protocols{pr} = RealtimeProtocol;
+%             %                                 self.feedback_protocols{pr}.protocol_name = protocols{pr};
+%             %                                 self.feedback_protocols{pr}.protocol_duration = durations(pr);
+%             %
+%             %                                 if strfind(protocols{pr},'ssd')
+%             %                                     self.ssd = 1;
+%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%             %                                     self.feedback_protocols{pr}.band = 1;
+%             %                                 elseif strfind(protocols{pr},'csp')
+%             %                                     self.ssd = 1;
+%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%             %                                     self.feedback_protocols{pr}.band = 1;
+%             %                                 elseif strcmpi(protocols{pr},'baseline')
+%             %                                     self.feedback_protocols{pr}.to_update_statistics = 1;
+%             %                                 elseif strfind(lower(protocols{pr}),'feedback')
+%             %                                     self.feedback_protocols{pr}.fb_type = protocols{pr};
+%             %                                 end
+%             %                             end
 %         end
