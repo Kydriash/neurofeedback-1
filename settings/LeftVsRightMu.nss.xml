@@ -178,7 +178,7 @@
 
 <CSPSettings>
 	<iNComp>2</iNComp>
-	<dInitBand>16 18</dInitBand>
+	<dInitBand>7 10</dInitBand>
 </CSPSettings>
 
 </NeurofeedbackSignalSpecs>
