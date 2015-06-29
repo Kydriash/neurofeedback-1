@@ -1135,7 +1135,9 @@ classdef EEGLSL < handle
                     self.derived_signals{i} = DerivedSignal(1,self.signals{i}, self.sampling_frequency,self.exp_data_length,self.channel_labels,self.plot_length);
                     
                     self.derived_signals{i}.UpdateSpatialFilter(self.signals{i}.channels,self.derived_signals{1},self.bad_channels);
-                    
+                    if ~isempty(self.signals{i}.filters)
+                    self.derived_signals{i}.UpdateTemporalFilter(size(self.signals{i}.channels,2)-1,self.signals{i}.filters(1).range,self.signals{i}.filters(1).order,self.signals{i}.filters(1).mode);
+                    end
                 end
                 
             end

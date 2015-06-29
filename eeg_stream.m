@@ -87,7 +87,16 @@ global channel_count
 b = findobj('Tag','connect button');
 %eeg_figure = findobj('Tag','raw_and_ds_figure');
 if ~connected
+    
     outlet.push_chunk(zeros(channel_count,1));
+    if pushed > 1 && ~outlet.have_consumers()
+        disp('The eeg window has been closed, closing transmission')
+        delete(outlet);
+        stop(timer_obj);
+        f = findobj('Tag','stream control');
+        delete(f);
+    end
+    
 else
     
     if looped
@@ -97,7 +106,7 @@ else
             outlet.push_chunk(data(:,mod(pushed,size(data,2))))
             pushed = pushed + 1;
         elseif pushed > 1 && ~outlet.have_consumers()
-           disp('The eeg window has been closed, closing transmission')
+            disp('The eeg window has been closed, closing transmission')
             delete(outlet);
             stop(timer_obj);
             f = findobj('Tag','stream control');
@@ -121,18 +130,18 @@ else
             delete(f);
         elseif pushed > 1 && ~outlet.have_consumers()
             disp('The eeg window has been closed, closing transmission')
-             delete(outlet);
+            delete(outlet);
             stop(timer_obj);
             f = findobj('Tag','stream control');
             delete(f);
         elseif connected && ~outlet.have_consumers()
-                %delete(outlet);
-                %stop(timer_obj);
-                %f = findobj('Tag','stream control');
-                %delete(f);
-                disp('Waiting for consumers');
-                connected = 0;
-                b.String = 'Start streaming';
+            %delete(outlet);
+            %stop(timer_obj);
+            %f = findobj('Tag','stream control');
+            %delete(f);
+            disp('Waiting for consumers');
+            connected = 0;
+            b.String = 'Start streaming';
             
         end
     end
